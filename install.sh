@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-REPO="amine/figma-kit"
+REPO="dop-amine/figma-kit"
 BINARY="figma-kit"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 
