@@ -3,350 +3,604 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>figma-kit — Design from the command line</title>
-  <meta name="description" content="A Go CLI that generates production Figma designs from the terminal. 120+ commands, built-in themes, YAML-driven templates.">
-  <meta property="og:title" content="figma-kit — Design from the command line">
-  <meta property="og:description" content="A Go CLI that generates production Figma designs from the terminal.">
+  <title>figma-kit — Build Figma designs from the terminal</title>
+  <meta name="description" content="A single Go binary that generates production Figma designs from the terminal. 120+ commands, built-in dark theme, zero config.">
+  <meta property="og:title" content="figma-kit — Build Figma designs from the terminal">
+  <meta property="og:description" content="120+ commands. One binary. Dark theme included. Open source.">
   <meta property="og:type" content="website">
+  <meta property="og:image" content="https://dop-amine.github.io/figma-kit/og.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            bg: 'rgb(13, 15, 23)',
-            card: 'rgb(22, 26, 37)',
-            stk: 'rgb(36, 41, 56)',
-            bl: 'rgb(51, 102, 255)',
-            tl: 'rgb(14, 184, 165)',
-            mt: 'rgb(115, 122, 140)',
-            wt: 'rgb(240, 242, 245)',
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-        },
-      },
-    }
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    body { background: rgb(13, 15, 23); }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0D0F17;
+      --card: #161A25;
+      --stk: #242938;
+      --bl: #3366FF;
+      --tl: #14B8A6;
+      --pp: #8B5CF6;
+      --mt: #737A8C;
+      --bd: #C7CFD9;
+      --wt: #F5F7FA;
+      --err: #FF5959;
+      --success: #33CC80;
+      --warn: #FF9933;
+      --sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --mono: 'Geist Mono', 'SF Mono', 'Fira Code', monospace;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--wt);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--bl); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+    @media (max-width: 768px) { .container { padding: 0 20px; } }
 
-    .glow-bl {
-      background: radial-gradient(ellipse 600px 400px at 70% 20%, rgba(51, 102, 255, 0.12), transparent);
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(13, 15, 23, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--stk);
     }
-    .glow-tl {
-      background: radial-gradient(ellipse 400px 300px at 30% 80%, rgba(14, 184, 165, 0.08), transparent);
+    nav .inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px;
+    }
+    nav .logo { font-family: var(--mono); font-weight: 500; font-size: 14px; color: var(--wt); }
+    nav .links { display: flex; gap: 28px; }
+    nav .links a { font-size: 14px; color: var(--mt); transition: color .2s; }
+    nav .links a:hover { color: var(--wt); text-decoration: none; }
+    @media (max-width: 640px) { nav .links { gap: 16px; } }
+
+    /* ── ACCENT BAR ── */
+    .accent-bar {
+      height: 4px; width: 100%;
+      background: linear-gradient(90deg, var(--bl), var(--tl));
+      position: fixed; top: 56px; left: 0; z-index: 99;
     }
 
-    .glass {
-      background: rgba(22, 26, 37, 0.6);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(240, 242, 245, 0.06);
-    }
-
-    @keyframes typewriter {
-      from { width: 0; }
-      to { width: 100%; }
-    }
-    @keyframes blink {
-      50% { border-color: transparent; }
-    }
-    .typewriter {
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      padding-top: 120px;
+      position: relative;
       overflow: hidden;
-      white-space: nowrap;
-      border-right: 2px solid rgb(51, 102, 255);
-      animation: typewriter 2.5s steps(44) 0.5s forwards, blink 0.8s step-end infinite;
-      width: 0;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 70% 20%, rgba(30, 56, 140, 0.14), transparent),
+        radial-gradient(ellipse 50% 40% at 20% 60%, rgba(13, 72, 77, 0.10), transparent),
+        radial-gradient(ellipse 60% 50% at 80% 50%, rgba(38, 25, 102, 0.12), transparent);
+      pointer-events: none;
+    }
+    .hero .inner {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+      position: relative; z-index: 1;
+    }
+    @media (max-width: 900px) {
+      .hero .inner { grid-template-columns: 1fr; gap: 40px; }
+    }
+    .hero .badge {
+      display: inline-block;
+      font-family: var(--mono); font-size: 12px; font-weight: 500;
+      color: var(--bl); border: 1px solid var(--bl);
+      padding: 4px 12px; border-radius: 999px;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(48px, 6vw, 80px);
+      font-weight: 800; line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 24px;
+    }
+    .hero .subtitle {
+      font-size: 20px; color: var(--bd);
+      line-height: 1.6; margin-bottom: 36px;
+      max-width: 520px;
+    }
+    .hero .cta-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--bl); color: var(--wt);
+      font-family: var(--sans); font-weight: 600; font-size: 16px;
+      padding: 12px 28px; border-radius: 10px; border: none; cursor: pointer;
+      box-shadow: 0 4px 24px rgba(51, 102, 255, 0.25);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 32px rgba(51, 102, 255, 0.35); text-decoration: none; }
+    .brew-hint {
+      font-family: var(--mono); font-size: 13px; color: var(--mt);
+      letter-spacing: 0.04em;
     }
 
-    .terminal-line {
-      opacity: 0;
-      animation: fadeIn 0.3s forwards;
+    /* ── TERMINAL CARD ── */
+    .terminal {
+      background: #0A0B12;
+      border: 1px solid var(--stk);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.3);
     }
-    @keyframes fadeIn {
-      to { opacity: 1; }
+    .terminal-bar {
+      display: flex; align-items: center; gap: 7px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--stk);
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-r { background: #FF5959; }
+    .dot-y { background: #FFBF33; }
+    .dot-g { background: #33CC80; }
+    .terminal-title {
+      margin-left: auto;
+      font-family: var(--mono); font-size: 11px; color: var(--mt);
+    }
+    .terminal-body { padding: 20px; }
+    .terminal-body .line {
+      font-family: var(--mono); font-size: 12px; line-height: 2;
+      white-space: pre;
+    }
+    .line .cmd { color: var(--tl); }
+    .line .out { color: var(--mt); }
+    .line .ok { color: var(--success); }
+
+    /* ── SECTION ── */
+    section { padding: 100px 0; }
+    .section-label {
+      font-family: var(--mono); font-weight: 500; font-size: 12px;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 700; margin-bottom: 20px;
+    }
+    .section-desc {
+      font-size: 18px; color: var(--bd); max-width: 600px;
+      margin-bottom: 48px; line-height: 1.7;
     }
 
-    .tab-btn.active {
-      color: rgb(51, 102, 255);
-      border-bottom-color: rgb(51, 102, 255);
+    /* ── FEATURES ── */
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
     }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
+    @media (max-width: 768px) { .features-grid { grid-template-columns: 1fr; } }
+    .feature-card {
+      background: rgba(22, 26, 37, 0.6);
+      border: 1px solid var(--stk);
+      border-radius: 16px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      transition: border-color .3s, transform .3s;
+    }
+    .feature-card:hover { border-color: rgba(51, 102, 255, 0.3); transform: translateY(-2px); }
+    .feature-card .icon { font-size: 36px; margin-bottom: 20px; }
+    .feature-card h3 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+    .feature-card p { font-size: 14px; color: var(--mt); line-height: 1.7; }
+    .feature-card::after {
+      content: '';
+      position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
+      width: 200px; height: 200px; border-radius: 50%;
+      pointer-events: none; opacity: 0; transition: opacity .3s;
+    }
+    .feature-card:nth-child(1)::after { background: radial-gradient(circle, rgba(51,102,255,0.1), transparent 70%); }
+    .feature-card:nth-child(2)::after { background: radial-gradient(circle, rgba(139,92,246,0.1), transparent 70%); }
+    .feature-card:nth-child(3)::after { background: radial-gradient(circle, rgba(20,184,166,0.1), transparent 70%); }
+    .feature-card:hover::after { opacity: 1; }
 
-    .flow-arrow {
-      background: linear-gradient(90deg, rgb(51, 102, 255), rgb(14, 184, 165));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    /* ── DEMO ── */
+    .demo-terminal {
+      max-width: 1000px;
+      margin: 0 auto;
     }
+    .demo-terminal .terminal { font-size: 13px; }
+    .demo-terminal .terminal-body .line { line-height: 1.8; }
+    .just-works {
+      display: inline-block;
+      font-family: var(--mono); font-size: 11px;
+      color: var(--success);
+      background: rgba(51, 204, 128, 0.1);
+      border: 1px solid var(--success);
+      padding: 3px 10px; border-radius: 999px;
+      float: right; margin-top: 8px;
+    }
+
+    /* ── STORY ── */
+    .story-section { background: rgba(22, 26, 37, 0.3); border-top: 1px solid var(--stk); border-bottom: 1px solid var(--stk); }
+    .story-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start;
+    }
+    @media (max-width: 900px) { .story-grid { grid-template-columns: 1fr; } }
+    .story-step {
+      display: flex; gap: 16px; margin-bottom: 32px;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--bl); color: var(--wt);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600;
+    }
+    .step-content h4 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .step-content p { font-size: 14px; color: var(--mt); line-height: 1.6; }
+    .step-content code {
+      font-family: var(--mono); font-size: 12px;
+      background: rgba(51, 102, 255, 0.1);
+      color: var(--tl); padding: 2px 6px; border-radius: 4px;
+    }
+
+    /* ── FIGMA EMBED ── */
+    .figma-embed {
+      border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--stk);
+      box-shadow: 0 12px 48px rgba(0,0,0,0.4);
+    }
+    .figma-embed iframe {
+      width: 100%; height: 500px; border: none; display: block;
+    }
+    @media (max-width: 768px) { .figma-embed iframe { height: 350px; } }
+    .figma-link-row {
+      display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;
+    }
+    .figma-link {
+      font-family: var(--mono); font-size: 12px;
+      color: var(--mt); border: 1px solid var(--stk);
+      padding: 6px 14px; border-radius: 8px;
+      transition: border-color .2s, color .2s;
+    }
+    .figma-link:hover { border-color: var(--bl); color: var(--bl); text-decoration: none; }
+
+    /* ── GIF ── */
+    .demo-gif {
+      border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--stk);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .demo-gif img { width: 100%; display: block; }
+
+    /* ── INSTALL CTA ── */
+    .install-section { text-align: center; }
+    .install-section .section-desc { margin-left: auto; margin-right: auto; }
+    .install-btn {
+      display: inline-block;
+      font-family: var(--mono); font-weight: 500; font-size: 16px;
+      color: var(--bl); border: 1.5px solid var(--bl);
+      padding: 14px 28px; border-radius: 10px;
+      transition: background .2s, color .2s;
+    }
+    .install-btn:hover { background: var(--bl); color: var(--wt); text-decoration: none; }
+    .install-alt {
+      display: block; margin-top: 16px;
+      font-family: var(--mono); font-size: 12px; color: var(--mt);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--stk);
+      padding: 48px 0;
+      background: rgba(9, 10, 15, 0.8);
+    }
+    .footer-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px;
+    }
+    @media (max-width: 768px) { .footer-grid { grid-template-columns: repeat(2, 1fr); } }
+    .footer-col h4 {
+      font-size: 13px; font-weight: 600; margin-bottom: 16px;
+    }
+    .footer-col a {
+      display: block; font-size: 13px; color: var(--mt);
+      margin-bottom: 8px; transition: color .2s;
+    }
+    .footer-col a:hover { color: var(--wt); text-decoration: none; }
+    .footer-col .logo-text {
+      font-family: var(--mono); font-weight: 500; font-size: 16px;
+      color: var(--wt); margin-bottom: 8px;
+    }
+    .footer-col .copy { font-size: 12px; color: var(--mt); }
+
+    /* ── META BADGE ── */
+    .meta-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--mono); font-size: 11px;
+      color: var(--tl); background: rgba(20, 184, 166, 0.08);
+      border: 1px solid rgba(20, 184, 166, 0.2);
+      padding: 4px 12px; border-radius: 999px;
+      margin-bottom: 24px;
+    }
+    .meta-badge svg { width: 14px; height: 14px; }
   </style>
 </head>
-<body class="text-wt antialiased">
+<body>
 
-  <!-- Hero -->
-  <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
-    <div class="glow-bl absolute inset-0 pointer-events-none"></div>
-    <div class="glow-tl absolute inset-0 pointer-events-none"></div>
-    <div class="relative z-10 text-center px-6 max-w-4xl mx-auto">
-      <p class="font-mono text-sm text-tl tracking-wider uppercase mb-6">Open Source CLI Tool</p>
-      <h1 class="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-        Design from<br>
-        <span class="bg-gradient-to-r from-bl to-tl bg-clip-text text-transparent">the command line.</span>
-      </h1>
-      <p class="text-lg md:text-xl text-mt max-w-2xl mx-auto mb-10">
-        A single Go binary that generates production Figma designs via the official MCP server.
-        120+ commands. Built-in themes. YAML-driven templates.
-      </p>
-
-      <!-- Terminal demo -->
-      <div class="glass rounded-xl p-1 max-w-2xl mx-auto mb-10 text-left">
-        <div class="flex items-center gap-2 px-4 py-2.5 border-b border-stk/50">
-          <div class="w-3 h-3 rounded-full bg-red-500/70"></div>
-          <div class="w-3 h-3 rounded-full bg-yellow-500/70"></div>
-          <div class="w-3 h-3 rounded-full bg-green-500/70"></div>
-          <span class="ml-3 text-xs text-mt font-mono">terminal</span>
-        </div>
-        <div class="p-5 font-mono text-sm leading-relaxed">
-          <div class="text-mt mb-1">$</div>
-          <div class="typewriter text-bl font-medium">figma-kit make carousel -t noir --content slides.yml</div>
-          <div class="terminal-line text-mt/70 mt-4" style="animation-delay: 3.5s">
-            <span class="text-mt">// Auto-generated by figma-kit</span><br>
-            <span class="text-mt">// Theme: Noir Studio</span>
-          </div>
-          <div class="terminal-line text-green-400 mt-2" style="animation-delay: 4s">
-            <span class="text-tl">&#x2713;</span> Generated 7 slides (1080&times;1350) &mdash; ready for use_figma
-          </div>
-        </div>
-      </div>
-
-      <!-- Install one-liner -->
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <code class="glass rounded-lg px-5 py-3 font-mono text-sm text-wt/90">
-          brew install dop-amine/tap/figma-kit
-        </code>
-        <a href="https://github.com/dop-amine/figma-kit" class="inline-flex items-center gap-2 bg-bl hover:bg-bl/90 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          View on GitHub
-        </a>
-      </div>
+<!-- NAV -->
+<nav>
+  <div class="inner">
+    <a href="#" class="logo">&#9670; figma-kit</a>
+    <div class="links">
+      <a href="#features">Features</a>
+      <a href="#demo">Demo</a>
+      <a href="#story">Story</a>
+      <a href="#figma">Figma</a>
+      <a href="https://github.com/dop-amine/figma-kit">GitHub</a>
     </div>
-  </section>
+  </div>
+</nav>
+<div class="accent-bar"></div>
 
-  <!-- What It Does -->
-  <section class="py-24 px-6">
-    <div class="max-w-6xl mx-auto">
-      <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Three verbs. Infinite designs.</h2>
-      <p class="text-mt text-center mb-16 max-w-xl mx-auto">From raw nodes to full marketing campaigns, all from your terminal.</p>
-      <div class="grid md:grid-cols-3 gap-6">
-
-        <div class="glass rounded-2xl p-8">
-          <div class="w-12 h-12 rounded-xl bg-bl/10 flex items-center justify-center mb-5">
-            <svg class="w-6 h-6 text-bl" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
-          </div>
-          <h3 class="text-xl font-semibold mb-3">Generate</h3>
-          <p class="text-mt leading-relaxed">36 production-ready templates. Carousels, pitch decks, OG images, storyboards, UI screens — one command each.</p>
-          <code class="block mt-4 text-xs font-mono text-bl/80">figma-kit make carousel -t noir</code>
-        </div>
-
-        <div class="glass rounded-2xl p-8">
-          <div class="w-12 h-12 rounded-xl bg-tl/10 flex items-center justify-center mb-5">
-            <svg class="w-6 h-6 text-tl" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
-          </div>
-          <h3 class="text-xl font-semibold mb-3">Compose</h3>
-          <p class="text-mt leading-relaxed">28+ mid-level patterns. Cards, buttons, effects, auto-layout — build custom designs by composing primitives.</p>
-          <code class="block mt-4 text-xs font-mono text-tl/80">figma-kit card glass --preset strong</code>
-        </div>
-
-        <div class="glass rounded-2xl p-8">
-          <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-5">
-            <svg class="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          </div>
-          <h3 class="text-xl font-semibold mb-3">Audit</h3>
-          <p class="text-mt leading-relaxed">10 automated QA checks. Contrast ratios, touch targets, orphaned layers, font consistency — catch issues before handoff.</p>
-          <code class="block mt-4 text-xs font-mono text-purple-400/80">figma-kit qa checklist --page 0</code>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- Command Showcase -->
-  <section class="py-24 px-6">
-    <div class="max-w-4xl mx-auto">
-      <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">120+ commands across 8 layers</h2>
-      <p class="text-mt text-center mb-12">From pixel-level node operations to full design deliverables.</p>
-
-      <div class="flex flex-wrap justify-center gap-1 mb-8 border-b border-stk/30 pb-px">
-        <button onclick="switchTab('primitives')" class="tab-btn active px-4 py-2.5 text-sm font-medium text-mt border-b-2 border-transparent transition-colors hover:text-wt">Primitives</button>
-        <button onclick="switchTab('patterns')" class="tab-btn px-4 py-2.5 text-sm font-medium text-mt border-b-2 border-transparent transition-colors hover:text-wt">Patterns</button>
-        <button onclick="switchTab('deliverables')" class="tab-btn px-4 py-2.5 text-sm font-medium text-mt border-b-2 border-transparent transition-colors hover:text-wt">Deliverables</button>
-        <button onclick="switchTab('system')" class="tab-btn px-4 py-2.5 text-sm font-medium text-mt border-b-2 border-transparent transition-colors hover:text-wt">Design System</button>
-        <button onclick="switchTab('qa')" class="tab-btn px-4 py-2.5 text-sm font-medium text-mt border-b-2 border-transparent transition-colors hover:text-wt">QA & Export</button>
-      </div>
-
-      <div id="tab-primitives" class="tab-content active">
-        <div class="glass rounded-xl p-6 font-mono text-sm leading-loose">
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit node create frame</span> <span class="text-mt">--name "Hero" -w 1440 --height 800</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit style fill</span> <span class="text-mt">node_id --solid "#0D0F17"</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit style corner</span> <span class="text-mt">node_id --radius 24</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit layout auto</span> <span class="text-mt">node_id --dir VERTICAL --gap 24 --pad 48</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit text create</span> <span class="text-mt">--content "Hello World" --size 64 --weight Bold</span><br>
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="inner">
+      <div>
+        <span class="badge">v0.2.0</span>
+        <h1>figma-kit</h1>
+        <p class="subtitle">Build Figma designs from the terminal.<br>120+ commands. One binary. Dark theme included.</p>
+        <div class="cta-row">
+          <a href="https://github.com/dop-amine/figma-kit" class="btn-primary">Get Started</a>
+          <span class="brew-hint">brew install dop-amine/tap/figma-kit</span>
         </div>
       </div>
-      <div id="tab-patterns" class="tab-content">
-        <div class="glass rounded-xl p-6 font-mono text-sm leading-loose">
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit card glass</span> <span class="text-mt">--preset strong -w 400 --height 300</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit ui button</span> <span class="text-mt">--variant primary --label "Get Started" --size lg</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit ui stat</span> <span class="text-mt">--value "4.2x" --label "Faster" --trend up</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit fx glow</span> <span class="text-mt">node_id --position topRight --intensity 1.2</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit fx accent-bar</span> <span class="text-mt">parent_id --from "#3366FF" --to "#0EB8A5" --w 400</span><br>
+      <div class="terminal">
+        <div class="terminal-bar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span class="terminal-title">figma-kit &mdash; zsh &mdash; 120&times;40</span>
         </div>
-      </div>
-      <div id="tab-deliverables" class="tab-content">
-        <div class="glass rounded-xl p-6 font-mono text-sm leading-loose">
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit make carousel</span> <span class="text-mt">--content slides.yml -t noir</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit make og-image</span> <span class="text-mt">--title "Launch Day" --description "We're live."</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit make pitch-deck</span> <span class="text-mt">--slides 10 --template saas</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit make wireframe</span> <span class="text-mt">--type dashboard --breakpoint desktop</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit make storyboard</span> <span class="text-mt">--scenes 6 --content storyboard.yml</span><br>
-        </div>
-      </div>
-      <div id="tab-system" class="tab-content">
-        <div class="glass rounded-xl p-6 font-mono text-sm leading-loose">
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit ds create</span> <span class="text-mt">-t noir</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit ds colors</span> <span class="text-mt">--primary "#3366FF" --tints 5</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit ds type-scale</span> <span class="text-mt">--base 16 --ratio 1.25</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit ds component</span> <span class="text-mt">Button --variants "primary,ghost" --sizes "sm,md,lg"</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit ds sync-tokens</span> <span class="text-mt">--format tailwind</span><br>
-        </div>
-      </div>
-      <div id="tab-qa" class="tab-content">
-        <div class="glass rounded-xl p-6 font-mono text-sm leading-loose">
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit qa checklist</span> <span class="text-mt">--page 0</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit qa contrast</span> <span class="text-mt">--page 0 --level AA</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit inspect</span> <span class="text-mt">node_id</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit export tokens</span> <span class="text-mt">--format css</span><br>
-          <span class="text-mt">$</span> <span class="text-bl">figma-kit handoff css</span> <span class="text-mt">node_id --framework tailwind</span><br>
+        <div class="terminal-body">
+          <div class="line"><span class="cmd">$ figma-kit make og-image -t noir</span></div>
+          <div class="line"><span class="out">  &rarr; OG Image (1200&times;630)</span></div>
+          <div class="line">&nbsp;</div>
+          <div class="line"><span class="cmd">$ figma-kit ui button --variant primary</span></div>
+          <div class="line"><span class="out">  &rarr; UI/Button created</span></div>
+          <div class="line">&nbsp;</div>
+          <div class="line"><span class="cmd">$ figma-kit ds create -t noir</span></div>
+          <div class="line"><span class="out">  &rarr; Design System page (11 tokens, 8 scales)</span></div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- How It Works -->
-  <section class="py-24 px-6">
-    <div class="max-w-4xl mx-auto text-center">
-      <h2 class="text-3xl md:text-4xl font-bold mb-12">How it works</h2>
-      <div class="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 text-lg">
-        <div class="glass rounded-xl px-6 py-4">
-          <div class="text-sm text-mt mb-1">You run</div>
-          <div class="font-mono text-bl text-sm">figma-kit</div>
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="section-label" style="color: var(--bl);">WHY FIGMA-KIT?</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="icon">&#9889;</div>
+        <h3>120+ Commands</h3>
+        <p>From low-level primitives to full-page templates. Buttons, cards, design systems, exports &mdash; all from one binary.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">&#127912;</div>
+        <h3>Dark Theme Built In</h3>
+        <p>Premium Noir theme with brand colors, type scale, and spacing tokens. Build consistent designs instantly.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">&#128640;</div>
+        <h3>Zero Config</h3>
+        <p>Single Go binary. No Node.js, no plugins, no setup. brew install and start building in seconds.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo" style="background: var(--bg);">
+  <div class="container">
+    <div class="section-label" style="color: var(--tl);">SEE IT IN ACTION</div>
+    <div class="section-title">One command. Instant design.</div>
+    <div class="section-desc">Every section of this page was designed in Figma using figma-kit commands. Here's what the workflow looks like:</div>
+
+    <div class="demo-gif" style="margin-bottom: 48px;">
+      <img src="demo.gif" alt="figma-kit demo recording" loading="lazy">
+    </div>
+
+    <div class="demo-terminal">
+      <div class="terminal">
+        <div class="terminal-bar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span class="terminal-title">building this site's Figma design</span>
         </div>
-        <div class="flow-arrow text-2xl font-bold">&rarr;</div>
-        <div class="glass rounded-xl px-6 py-4">
-          <div class="text-sm text-mt mb-1">Generates</div>
-          <div class="font-mono text-tl text-sm">JavaScript</div>
-        </div>
-        <div class="flow-arrow text-2xl font-bold">&rarr;</div>
-        <div class="glass rounded-xl px-6 py-4">
-          <div class="text-sm text-mt mb-1">Executed by</div>
-          <div class="font-mono text-purple-400 text-sm">use_figma MCP</div>
-        </div>
-        <div class="flow-arrow text-2xl font-bold">&rarr;</div>
-        <div class="glass rounded-xl px-6 py-4">
-          <div class="text-sm text-mt mb-1">Creates in</div>
-          <div class="font-mono text-green-400 text-sm">Figma</div>
+        <div class="terminal-body">
+          <div class="line"><span class="cmd">$ figma-kit page create "Landing Page" -p 0</span></div>
+          <div class="line"><span class="ok">  &#10003; Page created at index 1</span></div>
+          <div class="line">&nbsp;</div>
+          <div class="line"><span class="cmd">$ figma-kit make og-image --title "figma-kit" -t noir</span></div>
+          <div class="line"><span class="ok">  &#10003; OG Image (1200&times;630) created</span></div>
+          <div class="line">&nbsp;</div>
+          <div class="line"><span class="cmd">$ figma-kit card glass -t noir --title "Feature" --desc "Fast."</span></div>
+          <div class="line"><span class="ok">  &#10003; Card/Glass created with blur and border</span></div>
+          <div class="line">&nbsp;</div>
+          <div class="line"><span class="cmd">$ figma-kit ds create -t noir</span></div>
+          <div class="line"><span class="ok">  &#10003; Design System page generated (14 sections)</span></div>
+          <div class="line">&nbsp;</div>
+          <div class="line"><span class="cmd">$ figma-kit ds variables-create -t noir --name "Noir Tokens"</span></div>
+          <div class="line"><span class="ok">  &#10003; 11 Figma variables created</span></div>
+          <div class="line"><span class="just-works">&#10003; Just works</span></div>
         </div>
       </div>
-      <p class="text-mt mt-8 max-w-lg mx-auto text-sm">
-        The CLI generates Figma Plugin API JavaScript. The AI feeds it to the official Figma MCP server.
-        No CDP hacking, no browser automation &mdash; just the official API.
-      </p>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Themes -->
-  <section class="py-24 px-6">
-    <div class="max-w-5xl mx-auto">
-      <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">Built-in themes</h2>
-      <div class="grid md:grid-cols-3 gap-6">
-        <div class="rounded-2xl p-6 border border-stk/50" style="background: rgb(13, 15, 23);">
-          <div class="flex gap-2 mb-4">
-            <div class="w-6 h-6 rounded-md" style="background: rgb(51, 102, 255);"></div>
-            <div class="w-6 h-6 rounded-md" style="background: rgb(14, 184, 165);"></div>
-            <div class="w-6 h-6 rounded-md" style="background: rgb(22, 26, 37);"></div>
+<!-- THE STORY -->
+<section id="story" class="story-section">
+  <div class="container">
+    <div class="meta-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      Meta: this design was built by the tool it advertises
+    </div>
+    <div class="section-title">How This Site Was Built</div>
+    <div class="section-desc">This isn't a mockup. The Figma file below was designed entirely by running figma-kit commands from the terminal &mdash; then the same design became this marketing page.</div>
+
+    <div class="story-grid">
+      <div>
+        <div class="story-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Created a Figma file via MCP</h4>
+            <p>Used <code>create_new_file</code> from the Figma MCP server to create "figma-kit demo" in our team workspace.</p>
           </div>
-          <h3 class="font-semibold mb-1">Default Dark</h3>
-          <p class="text-mt text-sm">Tech/SaaS aesthetic. Blue-teal accents on deep navy.</p>
         </div>
-        <div class="rounded-2xl p-6 border border-gray-200" style="background: rgb(250, 250, 250);">
-          <div class="flex gap-2 mb-4">
-            <div class="w-6 h-6 rounded-md" style="background: rgb(34, 34, 34);"></div>
-            <div class="w-6 h-6 rounded-md" style="background: rgb(0, 122, 204);"></div>
-            <div class="w-6 h-6 rounded-md" style="background: rgb(255, 255, 255); border: 1px solid #ddd;"></div>
+        <div class="story-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Set up 3 pages with figma-kit</h4>
+            <p>Ran <code>figma-kit page create</code> and <code>page rename</code> to create Landing Page, Components, and Design System pages.</p>
           </div>
-          <h3 class="font-semibold mb-1" style="color: rgb(34, 34, 34);">Light</h3>
-          <p class="text-sm" style="color: rgb(102, 102, 102);">Print-friendly. Clean whites and subtle greys.</p>
         </div>
-        <div class="rounded-2xl p-6 border border-stk/50" style="background: rgb(13, 15, 23);">
-          <div class="flex gap-2 mb-4">
-            <div class="w-6 h-6 rounded-md" style="background: rgb(51, 102, 255);"></div>
-            <div class="w-6 h-6 rounded-md" style="background: rgb(255, 90, 90);"></div>
-            <div class="w-6 h-6 rounded-md" style="background: rgb(51, 204, 128);"></div>
+        <div class="story-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Built the hero section</h4>
+            <p>Used <code>node create frame</code>, <code>fx mesh</code>, <code>fx accent-bar</code>, <code>text create</code>, <code>ui button</code>, and <code>ui badge</code> to compose the hero.</p>
           </div>
-          <h3 class="font-semibold mb-1">Noir</h3>
-          <p class="text-mt text-sm">Dark premium brand theme. Primary blue #3366FF, Inter + Geist Mono.</p>
+        </div>
+        <div class="story-step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Added 3 glass feature cards</h4>
+            <p>Ran <code>card glass -t noir --title "..." --desc "..."</code> three times with different content. Each card got <code>fx glow</code> underneath.</p>
+          </div>
+        </div>
+        <div class="story-step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h4>Created 19 UI components</h4>
+            <p>Page 2 showcases every UI primitive: buttons (5 variants), badges (4 colors), toggles, checkboxes, radios, tabs, dropdowns, table, and more.</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="story-step">
+          <div class="step-num">6</div>
+          <div class="step-content">
+            <h4>Generated the design system</h4>
+            <p>One command: <code>figma-kit ds create -t noir</code>. Creates color swatches, type scale specimens, and spacing bars &mdash; all auto-layout.</p>
+          </div>
+        </div>
+        <div class="story-step">
+          <div class="step-num">7</div>
+          <div class="step-content">
+            <h4>Created Figma variables</h4>
+            <p><code>ds variables-create -t noir --name "Noir Tokens"</code> pushed 11 color tokens into Figma's native variable system.</p>
+          </div>
+        </div>
+        <div class="story-step">
+          <div class="step-num">8</div>
+          <div class="step-content">
+            <h4>Exported CSS tokens</h4>
+            <p><code>export tokens --format css -t noir</code> prints clean <code>:root</code> CSS custom properties. No manual extraction needed.</p>
+          </div>
+        </div>
+        <div class="story-step">
+          <div class="step-num">9</div>
+          <div class="step-content">
+            <h4>Ran QA on all 3 pages</h4>
+            <p><code>qa checklist -t noir</code> walks every node checking for empty names, tiny targets, and tight spacing. 258 nodes, 0 issues.</p>
+          </div>
+        </div>
+        <div class="story-step">
+          <div class="step-num">10</div>
+          <div class="step-content">
+            <h4>Turned the Figma design into this site</h4>
+            <p>The colors, fonts, layout, and copy on this page are a 1:1 match of the Figma file. Scroll down to explore the live embed.</p>
+          </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Install -->
-  <section class="py-24 px-6">
-    <div class="max-w-2xl mx-auto text-center">
-      <h2 class="text-3xl md:text-4xl font-bold mb-8">Get started in seconds</h2>
-      <div class="space-y-4 text-left">
-        <div class="glass rounded-xl p-5">
-          <div class="text-xs text-mt mb-2 font-mono">Homebrew (macOS / Linux)</div>
-          <code class="text-sm font-mono text-bl">brew install dop-amine/tap/figma-kit</code>
-        </div>
-        <div class="glass rounded-xl p-5">
-          <div class="text-xs text-mt mb-2 font-mono">Go install</div>
-          <code class="text-sm font-mono text-bl">go install github.com/dop-amine/figma-kit@latest</code>
-        </div>
-        <div class="glass rounded-xl p-5">
-          <div class="text-xs text-mt mb-2 font-mono">curl one-liner</div>
-          <code class="text-sm font-mono text-bl">curl -fsSL https://figma-kit.dev/install.sh | sh</code>
-        </div>
+<!-- LIVE FIGMA EMBED -->
+<section id="figma">
+  <div class="container">
+    <div class="section-label" style="color: var(--pp);">LIVE FIGMA FILE</div>
+    <div class="section-title">Explore the actual design</div>
+    <div class="section-desc">This is a live embed of the Figma file created by figma-kit. Pan, zoom, switch pages &mdash; it's the real file, always in sync.</div>
+
+    <div class="figma-embed">
+      <iframe
+        src="https://embed.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=2-2&embed-host=figma-kit-site&theme=dark&footer=false"
+        allowfullscreen
+      ></iframe>
+    </div>
+
+    <div class="figma-link-row">
+      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=2-2" target="_blank" class="figma-link">
+        &#9670; Landing Page
+      </a>
+      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=7-2" target="_blank" class="figma-link">
+        &#9670; Components
+      </a>
+      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=11-2" target="_blank" class="figma-link">
+        &#9670; Design System
+      </a>
+      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo" target="_blank" class="figma-link">
+        Open in Figma &rarr;
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL CTA -->
+<section class="install-section">
+  <div class="container">
+    <div class="section-title">Ready to build?</div>
+    <div class="section-desc" style="text-align: center;">Install figma-kit in seconds. Open source, MIT licensed.</div>
+    <a href="https://github.com/dop-amine/figma-kit" class="install-btn">brew install dop-amine/tap/figma-kit</a>
+    <span class="install-alt">or: curl -sSL https://github.com/dop-amine/figma-kit/raw/main/install.sh | sh</span>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COMMANDS.md">Commands</a>
+        <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/THEMES.md">Themes</a>
+        <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/RECIPES.md">Recipes</a>
+        <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/ARCHITECTURE.md">Architecture</a>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <a href="https://github.com/dop-amine/figma-kit">GitHub</a>
+        <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COMMANDS.md">Documentation</a>
+        <a href="https://github.com/dop-amine/figma-kit/releases">Changelog</a>
+        <a href="https://github.com/dop-amine/figma-kit/blob/main/CONTRIBUTING.md">Contributing</a>
+      </div>
+      <div class="footer-col">
+        <h4>Community</h4>
+        <a href="https://github.com/dop-amine/figma-kit/discussions">Discussions</a>
+        <a href="https://github.com/dop-amine/figma-kit/issues">Issues</a>
+      </div>
+      <div class="footer-col">
+        <div class="logo-text">&#9670; figma-kit</div>
+        <p class="copy">MIT License &bull; Open Source</p>
+        <p class="copy">&copy; 2026 dop-amine</p>
       </div>
     </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="py-12 px-6 border-t border-stk/30">
-    <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-      <div class="font-mono text-sm text-mt">
-        figma-kit &mdash; MIT License
-      </div>
-      <div class="flex items-center gap-6">
-        <a href="https://github.com/dop-amine/figma-kit" class="text-mt hover:text-wt transition-colors text-sm">GitHub</a>
-        <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COMMANDS.md" class="text-mt hover:text-wt transition-colors text-sm">Docs</a>
-      </div>
-    </div>
-  </footer>
-
-  <script>
-    function switchTab(name) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById('tab-' + name).classList.add('active');
-    }
-  </script>
+  </div>
+</footer>
 
 </body>
 </html>
