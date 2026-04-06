@@ -71,7 +71,7 @@ Commands that only export tokens from Go (e.g. `figma-kit export tokens`) skip t
 ## Build and distribution
 
 - **GoReleaser** (`.goreleaser.yml`): builds `figma-kit` from `./cmd/figma-kit` for darwin/linux/windows (amd64 + arm64 where applicable), stamps version via ldflags (`internal/cli.Version`), archives tarballs/zip, checksums, and changelog filters.
-- **Homebrew**: `brews` publishes to tap repo `amine/homebrew-tap` for `brew install`.
+- **Homebrew**: `brews` publishes to tap repo `dop-amine/homebrew-tap` for `brew install`.
 - **`install.sh`**: downloads the latest GitHub release archive for the current OS/arch, extracts, and `install`s the binary to `/usr/local/bin` (or `INSTALL_DIR`).
 
 Local development typically uses `go build -o figma-kit ./cmd/figma-kit` or a project `Makefile` target.

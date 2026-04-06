@@ -25,4 +25,4 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/amine/figma-kit
+        - github.com/dop-amine/figma-kit

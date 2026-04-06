@@ -2,7 +2,7 @@
 
 **Title:** Show HN: figma-kit – a CLI that generates production Figma designs from the terminal
 
-**URL:** https://github.com/amine/figma-kit
+**URL:** https://github.com/dop-amine/figma-kit
 
 ---
 
@@ -31,7 +31,7 @@ Hey HN! I built figma-kit because I wanted a faster way to create Figma designs 
 6. Export (PNG/SVG/PDF, CSS/React handoff)
 7. Batch orchestration (YAML recipes for multi-step workflows)
 
-**Install:** `brew install amine/tap/figma-kit` or `go install github.com/amine/figma-kit@latest`
+**Install:** `brew install dop-amine/tap/figma-kit` or `go install github.com/dop-amine/figma-kit@latest`
 
 It's MIT licensed, free, and open source. Built this as a portfolio project to explore what's possible with Figma's new MCP integration.
 

@@ -8,7 +8,7 @@
 - [ ] Generate OG image using `figma-kit make og-image --title "figma-kit" --description "Design from the command line"`
 - [ ] Get 2-3 beta testers (designer friends) to try it, collect quotes
 - [ ] Tag `v0.1.0` and push — triggers goreleaser, creates GitHub Release
-- [ ] Verify Homebrew tap works: `brew install amine/tap/figma-kit`
+- [ ] Verify Homebrew tap works: `brew install dop-amine/tap/figma-kit`
 - [ ] Verify `install.sh` works on clean machine
 - [ ] Deploy website to GitHub Pages (or Cloudflare Pages)
 - [ ] Final README review — ensure demo GIF is embedded

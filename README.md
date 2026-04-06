@@ -4,7 +4,7 @@
 
 [![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![CI](https://github.com/amine/figma-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/amine/figma-kit/actions/workflows/ci.yml)
+[![CI](https://github.com/dop-amine/figma-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/dop-amine/figma-kit/actions/workflows/ci.yml)
 
 A single Go binary that generates `use_figma`-compatible JavaScript for the official [Figma MCP server](https://mcp.figma.com). 120+ commands across 8 layers of abstraction — from `node create frame` to `make carousel --content slides.yml`.
 
@@ -12,10 +12,10 @@ A single Go binary that generates `use_figma`-compatible JavaScript for the offi
 
 ```bash
 # Homebrew (macOS / Linux)
-brew install amine/tap/figma-kit
+brew install dop-amine/tap/figma-kit
 
 # Go install
-go install github.com/amine/figma-kit@latest
+go install github.com/dop-amine/figma-kit@latest
 
 # curl one-liner
 curl -fsSL https://raw.githubusercontent.com/amine/figma-kit/main/install.sh | sh
@@ -158,7 +158,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
 
 ```bash
 # Clone
-git clone https://github.com/amine/figma-kit && cd figma-kit
+git clone https://github.com/dop-amine/figma-kit && cd figma-kit
 
 # Build
 make build

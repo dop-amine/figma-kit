@@ -6,7 +6,7 @@ builds:
   - main: ./cmd/figma-kit
     binary: figma-kit
     ldflags:
-      - -s -w -X github.com/amine/figma-kit/internal/cli.Version={{.Version}}
+      - -s -w -X github.com/dop-amine/figma-kit/internal/cli.Version={{.Version}}
     goos:
       - darwin
       - linux
@@ -40,9 +40,9 @@ changelog:
 
 brews:
   - repository:
-      owner: amine
+      owner: dop-amine
       name: homebrew-tap
-    homepage: https://github.com/amine/figma-kit
+    homepage: https://github.com/dop-amine/figma-kit
     description: CLI for programmatic Figma design via the MCP server
     license: MIT
     install: |

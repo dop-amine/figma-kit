@@ -1,7 +1,7 @@
 package theme
 
 import (
-	"github.com/amine/figma-kit/assets"
+	"github.com/dop-amine/figma-kit/assets"
 )
 
 // embeddedThemes maps theme names to their raw JSON data.

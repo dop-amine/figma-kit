@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/amine/figma-kit/internal/codegen"
-	"github.com/amine/figma-kit/internal/theme"
+	"github.com/dop-amine/figma-kit/internal/codegen"
+	"github.com/dop-amine/figma-kit/internal/theme"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )

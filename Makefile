@@ -1,5 +1,5 @@
 BINARY := figma-kit
-PKG    := github.com/amine/figma-kit
+PKG    := github.com/dop-amine/figma-kit
 CMD    := ./cmd/figma-kit
 VERSION ?= dev
 LDFLAGS := -ldflags "-s -w -X $(PKG)/internal/cli.Version=$(VERSION)"

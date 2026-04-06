@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/amine/figma-kit/internal/cli"
+	"github.com/dop-amine/figma-kit/internal/cli"
 )
 
 func main() {

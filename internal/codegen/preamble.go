@@ -3,7 +3,7 @@ package codegen
 import (
 	"sort"
 
-	"github.com/amine/figma-kit/internal/theme"
+	"github.com/dop-amine/figma-kit/internal/theme"
 )
 
 // Preamble generates the standard use_figma preamble: font loading + theme color constants.

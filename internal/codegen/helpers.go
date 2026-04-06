@@ -3,7 +3,7 @@ package codegen
 import (
 	"strings"
 
-	"github.com/amine/figma-kit/assets"
+	"github.com/dop-amine/figma-kit/assets"
 )
 
 // helperBoundaries maps function names to their source text.

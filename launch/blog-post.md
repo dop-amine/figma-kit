@@ -99,20 +99,20 @@ Go gives us exactly what this tool needs:
 - **Single binary** — no runtime, no node_modules, no Python venv
 - **Cross-platform** — `goreleaser` builds for macOS, Linux, Windows with one config
 - **`go:embed`** — themes, helpers, and templates compile into the binary
-- **Homebrew** — `brew install amine/tap/figma-kit` just works
+- **Homebrew** — `brew install dop-amine/tap/figma-kit` just works
 
 The entire tool is ~5,000 lines of Go and ~700 lines of embedded JavaScript. It compiles in under 3 seconds.
 
 ## Try It
 
 ```bash
-brew install amine/tap/figma-kit
+brew install dop-amine/tap/figma-kit
 figma-kit init my-project
 figma-kit themes
 figma-kit make og-image --title "Hello HN" -t default
 ```
 
-The project is MIT licensed and open source: [github.com/amine/figma-kit](https://github.com/amine/figma-kit)
+The project is MIT licensed and open source: [github.com/dop-amine/figma-kit](https://github.com/dop-amine/figma-kit)
 
 ---
 

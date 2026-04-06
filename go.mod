@@ -1,4 +1,4 @@
-module github.com/amine/figma-kit
+module github.com/dop-amine/figma-kit
 
 go 1.26.1
 
