@@ -39,7 +39,7 @@ the same output as 'figma-kit batch'. Press Ctrl-C to stop.`,
 			if err != nil {
 				return fmt.Errorf("create watcher: %w", err)
 			}
-			defer watcher.Close()
+			defer func() { _ = watcher.Close() }()
 
 			if err := watcher.Add(path); err != nil {
 				return fmt.Errorf("watch %s: %w", path, err)
