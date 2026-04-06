@@ -42,6 +42,7 @@ brews:
   - repository:
       owner: dop-amine
       name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     homepage: https://github.com/dop-amine/figma-kit
     description: CLI for programmatic Figma design via the MCP server
     license: MIT
