@@ -1,0 +1,18 @@
+# Binary
+figma-kit
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Config (user-specific)
+.figmarc.json
+
+# Go
+*.exe
+*.test
+*.out
+
+# Node (legacy, should not exist)
+node_modules/
