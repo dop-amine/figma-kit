@@ -117,7 +117,6 @@ func darken(c RGB, amount float64) RGB {
 	return hslToRGB(h, s, clamp01(l-amount))
 }
 
-
 func isDark(c RGB) bool {
 	luminance := 0.299*c.R + 0.587*c.G + 0.114*c.B
 	return luminance < 0.5
