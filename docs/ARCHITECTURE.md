@@ -2,11 +2,21 @@
 
 ## Overview
 
-**figma-kit** is a Go CLI that **generates JavaScript** intended to run inside Figma (via the Plugin API), typically delivered through the **use_figma** MCP tool. The binary never talks to Figma’s servers directly for design operations: it composes strings of JS that create or inspect nodes when executed in the plugin runtime.
+**figma-kit** is a Go CLI that **generates JavaScript** intended to run inside Figma (via the Plugin API), typically delivered through the **use_figma** MCP tool. The binary never talks to Figma's servers directly for design operations: it composes strings of JS that create or inspect nodes when executed in the plugin runtime.
+
+## AI Agent Workflow
+
+figma-kit is designed as an **AI agent tool** — each command is a composable unit that an LLM can select, sequence, and execute without human intervention.
+
+```
+User prompt -> AI selects figma-kit commands -> CLI generates JS -> Figma MCP executes -> design appears
+```
+
+The AI agent (via Cursor, Claude Code, or any MCP-compatible client) acts as the orchestrator: it reads the user's natural-language request, picks the appropriate figma-kit commands, runs them to produce JS, and feeds the output to the Figma MCP server's `use_figma` tool. Designers can describe what they want in plain English and get production Figma designs without touching the CLI directly.
 
 ## Why Go and JavaScript
 
-- **JavaScript** is required because Figma’s Plugin API is JS-only (async fonts, node creation, `figma.*` APIs).
+- **JavaScript** is required because Figma's Plugin API is JS-only (async fonts, node creation, `figma.*` APIs).
 - **Go** implements the CLI, configuration, theme parsing, tests, and release pipeline. Keeping generation logic in Go yields a single static binary, strong typing for theme/config structs, and straightforward embedding of assets.
 
 ## Package layout
@@ -33,12 +43,12 @@ YAML batch recipes are parsed in **`internal/cli/batch.go`** (not a separate `in
 - **`ThemeColors` / `ThemeColorsOrdered`** — emit `const TOKEN={r,g,b};` lines.
 - **`ReturnIDs` / `ReturnDone` / `ReturnExpr`** — tail return shapes for MCP-style results.
 
-`internal/codegen/preamble.go` defines **`Preamble`** (fonts + sorted theme colors) and **`PreambleWithPage`** (page setup then preamble)—the pattern most commands use after resolving theme and page index.
+`internal/codegen/preamble.go` defines **`Preamble`** (fonts + sorted theme colors) and **`PreambleWithPage`** (page setup then preamble) — the pattern most commands use after resolving theme and page index.
 
 ## Theme system
 
 - Built-in themes are embedded from `assets/themes/*.json` via `assets/embed.go` and wired in `internal/theme/embed.go` (`embeddedThemes` map).
-- **`theme.Load(name)`** resolution: embedded name → `~/.config/figma-kit/themes/<name>.json` → `./themes/<name>.json`.
+- **`theme.Load(name)`** resolution: embedded name -> `~/.config/figma-kit/themes/<name>.json` -> `./themes/<name>.json`.
 - **`theme.List()`** only enumerates **embedded** themes (for `figma-kit themes`).
 - **`theme.LoadFile(path)`** is available for explicit paths (tests, future CLI extensions).
 
@@ -46,8 +56,8 @@ YAML batch recipes are parsed in **`internal/cli/batch.go`** (not a separate `in
 
 Most commands follow the same shape:
 
-1. **Resolve theme** — `resolveTheme(cmd)` (`-t` → `.figmarc.json` `theme` → `"default"`), then `theme.Load`.
-2. **Resolve page** — `resolvePage()` (`-p` if ≥ 0, else config `page`, else `0`).
+1. **Resolve theme** — `resolveTheme(cmd)` (`-t` -> `.figmarc.json` `theme` -> `"default"`), then `theme.Load`.
+2. **Resolve page** — `resolvePage()` (`-p` if >= 0, else config `page`, else `0`).
 3. **Build** — `b := codegen.New()`, then `PreambleWithPage` or specialized sections, template `Raw`, deliverable-specific lines.
 4. **Emit** — `output(b.String())` writes JS to stdout.
 

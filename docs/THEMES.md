@@ -58,7 +58,15 @@ Embedded in the binary (`assets/themes/*.json`):
 | `light` | Print-friendly light mode: light greys, white cards; includes extra tokens such as `TH` and `RL` not present in all themes. |
 | `noir` | Brand-forward dark theme with primary blue **#3366FF** (`brand.primary`), optional `website`, and `brand` content for deliverables. |
 
-`figma-kit themes` lists embedded themes and descriptions.
+## Community themes
+
+Community-contributed themes ship bundled in `assets/themes/community/`. Anyone can contribute a theme — see [CONTRIBUTING-THEMES.md](../CONTRIBUTING-THEMES.md).
+
+| Key | Name / intent |
+| --- | --- |
+| `ocean` | Deep blue maritime palette. Navy backgrounds, aqua accents. |
+
+`figma-kit themes` lists all themes grouped by source (built-in, community, user, local).
 
 ## Color tokens
 
@@ -114,12 +122,29 @@ When a command needs a theme, `resolveTheme` applies:
 `theme.Load` search order for the **name**:
 
 1. Embedded built-ins (`default`, `light`, `noir`).
-2. `~/.config/figma-kit/themes/<name>.json` (OS user config dir).
-3. `./themes/<name>.json` relative to the current working directory.
+2. Bundled community themes (`assets/themes/community/`).
+3. `~/.config/figma-kit/themes/<name>.json` (OS user config dir).
+4. `./themes/<name>.json` relative to the current working directory.
 
 To use a one-off file path from the shell, place or symlink it under those directories with a stable `<name>.json`, or extend the CLI to call `theme.LoadFile` (Go API today: `theme.LoadFile(path)`).
 
-## Custom themes
+## Creating themes
+
+There are three ways to create a custom theme:
+
+### 1. Web Theme Builder (recommended for designers)
+
+Visit [dop-amine.github.io/figma-kit/theme-builder.html](https://dop-amine.github.io/figma-kit/theme-builder.html) to pick colors visually, see a live preview, and download ready-to-use JSON.
+
+### 2. `figma-kit theme init` (CLI)
+
+```bash
+figma-kit theme init --name "Ocean" --bg "#0A1628" --primary "#2196F3" --accent "#00BCD4" -o themes/ocean.json
+```
+
+Provide 3 hex colors and the CLI derives the full palette (card, text, muted, stroke, warn, error, success), plus typography, effects, and spacing defaults. Run with no flags to print a starter template.
+
+### 3. Copy and edit
 
 1. Copy `assets/themes/default.json` (or `light.json`) as a starting point.
 2. Save as either:
@@ -127,7 +152,21 @@ To use a one-off file path from the shell, place or symlink it under those direc
    - `./themes/<mytheme>.json` in your repo.
 3. Run with `-t mytheme` (no `.json` suffix).
 
-Validation (Go): `name` must be non-empty; `colors` must be non-empty. For deliverables (`make carousel`, `one-pager`, etc.), keep `type`, `fonts`, `effects`, `spacing`, and `gradients` aligned with the templates you use—dropping sections may break generated JS that expects keys like `theme.effects.glass.strong` or `theme.spacing.slide`.
+### Previewing themes in Figma
+
+```bash
+figma-kit theme preview -t mytheme
+```
+
+Generates `use_figma` JS that creates a compact preview page in Figma with color swatches, type scale specimens, and sample components.
+
+### Validation
+
+```bash
+figma-kit validate theme themes/mytheme.json
+```
+
+`name` must be non-empty; `colors` must be non-empty. For deliverables (`make carousel`, `one-pager`, etc.), keep `type`, `fonts`, `effects`, `spacing`, and `gradients` aligned with the templates you use—dropping sections may break generated JS that expects keys like `theme.effects.glass.strong` or `theme.spacing.slide`.
 
 ### Minimal custom theme
 

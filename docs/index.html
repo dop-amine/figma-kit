@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>figma-kit — Build Figma designs from the terminal</title>
-  <meta name="description" content="A single Go binary that generates production Figma designs from the terminal. 120+ commands, built-in dark theme, zero config.">
-  <meta property="og:title" content="figma-kit — Build Figma designs from the terminal">
-  <meta property="og:description" content="120+ commands. One binary. Dark theme included. Open source.">
+  <title>figma-kit — AI-Powered Figma Design</title>
+  <meta name="description" content="AI-powered Figma design. Describe what you want in natural language — your AI agent and figma-kit handle the rest. 120+ commands via the Figma MCP server.">
+  <meta property="og:title" content="figma-kit — AI-Powered Figma Design">
+  <meta property="og:description" content="Describe what you want. AI and figma-kit build it in Figma. 120+ commands. Open source.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://dop-amine.github.io/figma-kit/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="figma-kit — AI-Powered Figma Design">
+  <meta name="twitter:description" content="Describe what you want. AI and figma-kit build it in Figma.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -16,7 +19,8 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #0D0F17;
-      --card: #161A25;
+      --bg-raised: #161A25;
+      --bg-section: rgba(22, 26, 37, 0.3);
       --stk: #242938;
       --bl: #3366FF;
       --tl: #14B8A6;
@@ -38,17 +42,24 @@
       line-height: 1.6;
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
-    a { color: var(--bl); text-decoration: none; }
+    a { color: var(--bl); text-decoration: none; transition: color .2s; }
     a:hover { text-decoration: underline; }
     .container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
     @media (max-width: 768px) { .container { padding: 0 20px; } }
 
+    .fade-in {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+
     /* ── NAV ── */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(13, 15, 23, 0.85);
-      backdrop-filter: blur(20px);
+      background: rgba(13, 15, 23, 0.88);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--stk);
     }
     nav .inner {
@@ -60,21 +71,18 @@
     nav .links { display: flex; gap: 28px; }
     nav .links a { font-size: 14px; color: var(--mt); transition: color .2s; }
     nav .links a:hover { color: var(--wt); text-decoration: none; }
-    @media (max-width: 640px) { nav .links { gap: 16px; } }
+    @media (max-width: 640px) { nav .links { gap: 16px; } nav .inner { padding: 0 20px; } }
 
-    /* ── ACCENT BAR ── */
     .accent-bar {
-      height: 4px; width: 100%;
-      background: linear-gradient(90deg, var(--bl), var(--tl));
+      height: 3px; width: 100%;
+      background: linear-gradient(90deg, var(--bl), var(--tl), var(--pp));
       position: fixed; top: 56px; left: 0; z-index: 99;
     }
 
     /* ── HERO ── */
     .hero {
-      min-height: 100vh;
-      padding-top: 120px;
-      position: relative;
-      overflow: hidden;
+      min-height: 100vh; padding-top: 120px; padding-bottom: 80px;
+      position: relative; overflow: hidden;
     }
     .hero::before {
       content: '';
@@ -89,54 +97,44 @@
       display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
       position: relative; z-index: 1;
     }
-    @media (max-width: 900px) {
-      .hero .inner { grid-template-columns: 1fr; gap: 40px; }
-    }
+    @media (max-width: 900px) { .hero .inner { grid-template-columns: 1fr; gap: 40px; } }
     .hero .badge {
       display: inline-block;
       font-family: var(--mono); font-size: 12px; font-weight: 500;
       color: var(--bl); border: 1px solid var(--bl);
-      padding: 4px 12px; border-radius: 999px;
-      margin-bottom: 24px;
+      padding: 4px 12px; border-radius: 999px; margin-bottom: 24px;
     }
     .hero h1 {
       font-size: clamp(48px, 6vw, 80px);
       font-weight: 800; line-height: 1.05;
-      letter-spacing: -0.03em;
-      margin-bottom: 24px;
+      letter-spacing: -0.03em; margin-bottom: 24px;
     }
     .hero .subtitle {
-      font-size: 20px; color: var(--bd);
-      line-height: 1.6; margin-bottom: 36px;
-      max-width: 520px;
+      font-size: 18px; color: var(--bd);
+      line-height: 1.7; margin-bottom: 36px; max-width: 520px;
     }
     .hero .cta-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
     .btn-primary {
       display: inline-flex; align-items: center; gap: 8px;
       background: var(--bl); color: var(--wt);
       font-family: var(--sans); font-weight: 600; font-size: 16px;
-      padding: 12px 28px; border-radius: 10px; border: none; cursor: pointer;
+      padding: 14px 32px; border-radius: 10px; border: none; cursor: pointer;
       box-shadow: 0 4px 24px rgba(51, 102, 255, 0.25);
       transition: transform .15s, box-shadow .15s;
     }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 32px rgba(51, 102, 255, 0.35); text-decoration: none; }
-    .brew-hint {
-      font-family: var(--mono); font-size: 13px; color: var(--mt);
-      letter-spacing: 0.04em;
-    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(51, 102, 255, 0.35); text-decoration: none; }
+    .brew-hint { font-family: var(--mono); font-size: 13px; color: var(--mt); }
 
-    /* ── TERMINAL CARD ── */
+    /* ── TERMINAL ── */
     .terminal {
       background: #0A0B12;
       border: 1px solid var(--stk);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.35);
     }
     .terminal-bar {
       display: flex; align-items: center; gap: 7px;
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--stk);
+      padding: 14px 20px; border-bottom: 1px solid var(--stk);
     }
     .dot { width: 10px; height: 10px; border-radius: 50%; }
     .dot-r { background: #FF5959; }
@@ -148,41 +146,60 @@
     }
     .terminal-body { padding: 20px; }
     .terminal-body .line {
-      font-family: var(--mono); font-size: 12px; line-height: 2;
-      white-space: pre;
+      font-family: var(--mono); font-size: 12px; line-height: 2; white-space: pre;
     }
+    .line .prompt { color: var(--success); }
     .line .cmd { color: var(--tl); }
     .line .out { color: var(--mt); }
     .line .ok { color: var(--success); }
 
-    /* ── SECTION ── */
+    /* ── SECTION COMMON ── */
     section { padding: 100px 0; }
     .section-label {
       font-family: var(--mono); font-weight: 500; font-size: 12px;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      margin-bottom: 16px;
+      letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 16px;
     }
     .section-title {
       font-size: clamp(28px, 4vw, 40px);
-      font-weight: 700; margin-bottom: 20px;
+      font-weight: 700; margin-bottom: 20px; letter-spacing: -0.02em;
     }
     .section-desc {
-      font-size: 18px; color: var(--bd); max-width: 600px;
+      font-size: 17px; color: var(--bd); max-width: 640px;
       margin-bottom: 48px; line-height: 1.7;
     }
 
-    /* ── FEATURES ── */
-    .features-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    /* ── HOW IT WORKS ── */
+    .how-section {
+      background: var(--bg-section);
+      border-top: 1px solid var(--stk); border-bottom: 1px solid var(--stk);
     }
+    .workflow-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    @media (max-width: 900px) { .workflow-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .workflow-grid { grid-template-columns: 1fr; } }
+    .workflow-card {
+      background: rgba(13, 15, 23, 0.6);
+      border: 1px solid var(--stk); border-radius: 16px;
+      padding: 28px 24px; position: relative;
+      transition: border-color .3s, transform .3s;
+    }
+    .workflow-card:hover { border-color: rgba(51, 102, 255, 0.3); transform: translateY(-2px); }
+    .workflow-card .step-num { font-family: var(--mono); font-size: 11px; margin-bottom: 12px; display: block; }
+    .workflow-card .step-icon { font-size: 28px; margin-bottom: 14px; }
+    .workflow-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 10px; }
+    .workflow-card p { font-size: 13px; color: var(--mt); line-height: 1.65; }
+    .workflow-arrow {
+      display: none; position: absolute; right: -16px; top: 50%;
+      transform: translateY(-50%); font-size: 18px; color: var(--mt);
+    }
+    @media (min-width: 901px) { .workflow-arrow { display: block; } }
+
+    /* ── FEATURES ── */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
     @media (max-width: 768px) { .features-grid { grid-template-columns: 1fr; } }
     .feature-card {
       background: rgba(22, 26, 37, 0.6);
-      border: 1px solid var(--stk);
-      border-radius: 16px;
-      padding: 32px;
-      position: relative;
-      overflow: hidden;
+      border: 1px solid var(--stk); border-radius: 16px;
+      padding: 32px; position: relative; overflow: hidden;
       backdrop-filter: blur(12px);
       transition: border-color .3s, transform .3s;
     }
@@ -191,8 +208,7 @@
     .feature-card h3 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
     .feature-card p { font-size: 14px; color: var(--mt); line-height: 1.7; }
     .feature-card::after {
-      content: '';
-      position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
+      content: ''; position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
       width: 200px; height: 200px; border-radius: 50%;
       pointer-events: none; opacity: 0; transition: opacity .3s;
     }
@@ -202,66 +218,13 @@
     .feature-card:hover::after { opacity: 1; }
 
     /* ── DEMO ── */
-    .demo-terminal {
-      max-width: 1000px;
-      margin: 0 auto;
+    .demo-terminal { max-width: 1000px; margin: 0 auto; }
+    .ai-badge {
+      display: inline-block; font-family: var(--mono); font-size: 11px;
+      color: var(--tl); background: rgba(20, 184, 166, 0.1);
+      border: 1px solid rgba(20, 184, 166, 0.25);
+      padding: 3px 10px; border-radius: 999px; float: right; margin-top: 8px;
     }
-    .demo-terminal .terminal { font-size: 13px; }
-    .demo-terminal .terminal-body .line { line-height: 1.8; }
-    .just-works {
-      display: inline-block;
-      font-family: var(--mono); font-size: 11px;
-      color: var(--success);
-      background: rgba(51, 204, 128, 0.1);
-      border: 1px solid var(--success);
-      padding: 3px 10px; border-radius: 999px;
-      float: right; margin-top: 8px;
-    }
-
-    /* ── STORY ── */
-    .story-section { background: rgba(22, 26, 37, 0.3); border-top: 1px solid var(--stk); border-bottom: 1px solid var(--stk); }
-    .story-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start;
-    }
-    @media (max-width: 900px) { .story-grid { grid-template-columns: 1fr; } }
-    .story-step {
-      display: flex; gap: 16px; margin-bottom: 32px;
-    }
-    .step-num {
-      flex-shrink: 0;
-      width: 32px; height: 32px; border-radius: 50%;
-      background: var(--bl); color: var(--wt);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 600;
-    }
-    .step-content h4 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-    .step-content p { font-size: 14px; color: var(--mt); line-height: 1.6; }
-    .step-content code {
-      font-family: var(--mono); font-size: 12px;
-      background: rgba(51, 102, 255, 0.1);
-      color: var(--tl); padding: 2px 6px; border-radius: 4px;
-    }
-
-    /* ── FIGMA EMBED ── */
-    .figma-embed {
-      border-radius: 16px; overflow: hidden;
-      border: 1px solid var(--stk);
-      box-shadow: 0 12px 48px rgba(0,0,0,0.4);
-    }
-    .figma-embed iframe {
-      width: 100%; height: 500px; border: none; display: block;
-    }
-    @media (max-width: 768px) { .figma-embed iframe { height: 350px; } }
-    .figma-link-row {
-      display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;
-    }
-    .figma-link {
-      font-family: var(--mono); font-size: 12px;
-      color: var(--mt); border: 1px solid var(--stk);
-      padding: 6px 14px; border-radius: 8px;
-      transition: border-color .2s, color .2s;
-    }
-    .figma-link:hover { border-color: var(--bl); color: var(--bl); text-decoration: none; }
 
     /* ── GIF ── */
     .demo-gif {
@@ -271,9 +234,77 @@
     }
     .demo-gif img { width: 100%; display: block; }
 
+    /* ── STORY ── */
+    .story-section {
+      background: var(--bg-section);
+      border-top: 1px solid var(--stk); border-bottom: 1px solid var(--stk);
+    }
+    .story-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+    @media (max-width: 900px) { .story-grid { grid-template-columns: 1fr; } }
+    .story-step { display: flex; gap: 16px; margin-bottom: 32px; }
+    .step-circle {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+      background: var(--bl); color: var(--wt);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600;
+    }
+    .step-content h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .step-content p { font-size: 13px; color: var(--mt); line-height: 1.6; }
+    .step-content code {
+      font-family: var(--mono); font-size: 12px;
+      background: rgba(51, 102, 255, 0.1);
+      color: var(--tl); padding: 2px 6px; border-radius: 4px;
+    }
+    .meta-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--mono); font-size: 11px;
+      color: var(--tl); background: rgba(20, 184, 166, 0.08);
+      border: 1px solid rgba(20, 184, 166, 0.2);
+      padding: 4px 12px; border-radius: 999px; margin-bottom: 24px;
+    }
+    .meta-badge svg { width: 14px; height: 14px; }
+
+    /* ── THEME BUILDER ── */
+    .themes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    @media (max-width: 768px) { .themes-grid { grid-template-columns: 1fr; } }
+    .theme-card {
+      background: var(--bg-raised);
+      border: 1px solid var(--stk); border-radius: 16px;
+      padding: 32px; transition: border-color .3s, transform .3s;
+    }
+    .theme-card:hover { border-color: rgba(51, 102, 255, 0.3); transform: translateY(-2px); }
+    .theme-card .icon { font-size: 28px; margin-bottom: 16px; }
+    .theme-card h3 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+    .theme-card p { font-size: 14px; color: var(--mt); line-height: 1.7; margin-bottom: 16px; }
+    .theme-card .card-link {
+      font-family: var(--mono); font-size: 12px; color: var(--bl);
+      transition: color .2s;
+    }
+    .theme-card .card-link:hover { color: var(--tl); }
+    .theme-card .card-code {
+      font-family: var(--mono); font-size: 11px; color: var(--tl);
+    }
+
+    /* ── FIGMA EMBED ── */
+    .figma-embed {
+      border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--stk);
+      box-shadow: 0 12px 48px rgba(0,0,0,0.4);
+    }
+    .figma-embed iframe { width: 100%; height: 500px; border: none; display: block; }
+    @media (max-width: 768px) { .figma-embed iframe { height: 350px; } }
+    .figma-link-row { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .figma-link {
+      font-family: var(--mono); font-size: 12px;
+      color: var(--mt); border: 1px solid var(--stk);
+      padding: 6px 14px; border-radius: 8px;
+      transition: border-color .2s, color .2s;
+    }
+    .figma-link:hover { border-color: var(--bl); color: var(--bl); text-decoration: none; }
+
     /* ── INSTALL CTA ── */
     .install-section { text-align: center; }
-    .install-section .section-desc { margin-left: auto; margin-right: auto; }
+    .install-section .section-desc { margin-left: auto; margin-right: auto; text-align: center; }
     .install-btn {
       display: inline-block;
       font-family: var(--mono); font-weight: 500; font-size: 16px;
@@ -289,38 +320,19 @@
 
     /* ── FOOTER ── */
     footer {
-      border-top: 1px solid var(--stk);
-      padding: 48px 0;
+      border-top: 1px solid var(--stk); padding: 48px 0;
       background: rgba(9, 10, 15, 0.8);
     }
-    .footer-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px;
-    }
+    .footer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; }
     @media (max-width: 768px) { .footer-grid { grid-template-columns: repeat(2, 1fr); } }
-    .footer-col h4 {
-      font-size: 13px; font-weight: 600; margin-bottom: 16px;
-    }
+    .footer-col h4 { font-size: 13px; font-weight: 600; margin-bottom: 16px; }
     .footer-col a {
       display: block; font-size: 13px; color: var(--mt);
       margin-bottom: 8px; transition: color .2s;
     }
     .footer-col a:hover { color: var(--wt); text-decoration: none; }
-    .footer-col .logo-text {
-      font-family: var(--mono); font-weight: 500; font-size: 16px;
-      color: var(--wt); margin-bottom: 8px;
-    }
+    .footer-col .logo-text { font-family: var(--mono); font-weight: 500; font-size: 16px; color: var(--wt); margin-bottom: 8px; }
     .footer-col .copy { font-size: 12px; color: var(--mt); }
-
-    /* ── META BADGE ── */
-    .meta-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-family: var(--mono); font-size: 11px;
-      color: var(--tl); background: rgba(20, 184, 166, 0.08);
-      border: 1px solid rgba(20, 184, 166, 0.2);
-      padding: 4px 12px; border-radius: 999px;
-      margin-bottom: 24px;
-    }
-    .meta-badge svg { width: 14px; height: 14px; }
   </style>
 </head>
 <body>
@@ -330,9 +342,11 @@
   <div class="inner">
     <a href="#" class="logo">&#9670; figma-kit</a>
     <div class="links">
+      <a href="#how">How It Works</a>
       <a href="#features">Features</a>
       <a href="#demo">Demo</a>
       <a href="#story">Story</a>
+      <a href="#themes">Themes</a>
       <a href="#figma">Figma</a>
       <a href="https://github.com/dop-amine/figma-kit">GitHub</a>
     </div>
@@ -340,14 +354,14 @@
 </nav>
 <div class="accent-bar"></div>
 
-<!-- HERO -->
+<!-- HERO — matches Figma frame 2:2 -->
 <section class="hero">
   <div class="container">
     <div class="inner">
       <div>
         <span class="badge">v0.2.0</span>
         <h1>figma-kit</h1>
-        <p class="subtitle">Build Figma designs from the terminal.<br>120+ commands. One binary. Dark theme included.</p>
+        <p class="subtitle">AI-powered Figma design. Describe what you want in natural language &mdash; your AI agent and figma-kit handle the rest. 120+ commands via the Figma MCP server.</p>
         <div class="cta-row">
           <a href="https://github.com/dop-amine/figma-kit" class="btn-primary">Get Started</a>
           <span class="brew-hint">brew install dop-amine/tap/figma-kit</span>
@@ -358,172 +372,238 @@
           <span class="dot dot-r"></span>
           <span class="dot dot-y"></span>
           <span class="dot dot-g"></span>
-          <span class="terminal-title">figma-kit &mdash; zsh &mdash; 120&times;40</span>
+          <span class="terminal-title">AI + figma-kit + Figma MCP</span>
         </div>
         <div class="terminal-body">
-          <div class="line"><span class="cmd">$ figma-kit make og-image -t noir</span></div>
-          <div class="line"><span class="out">  &rarr; OG Image (1200&times;630)</span></div>
+          <div class="line"><span class="prompt">&gt; &quot;Create an OG image with the Noir theme&quot;</span></div>
+          <div class="line"><span class="cmd">&rarr; figma-kit make og-image -t noir</span></div>
           <div class="line">&nbsp;</div>
-          <div class="line"><span class="cmd">$ figma-kit ui button --variant primary</span></div>
-          <div class="line"><span class="out">  &rarr; UI/Button created</span></div>
+          <div class="line"><span class="prompt">&gt; &quot;Add a primary button&quot;</span></div>
+          <div class="line"><span class="cmd">&rarr; figma-kit ui button --variant primary</span></div>
           <div class="line">&nbsp;</div>
-          <div class="line"><span class="cmd">$ figma-kit ds create -t noir</span></div>
-          <div class="line"><span class="out">  &rarr; Design System page (11 tokens, 8 scales)</span></div>
+          <div class="line"><span class="prompt">&gt; &quot;Generate the full design system&quot;</span></div>
+          <div class="line"><span class="cmd">&rarr; figma-kit ds create -t noir</span>  <span class="ok">&#10003; Done</span></div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- FEATURES -->
-<section id="features">
+<!-- HOW IT WORKS — matches Figma frame 21:2 -->
+<section id="how" class="how-section">
   <div class="container">
-    <div class="section-label" style="color: var(--bl);">WHY FIGMA-KIT?</div>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="icon">&#9889;</div>
-        <h3>120+ Commands</h3>
-        <p>From low-level primitives to full-page templates. Buttons, cards, design systems, exports &mdash; all from one binary.</p>
+    <div class="section-label fade-in" style="color: var(--pp);">HOW IT WORKS</div>
+    <div class="section-title fade-in">From prompt to production design</div>
+    <div class="section-desc fade-in">Describe what you want in natural language. Your AI agent picks the right figma-kit commands. The Figma MCP server executes them. Your design appears.</div>
+
+    <div class="workflow-grid">
+      <div class="workflow-card fade-in">
+        <span class="step-num" style="color: var(--bl);">01</span>
+        <div class="step-icon">&#128172;</div>
+        <h3>You Prompt</h3>
+        <p>&quot;Create a landing page with a hero, 3 feature cards, and a dark theme&quot;</p>
+        <span class="workflow-arrow">&rarr;</span>
       </div>
-      <div class="feature-card">
-        <div class="icon">&#127912;</div>
-        <h3>Dark Theme Built In</h3>
-        <p>Premium Noir theme with brand colors, type scale, and spacing tokens. Build consistent designs instantly.</p>
+      <div class="workflow-card fade-in">
+        <span class="step-num" style="color: var(--pp);">02</span>
+        <div class="step-icon">&#129504;</div>
+        <h3>AI Reasons</h3>
+        <p>Your agent selects the right figma-kit commands, sequences them, picks the Noir theme</p>
+        <span class="workflow-arrow">&rarr;</span>
       </div>
-      <div class="feature-card">
-        <div class="icon">&#128640;</div>
-        <h3>Zero Config</h3>
-        <p>Single Go binary. No Node.js, no plugins, no setup. brew install and start building in seconds.</p>
+      <div class="workflow-card fade-in">
+        <span class="step-num" style="color: var(--tl);">03</span>
+        <div class="step-icon">&#9889;</div>
+        <h3>figma-kit Generates</h3>
+        <p>Each command outputs Figma Plugin API JavaScript. No manual code needed.</p>
+        <span class="workflow-arrow">&rarr;</span>
+      </div>
+      <div class="workflow-card fade-in">
+        <span class="step-num" style="color: var(--success);">04</span>
+        <div class="step-icon">&#127912;</div>
+        <h3>Figma Renders</h3>
+        <p>MCP server executes the code. Frames, text, styles, components appear in your file.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- DEMO -->
-<section id="demo" style="background: var(--bg);">
+<!-- FEATURES — matches Figma frame 3:2 -->
+<section id="features">
   <div class="container">
-    <div class="section-label" style="color: var(--tl);">SEE IT IN ACTION</div>
-    <div class="section-title">One command. Instant design.</div>
-    <div class="section-desc">Every section of this page was designed in Figma using figma-kit commands. Here's what the workflow looks like:</div>
-
-    <div class="demo-gif" style="margin-bottom: 48px;">
-      <img src="demo.gif" alt="figma-kit demo recording" loading="lazy">
+    <div class="section-label fade-in" style="color: var(--bl);">WHY FIGMA-KIT + AI?</div>
+    <div class="features-grid">
+      <div class="feature-card fade-in">
+        <div class="icon">&#129302;</div>
+        <h3>AI-Native Workflow</h3>
+        <p>Prompt in Cursor, Claude Code, or any MCP-compatible AI. figma-kit translates your intent into Figma Plugin API code. Designs appear instantly.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">&#127912;</div>
+        <h3>120+ Commands</h3>
+        <p>From buttons to full design systems. Every primitive, component, and template &mdash; all generated as executable Figma code through the MCP server.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">&#128279;</div>
+        <h3>Terminal + AI</h3>
+        <p>Use standalone from the CLI or let AI pick the right commands. One Go binary. Works with Cursor, Claude Code, any MCP-compatible agent.</p>
+      </div>
     </div>
+  </div>
+</section>
 
-    <div class="demo-terminal">
+<!-- DEMO — matches Figma frame 4:2 -->
+<section id="demo">
+  <div class="container">
+    <div class="section-label fade-in" style="color: var(--tl);">SEE IT IN ACTION</div>
+    <div class="section-title fade-in">Prompt it. figma-kit builds it.</div>
+    <div class="section-desc fade-in">Every section of this page was designed in Figma using figma-kit commands, driven by AI. Here&rsquo;s the workflow:</div>
+
+    <div class="demo-terminal fade-in">
       <div class="terminal">
         <div class="terminal-bar">
           <span class="dot dot-r"></span>
           <span class="dot dot-y"></span>
           <span class="dot dot-g"></span>
-          <span class="terminal-title">building this site's Figma design</span>
+          <span class="terminal-title">AI + figma-kit + Figma MCP</span>
         </div>
         <div class="terminal-body">
-          <div class="line"><span class="cmd">$ figma-kit page create "Landing Page" -p 0</span></div>
-          <div class="line"><span class="ok">  &#10003; Page created at index 1</span></div>
+          <div class="line"><span class="prompt">&gt; &quot;Create a Landing Page for my project&quot;</span></div>
+          <div class="line"><span class="cmd">&rarr; figma-kit page create &quot;Landing Page&quot; -p 0</span>  <span class="ok">&#10003;</span></div>
           <div class="line">&nbsp;</div>
-          <div class="line"><span class="cmd">$ figma-kit make og-image --title "figma-kit" -t noir</span></div>
-          <div class="line"><span class="ok">  &#10003; OG Image (1200&times;630) created</span></div>
+          <div class="line"><span class="prompt">&gt; &quot;Add a hero with OG image using the dark theme&quot;</span></div>
+          <div class="line"><span class="cmd">&rarr; figma-kit make og-image --title &quot;figma-kit&quot; -t noir</span>  <span class="ok">&#10003;</span></div>
           <div class="line">&nbsp;</div>
-          <div class="line"><span class="cmd">$ figma-kit card glass -t noir --title "Feature" --desc "Fast."</span></div>
-          <div class="line"><span class="ok">  &#10003; Card/Glass created with blur and border</span></div>
+          <div class="line"><span class="prompt">&gt; &quot;Build 3 glass feature cards about our key features&quot;</span></div>
+          <div class="line"><span class="cmd">&rarr; figma-kit card glass -t noir --title &quot;AI-Native&quot; --desc ...</span>  <span class="ok">&#10003;</span></div>
           <div class="line">&nbsp;</div>
-          <div class="line"><span class="cmd">$ figma-kit ds create -t noir</span></div>
-          <div class="line"><span class="ok">  &#10003; Design System page generated (14 sections)</span></div>
-          <div class="line">&nbsp;</div>
-          <div class="line"><span class="cmd">$ figma-kit ds variables-create -t noir --name "Noir Tokens"</span></div>
-          <div class="line"><span class="ok">  &#10003; 11 Figma variables created</span></div>
-          <div class="line"><span class="just-works">&#10003; Just works</span></div>
+          <div class="line"><span class="prompt">&gt; &quot;Generate a full design system from the Noir theme&quot;</span></div>
+          <div class="line"><span class="cmd">&rarr; figma-kit ds create -t noir</span>  <span class="ok">&#10003; 14 sections</span></div>
+          <div class="line"><span class="ai-badge">&#10003; AI + CLI</span></div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- THE STORY -->
+<!-- STORY — matches Figma frame Story -->
 <section id="story" class="story-section">
   <div class="container">
-    <div class="meta-badge">
+    <div class="meta-badge fade-in">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
       Meta: this design was built by the tool it advertises
     </div>
-    <div class="section-title">How This Site Was Built</div>
-    <div class="section-desc">This isn't a mockup. The Figma file below was designed entirely by running figma-kit commands from the terminal &mdash; then the same design became this marketing page.</div>
+    <div class="section-title fade-in">How This Site Was Built</div>
+    <div class="section-desc fade-in">This isn&rsquo;t a mockup. We described what we wanted in natural language &mdash; AI used figma-kit commands to build every element in Figma. Then the same design became this marketing page.</div>
 
     <div class="story-grid">
       <div>
-        <div class="story-step">
-          <div class="step-num">1</div>
+        <div class="story-step fade-in">
+          <div class="step-circle">1</div>
           <div class="step-content">
-            <h4>Created a Figma file via MCP</h4>
-            <p>Used <code>create_new_file</code> from the Figma MCP server to create "figma-kit demo" in our team workspace.</p>
+            <h4>Asked AI to create a Figma file</h4>
+            <p>Used <code>create_new_file</code> from the Figma MCP server.</p>
           </div>
         </div>
-        <div class="story-step">
-          <div class="step-num">2</div>
+        <div class="story-step fade-in">
+          <div class="step-circle">2</div>
           <div class="step-content">
-            <h4>Set up 3 pages with figma-kit</h4>
-            <p>Ran <code>figma-kit page create</code> and <code>page rename</code> to create Landing Page, Components, and Design System pages.</p>
+            <h4>Prompted &ldquo;Set up 3 pages&rdquo;</h4>
+            <p>AI ran <code>page create</code> and <code>page rename</code> for Landing, Components, Design System.</p>
           </div>
         </div>
-        <div class="story-step">
-          <div class="step-num">3</div>
+        <div class="story-step fade-in">
+          <div class="step-circle">3</div>
           <div class="step-content">
-            <h4>Built the hero section</h4>
-            <p>Used <code>node create frame</code>, <code>fx mesh</code>, <code>fx accent-bar</code>, <code>text create</code>, <code>ui button</code>, and <code>ui badge</code> to compose the hero.</p>
+            <h4>Described the hero section</h4>
+            <p>AI composed <code>node create frame</code>, <code>fx mesh</code>, <code>text create</code>, <code>ui button</code>, <code>ui badge</code>.</p>
           </div>
         </div>
-        <div class="story-step">
-          <div class="step-num">4</div>
+        <div class="story-step fade-in">
+          <div class="step-circle">4</div>
           <div class="step-content">
-            <h4>Added 3 glass feature cards</h4>
-            <p>Ran <code>card glass -t noir --title "..." --desc "..."</code> three times with different content. Each card got <code>fx glow</code> underneath.</p>
+            <h4>&ldquo;Add 3 glass feature cards&rdquo;</h4>
+            <p>AI called <code>card glass -t noir</code> three times. Each got <code>fx glow</code> underneath.</p>
           </div>
         </div>
-        <div class="story-step">
-          <div class="step-num">5</div>
+        <div class="story-step fade-in">
+          <div class="step-circle">5</div>
           <div class="step-content">
-            <h4>Created 19 UI components</h4>
-            <p>Page 2 showcases every UI primitive: buttons (5 variants), badges (4 colors), toggles, checkboxes, radios, tabs, dropdowns, table, and more.</p>
+            <h4>&ldquo;Create 19 UI components&rdquo;</h4>
+            <p>Buttons, badges, toggles, checkboxes, radios, tabs, dropdowns, tables.</p>
           </div>
         </div>
       </div>
       <div>
-        <div class="story-step">
-          <div class="step-num">6</div>
+        <div class="story-step fade-in">
+          <div class="step-circle">6</div>
           <div class="step-content">
-            <h4>Generated the design system</h4>
-            <p>One command: <code>figma-kit ds create -t noir</code>. Creates color swatches, type scale specimens, and spacing bars &mdash; all auto-layout.</p>
+            <h4>&ldquo;Generate the design system&rdquo;</h4>
+            <p>One command: <code>ds create -t noir</code>. Color swatches, type scale, spacing bars.</p>
           </div>
         </div>
-        <div class="story-step">
-          <div class="step-num">7</div>
+        <div class="story-step fade-in">
+          <div class="step-circle">7</div>
           <div class="step-content">
-            <h4>Created Figma variables</h4>
-            <p><code>ds variables-create -t noir --name "Noir Tokens"</code> pushed 11 color tokens into Figma's native variable system.</p>
+            <h4>&ldquo;Push tokens to Figma variables&rdquo;</h4>
+            <p><code>ds variables-create</code> pushed 11 color tokens into Figma&rsquo;s variable system.</p>
           </div>
         </div>
-        <div class="story-step">
-          <div class="step-num">8</div>
+        <div class="story-step fade-in">
+          <div class="step-circle">8</div>
           <div class="step-content">
-            <h4>Exported CSS tokens</h4>
-            <p><code>export tokens --format css -t noir</code> prints clean <code>:root</code> CSS custom properties. No manual extraction needed.</p>
+            <h4>&ldquo;Export CSS tokens&rdquo;</h4>
+            <p><code>export tokens --format css</code> prints clean <code>:root</code> CSS custom properties.</p>
           </div>
         </div>
-        <div class="story-step">
-          <div class="step-num">9</div>
+        <div class="story-step fade-in">
+          <div class="step-circle">9</div>
           <div class="step-content">
-            <h4>Ran QA on all 3 pages</h4>
-            <p><code>qa checklist -t noir</code> walks every node checking for empty names, tiny targets, and tight spacing. 258 nodes, 0 issues.</p>
+            <h4>&ldquo;QA everything&rdquo;</h4>
+            <p><code>qa checklist</code> walks every node. 258 nodes, 0 issues.</p>
           </div>
         </div>
-        <div class="story-step">
-          <div class="step-num">10</div>
+        <div class="story-step fade-in">
+          <div class="step-circle">10</div>
           <div class="step-content">
             <h4>Turned the Figma design into this site</h4>
-            <p>The colors, fonts, layout, and copy on this page are a 1:1 match of the Figma file. Scroll down to explore the live embed.</p>
+            <p>Colors, fonts, layout &mdash; 1:1 match of this Figma file.</p>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="demo-gif fade-in" style="margin-top: 48px;">
+      <img src="demo.gif" alt="figma-kit demo — terminal recording of building this site" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<!-- THEME BUILDER — matches Figma frame 34:2 -->
+<section id="themes" style="border-top: 1px solid var(--stk);">
+  <div class="container">
+    <div class="section-label fade-in" style="color: var(--tl);">CREATE YOUR OWN</div>
+    <div class="section-title fade-in">Design Your Own Theme</div>
+    <div class="section-desc fade-in">Pick 3 colors in the visual builder, generate from the CLI, or copy a template. No code required &mdash; designers can create and contribute themes without touching Go.</div>
+
+    <div class="themes-grid">
+      <div class="theme-card fade-in">
+        <div class="icon">&#127912;</div>
+        <h3>Visual Theme Builder</h3>
+        <p>Pick background, primary, and accent colors. See a live preview. Download ready-to-use JSON. Zero CLI, zero code.</p>
+        <a href="theme-builder.html" class="card-link">Open Theme Builder &rarr;</a>
+      </div>
+      <div class="theme-card fade-in">
+        <div class="icon">&#9889;</div>
+        <h3>CLI Theme Init</h3>
+        <p>Run figma-kit theme init with 3 hex colors. Full palette, typography, effects, and spacing derived automatically.</p>
+        <span class="card-code">theme init --bg &quot;#0A1628&quot;</span>
+      </div>
+      <div class="theme-card fade-in">
+        <div class="icon">&#129309;</div>
+        <h3>Community Themes</h3>
+        <p>Fork the repo, add a JSON file, open a PR. CI validates automatically. No Go, no build step, no code review needed.</p>
+        <a href="https://github.com/dop-amine/figma-kit/blob/main/CONTRIBUTING-THEMES.md" class="card-link">CONTRIBUTING-THEMES.md &rarr;</a>
       </div>
     </div>
   </div>
@@ -532,45 +612,37 @@
 <!-- LIVE FIGMA EMBED -->
 <section id="figma">
   <div class="container">
-    <div class="section-label" style="color: var(--pp);">LIVE FIGMA FILE</div>
-    <div class="section-title">Explore the actual design</div>
-    <div class="section-desc">This is a live embed of the Figma file created by figma-kit. Pan, zoom, switch pages &mdash; it's the real file, always in sync.</div>
+    <div class="section-label fade-in" style="color: var(--pp);">LIVE FIGMA FILE</div>
+    <div class="section-title fade-in">Explore the actual design</div>
+    <div class="section-desc fade-in">This is a live embed of the Figma file created by figma-kit. Pan, zoom, switch pages. It&rsquo;s always in sync.</div>
 
-    <div class="figma-embed">
+    <div class="figma-embed fade-in">
       <iframe
         src="https://embed.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=2-2&embed-host=figma-kit-site&theme=dark&footer=false"
         allowfullscreen
       ></iframe>
     </div>
 
-    <div class="figma-link-row">
-      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=2-2" target="_blank" class="figma-link">
-        &#9670; Landing Page
-      </a>
-      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=7-2" target="_blank" class="figma-link">
-        &#9670; Components
-      </a>
-      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=11-2" target="_blank" class="figma-link">
-        &#9670; Design System
-      </a>
-      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo" target="_blank" class="figma-link">
-        Open in Figma &rarr;
-      </a>
+    <div class="figma-link-row fade-in">
+      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=2-2" target="_blank" class="figma-link">&#9670; Landing Page</a>
+      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=7-2" target="_blank" class="figma-link">&#9670; Components</a>
+      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=11-2" target="_blank" class="figma-link">&#9670; Design System</a>
+      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo" target="_blank" class="figma-link">Open in Figma &rarr;</a>
     </div>
   </div>
 </section>
 
-<!-- INSTALL CTA -->
+<!-- INSTALL CTA — matches Figma frame 6:2 -->
 <section class="install-section">
   <div class="container">
-    <div class="section-title">Ready to build?</div>
-    <div class="section-desc" style="text-align: center;">Install figma-kit in seconds. Open source, MIT licensed.</div>
-    <a href="https://github.com/dop-amine/figma-kit" class="install-btn">brew install dop-amine/tap/figma-kit</a>
-    <span class="install-alt">or: curl -sSL https://github.com/dop-amine/figma-kit/raw/main/install.sh | sh</span>
+    <div class="section-title fade-in">Ready to design with AI?</div>
+    <div class="section-desc fade-in">Install figma-kit and connect it to your AI tool. Free, open source, MIT licensed.</div>
+    <a href="https://github.com/dop-amine/figma-kit" class="install-btn fade-in">brew install dop-amine/tap/figma-kit</a>
+    <span class="install-alt fade-in">or: curl -sSL https://github.com/dop-amine/figma-kit/raw/main/install.sh | sh</span>
   </div>
 </section>
 
-<!-- FOOTER -->
+<!-- FOOTER — matches Figma frame 6:8 -->
 <footer>
   <div class="container">
     <div class="footer-grid">
@@ -578,6 +650,7 @@
         <h4>Product</h4>
         <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COMMANDS.md">Commands</a>
         <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/THEMES.md">Themes</a>
+        <a href="theme-builder.html">Theme Builder</a>
         <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/RECIPES.md">Recipes</a>
         <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/ARCHITECTURE.md">Architecture</a>
       </div>
@@ -601,6 +674,13 @@
     </div>
   </div>
 </footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
 
 </body>
 </html>

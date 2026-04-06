@@ -2486,8 +2486,48 @@ figma-kit batch ./recipe.yaml > combined.js
 
 ---
 
+## Theme Management
+
+### `theme init`
+
+**Usage:** `figma-kit theme init [flags]`
+
+**Description:** Generate a complete, valid theme JSON from a few hex colors. If no color flags are given, prints a starter template to stdout.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--name` | string | `"My Theme"` | Theme name |
+| `--desc` | string | *(auto)* | Theme description |
+| `--bg` | string | `#0D0F17` | Background hex color |
+| `--primary` | string | `#3366FF` | Primary accent hex color |
+| `--accent` | string | `#14B8A6` | Secondary accent hex color |
+| `--output` / `-o` | string | *(stdout)* | Output file path |
+
+```bash
+figma-kit theme init --name "Ocean" --bg "#0A1628" --primary "#2196F3" --accent "#00BCD4" -o themes/ocean.json
+```
+
+---
+
+### `theme preview`
+
+**Usage:** `figma-kit theme preview [flags]`
+
+**Description:** Outputs `use_figma` JS that creates a compact theme preview page in Figma with color swatches, type scale specimens, and sample components.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--theme` / `-t` | string | *(resolved)* | Theme to preview |
+| `--page` / `-p` | int | *(resolved)* | Target page index |
+
+```bash
+figma-kit theme preview -t noir
+```
+
+---
+
 ## See also
 
 - Root help: `figma-kit --help`
 - Command help: `figma-kit <command> --help`
-- Additional top-level commands (not in layers 0–7 above): `preamble`, `helpers`, `template`, `themes`, `scaffold`, `info`, `completion`.
+- Additional top-level commands (not in layers 0–7 above): `preamble`, `helpers`, `template`, `themes`, `scaffold`, `info`, `theme`, `completion`.

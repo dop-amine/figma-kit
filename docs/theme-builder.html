@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theme Builder — figma-kit</title>
+  <meta name="description" content="Visual theme builder for figma-kit. Pick colors, preview live, download ready-to-use JSON.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0D0F17;
+      --bg-raised: #161A25;
+      --stk: #242938;
+      --bl: #3366FF;
+      --tl: #14B8A6;
+      --mt: #737A8C;
+      --bd: #C7CFD9;
+      --wt: #F5F7FA;
+      --sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --mono: 'Geist Mono', 'SF Mono', monospace;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--wt);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    a { color: var(--bl); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,15,23,.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--stk);
+      padding: 14px 40px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    nav .logo { font-weight: 700; font-size: 15px; letter-spacing: -.02em; }
+    nav .logo span { color: var(--bl); }
+    nav a.back { font-size: 13px; color: var(--mt); margin-left: auto; }
+
+    .page { max-width: 1200px; margin: 0 auto; padding: 48px 40px 80px; }
+    @media (max-width: 768px) { .page { padding: 32px 20px 60px; } }
+
+    h1 { font-size: 32px; font-weight: 700; letter-spacing: -.03em; margin-bottom: 8px; }
+    .subtitle { color: var(--mt); font-size: 15px; margin-bottom: 40px; }
+
+    .builder { display: grid; grid-template-columns: 340px 1fr; gap: 32px; }
+    @media (max-width: 900px) { .builder { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: var(--bg-raised);
+      border: 1px solid var(--stk);
+      border-radius: 16px;
+      padding: 28px;
+    }
+    .panel h2 { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+
+    .field { margin-bottom: 20px; }
+    .field label { display: block; font-size: 12px; font-weight: 500; color: var(--mt); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+    .color-row { display: flex; align-items: center; gap: 12px; }
+    .color-row input[type="color"] {
+      width: 44px; height: 44px; border: 2px solid var(--stk); border-radius: 10px;
+      cursor: pointer; background: transparent; padding: 2px;
+    }
+    .color-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-row input[type="color"]::-webkit-color-swatch { border: none; border-radius: 6px; }
+    .color-row input[type="text"] {
+      flex: 1; background: var(--bg); border: 1px solid var(--stk); border-radius: 8px;
+      padding: 10px 14px; color: var(--wt); font-family: var(--mono); font-size: 14px;
+    }
+    .color-row input[type="text"]:focus { outline: none; border-color: var(--bl); }
+
+    .field input[type="text"].name-input {
+      width: 100%; background: var(--bg); border: 1px solid var(--stk); border-radius: 8px;
+      padding: 10px 14px; color: var(--wt); font-family: var(--sans); font-size: 14px;
+    }
+    .field input[type="text"].name-input:focus { outline: none; border-color: var(--bl); }
+
+    .divider { height: 1px; background: var(--stk); margin: 24px 0; }
+
+    .derived-colors { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+    .derived-swatch {
+      display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+      background: var(--bg); border-radius: 8px; border: 1px solid var(--stk);
+    }
+    .derived-swatch .dot { width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0; }
+    .derived-swatch .name { font-family: var(--mono); font-size: 11px; color: var(--mt); }
+
+    .preview-card {
+      background: var(--bg); border-radius: 16px; padding: 48px;
+      border: 1px solid var(--stk); transition: all .3s;
+    }
+
+    .preview-swatches { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
+    .preview-swatch {
+      width: 60px; height: 60px; border-radius: 10px; position: relative;
+      display: flex; align-items: flex-end; padding: 4px 6px;
+    }
+    .preview-swatch span { font-family: var(--mono); font-size: 8px; opacity: .8; }
+
+    .preview-type { margin-bottom: 32px; }
+    .preview-type .h1 { font-size: 36px; font-weight: 700; margin-bottom: 4px; }
+    .preview-type .h3 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .preview-type .body { font-size: 14px; margin-bottom: 4px; }
+    .preview-type .small { font-size: 12px; }
+
+    .preview-components { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .preview-btn {
+      padding: 10px 24px; border-radius: 10px; font-size: 14px; font-weight: 600;
+      border: none; cursor: pointer; font-family: var(--sans);
+    }
+    .preview-badge {
+      padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+      font-family: var(--mono);
+    }
+    .preview-card-inner {
+      margin-top: 24px; padding: 20px; border-radius: 12px;
+      border: 1px solid transparent;
+    }
+    .preview-card-inner h4 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .preview-card-inner p { font-size: 13px; }
+
+    .actions { display: flex; gap: 12px; margin-top: 24px; }
+    .btn {
+      flex: 1; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+      border: none; cursor: pointer; font-family: var(--sans); text-align: center;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: var(--bl); color: #fff; }
+    .btn-secondary { background: var(--bg); color: var(--wt); border: 1px solid var(--stk); }
+    .btn-secondary:hover { border-color: var(--bl); }
+
+    .toast {
+      position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--tl); color: #fff; padding: 12px 24px; border-radius: 10px;
+      font-size: 14px; font-weight: 500; opacity: 0; transition: all .3s; pointer-events: none;
+      z-index: 200;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    .json-panel { margin-top: 32px; }
+    .json-panel summary {
+      cursor: pointer; font-size: 13px; color: var(--mt); font-weight: 500;
+      user-select: none; padding: 8px 0;
+    }
+    .json-panel pre {
+      background: var(--bg); border: 1px solid var(--stk); border-radius: 12px;
+      padding: 20px; overflow-x: auto; margin-top: 12px;
+      font-family: var(--mono); font-size: 12px; line-height: 1.5; color: var(--bd);
+      max-height: 400px; overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>◆</span> figma-kit</div>
+  <a href="index.html" class="back">← Back to site</a>
+</nav>
+
+<div class="page">
+  <h1>Theme Builder</h1>
+  <p class="subtitle">Pick 3 colors. Get a complete figma-kit theme with derived palette, typography, and effects.</p>
+
+  <div class="builder">
+    <div class="controls">
+      <div class="panel">
+        <h2>Colors</h2>
+        <div class="field">
+          <label>Theme Name</label>
+          <input type="text" class="name-input" id="themeName" value="My Theme" />
+        </div>
+        <div class="field">
+          <label>Background</label>
+          <div class="color-row">
+            <input type="color" id="bgPicker" value="#0D0F17" />
+            <input type="text" id="bgHex" value="#0D0F17" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Primary Accent</label>
+          <div class="color-row">
+            <input type="color" id="priPicker" value="#3366FF" />
+            <input type="text" id="priHex" value="#3366FF" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Secondary Accent</label>
+          <div class="color-row">
+            <input type="color" id="accPicker" value="#14B8A6" />
+            <input type="text" id="accHex" value="#14B8A6" />
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <h2>Derived Palette</h2>
+        <div class="derived-colors" id="derivedColors"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" onclick="downloadJSON()">Download JSON</button>
+        <button class="btn btn-secondary" onclick="copyJSON()">Copy</button>
+      </div>
+    </div>
+
+    <div class="preview-area">
+      <div class="panel">
+        <h2>Live Preview</h2>
+        <div class="preview-card" id="previewCard">
+          <div class="preview-swatches" id="previewSwatches"></div>
+          <div class="preview-type" id="previewType">
+            <div class="h1">Heading</div>
+            <div class="h3">Subheading</div>
+            <div class="body">Body text with the default style and sizing.</div>
+            <div class="small">Small caption text — muted and secondary.</div>
+          </div>
+          <div class="preview-components" id="previewComponents">
+            <button class="preview-btn" id="previewBtn">Get Started</button>
+            <span class="preview-badge" id="previewBadge">v0.2.0</span>
+          </div>
+          <div class="preview-card-inner" id="previewInnerCard">
+            <h4>Sample Card</h4>
+            <p>A card component with the theme's card background and stroke colors.</p>
+          </div>
+        </div>
+      </div>
+
+      <details class="json-panel">
+        <summary>View generated JSON</summary>
+        <pre id="jsonOutput"></pre>
+      </details>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  function hexToRGB01(hex) {
+    hex = hex.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16) / 255;
+    const g = parseInt(hex.substring(2, 4), 16) / 255;
+    const b = parseInt(hex.substring(4, 6), 16) / 255;
+    return { r: Math.round(r * 100) / 100, g: Math.round(g * 100) / 100, b: Math.round(b * 100) / 100 };
+  }
+
+  function rgb01ToHex(c) {
+    const r = Math.round(c.r * 255).toString(16).padStart(2, '0');
+    const g = Math.round(c.g * 255).toString(16).padStart(2, '0');
+    const b = Math.round(c.b * 255).toString(16).padStart(2, '0');
+    return '#' + r + g + b;
+  }
+
+  function rgbToHSL(c) {
+    const max = Math.max(c.r, c.g, c.b), min = Math.min(c.r, c.g, c.b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) return { h: 0, s: 0, l };
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === c.r) { h = (c.g - c.b) / d + (c.g < c.b ? 6 : 0); }
+    else if (max === c.g) { h = (c.b - c.r) / d + 2; }
+    else { h = (c.r - c.g) / d + 4; }
+    h /= 6;
+    return { h, s, l };
+  }
+
+  function hue2rgb(p, q, t) {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  }
+
+  function hslToRGB(h, s, l) {
+    if (s === 0) return { r: l, g: l, b: l };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    return {
+      r: Math.round(hue2rgb(p, q, h + 1/3) * 100) / 100,
+      g: Math.round(hue2rgb(p, q, h) * 100) / 100,
+      b: Math.round(hue2rgb(p, q, h - 1/3) * 100) / 100
+    };
+  }
+
+  function lighten(c, amount) {
+    const { h, s, l } = rgbToHSL(c);
+    return hslToRGB(h, s, Math.min(1, l + amount));
+  }
+
+  function darken(c, amount) {
+    const { h, s, l } = rgbToHSL(c);
+    return hslToRGB(h, s, Math.max(0, l - amount));
+  }
+
+  function derive(bg, primary, accent) {
+    const lum = 0.299 * bg.r + 0.587 * bg.g + 0.114 * bg.b;
+    const dark = lum < 0.5;
+    const colors = { BG: bg, BL: primary, TL: accent };
+    if (dark) {
+      colors.CARD = lighten(bg, 0.04);
+      colors.STK = lighten(bg, 0.08);
+      colors.WT = { r: 0.96, g: 0.97, b: 0.98 };
+      colors.BD = { r: 0.78, g: 0.81, b: 0.85 };
+      colors.MT = { r: 0.45, g: 0.48, b: 0.55 };
+    } else {
+      colors.CARD = darken(bg, 0.03);
+      colors.STK = darken(bg, 0.08);
+      colors.WT = { r: 0.08, g: 0.09, b: 0.12 };
+      colors.BD = { r: 0.25, g: 0.27, b: 0.32 };
+      colors.MT = { r: 0.50, g: 0.52, b: 0.56 };
+    }
+    colors.WARN = { r: 1.00, g: 0.60, b: 0.20 };
+    colors.ERR = { r: 1.00, g: 0.35, b: 0.35 };
+    colors.SUCCESS = { r: 0.20, g: 0.80, b: 0.50 };
+    return colors;
+  }
+
+  function buildThemeJSON() {
+    const name = $('themeName').value || 'My Theme';
+    const bg = hexToRGB01($('bgHex').value);
+    const primary = hexToRGB01($('priHex').value);
+    const accent = hexToRGB01($('accHex').value);
+    const colors = derive(bg, primary, accent);
+
+    return {
+      name,
+      description: 'Custom theme generated with figma-kit Theme Builder.',
+      colors,
+      type: {
+        h1: { fontSize: 72, style: 'Bold', lineHeight: 86 },
+        h2: { fontSize: 48, style: 'Bold', lineHeight: 58 },
+        h3: { fontSize: 32, style: 'Semi Bold', lineHeight: 40 },
+        h4: { fontSize: 22, style: 'Semi Bold', lineHeight: 30 },
+        body: { fontSize: 16, style: 'Regular', lineHeight: 26 },
+        small: { fontSize: 13, style: 'Regular', lineHeight: 20 },
+        label: { fontSize: 11, style: 'Medium', lineHeight: null },
+        mono: { fontSize: 11, style: 'Medium', lineHeight: null, family: 'Geist Mono' }
+      },
+      fonts: { heading: 'Inter', body: 'Inter', mono: 'Geist Mono', weights: ['Bold', 'Semi Bold', 'Medium', 'Regular'] },
+      effects: {
+        glass: {
+          subtle: { r: 16, f: 0.03, s: 0.06, ga: 0.04, bl: 20 },
+          'default': { r: 20, f: 0.04, s: 0.08, ga: 0.06, bl: 24 },
+          strong: { r: 24, f: 0.06, s: 0.12, ga: 0.12, bl: 24 }
+        },
+        shadow: {
+          card: { type: 'DROP_SHADOW', color: { r: primary.r * 0.4, g: primary.g * 0.3, b: primary.b * 0.15, a: 0.10 }, offset: { x: 0, y: 2 }, radius: 16, spread: 0, visible: true, blendMode: 'NORMAL' },
+          glow: { type: 'DROP_SHADOW', color: { r: primary.r, g: primary.g, b: primary.b, a: 0.20 }, offset: { x: 0, y: 4 }, radius: 32, spread: 0, visible: true, blendMode: 'NORMAL' }
+        }
+      },
+      spacing: {
+        page: { padding: 80, gap: 16 },
+        card: { padding: 24, gap: 12 },
+        slide: { width: 1080, height: 1350, padding: 80 },
+        frame16: { width: 1920, height: 1080 },
+        letter: { width: 1224, height: 1584, margin: 60 }
+      },
+      gradients: {
+        accent: {
+          type: 'GRADIENT_LINEAR',
+          gradientTransform: [[1,0,0],[0,1,0]],
+          gradientStops: [
+            { position: 0, color: { r: primary.r, g: primary.g, b: primary.b, a: 1 } },
+            { position: 1, color: { r: accent.r, g: accent.g, b: accent.b, a: 1 } }
+          ]
+        }
+      }
+    };
+  }
+
+  function update() {
+    const theme = buildThemeJSON();
+    const colors = theme.colors;
+
+    // Derived palette display
+    const derivedEl = $('derivedColors');
+    const derivedOrder = ['BG', 'CARD', 'WT', 'BD', 'MT', 'BL', 'TL', 'STK', 'WARN', 'ERR', 'SUCCESS'];
+    derivedEl.innerHTML = derivedOrder.map(name => {
+      const c = colors[name];
+      if (!c) return '';
+      const hex = rgb01ToHex(c);
+      return `<div class="derived-swatch"><div class="dot" style="background:${hex}"></div><span class="name">${name}</span></div>`;
+    }).join('');
+
+    // Preview
+    const card = $('previewCard');
+    const bgHex = rgb01ToHex(colors.BG);
+    const cardHex = rgb01ToHex(colors.CARD);
+    const wtHex = rgb01ToHex(colors.WT);
+    const bdHex = rgb01ToHex(colors.BD);
+    const mtHex = rgb01ToHex(colors.MT);
+    const blHex = rgb01ToHex(colors.BL);
+    const tlHex = rgb01ToHex(colors.TL);
+    const stkHex = rgb01ToHex(colors.STK);
+
+    card.style.background = bgHex;
+    card.style.borderColor = stkHex;
+
+    // Swatches
+    const swatches = $('previewSwatches');
+    swatches.innerHTML = derivedOrder.map(name => {
+      const c = colors[name];
+      if (!c) return '';
+      const hex = rgb01ToHex(c);
+      const textColor = (0.299 * c.r + 0.587 * c.g + 0.114 * c.b) > 0.5 ? '#000' : '#fff';
+      return `<div class="preview-swatch" style="background:${hex}"><span style="color:${textColor}">${name}</span></div>`;
+    }).join('');
+
+    // Type
+    const typeEl = $('previewType');
+    typeEl.querySelector('.h1').style.color = wtHex;
+    typeEl.querySelector('.h3').style.color = bdHex;
+    typeEl.querySelector('.body').style.color = bdHex;
+    typeEl.querySelector('.small').style.color = mtHex;
+
+    // Components
+    $('previewBtn').style.background = blHex;
+    $('previewBtn').style.color = wtHex;
+    $('previewBadge').style.background = tlHex + '22';
+    $('previewBadge').style.color = tlHex;
+    $('previewBadge').style.border = `1px solid ${tlHex}44`;
+
+    // Inner card
+    const inner = $('previewInnerCard');
+    inner.style.background = cardHex;
+    inner.style.borderColor = stkHex;
+    inner.querySelector('h4').style.color = wtHex;
+    inner.querySelector('p').style.color = mtHex;
+
+    // JSON
+    $('jsonOutput').textContent = JSON.stringify(theme, null, 2);
+  }
+
+  function syncPickers(pickerId, hexId) {
+    const picker = $(pickerId);
+    const hex = $(hexId);
+    picker.addEventListener('input', () => { hex.value = picker.value; update(); });
+    hex.addEventListener('input', () => {
+      const v = hex.value;
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { picker.value = v; update(); }
+    });
+    hex.addEventListener('change', () => {
+      let v = hex.value.replace(/[^0-9a-fA-F#]/g, '');
+      if (!v.startsWith('#')) v = '#' + v;
+      if (v.length > 7) v = v.slice(0, 7);
+      hex.value = v;
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { picker.value = v; update(); }
+    });
+  }
+
+  function downloadJSON() {
+    const theme = buildThemeJSON();
+    const name = theme.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const blob = new Blob([JSON.stringify(theme, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${name || 'theme'}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function copyJSON() {
+    const theme = buildThemeJSON();
+    navigator.clipboard.writeText(JSON.stringify(theme, null, 2)).then(() => {
+      const toast = $('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    });
+  }
+
+  $('themeName').addEventListener('input', update);
+  syncPickers('bgPicker', 'bgHex');
+  syncPickers('priPicker', 'priHex');
+  syncPickers('accPicker', 'accHex');
+
+  update();
+</script>
+</body>
+</html>

@@ -86,6 +86,9 @@ deliverable templates, all powered by a built-in theme system.`,
 	cmd.AddCommand(newValidateCmd())
 	cmd.AddCommand(newWatchCmd())
 
+	// Phase 11: Theme management
+	cmd.AddCommand(newThemeCmd())
+
 	return cmd
 }
 

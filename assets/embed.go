@@ -1,7 +1,7 @@
 package assets
 
 import (
-	_ "embed"
+	"embed"
 )
 
 //go:embed helpers.js
@@ -24,3 +24,6 @@ var TemplateOnePager string
 
 //go:embed templates/storyboard-panel.js
 var TemplateStoryboard string
+
+//go:embed themes/community
+var CommunityThemesFS embed.FS

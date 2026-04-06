@@ -1,0 +1,67 @@
+{
+  "name": "Ocean",
+  "description": "Deep blue maritime palette. Navy backgrounds, aqua accents, seafoam highlights.",
+
+  "colors": {
+    "BG":      { "r": 0.04, "g": 0.08, "b": 0.16 },
+    "CARD":    { "r": 0.06, "g": 0.12, "b": 0.22 },
+    "WT":      { "r": 0.94, "g": 0.97, "b": 1.00 },
+    "BD":      { "r": 0.72, "g": 0.82, "b": 0.90 },
+    "MT":      { "r": 0.40, "g": 0.52, "b": 0.64 },
+    "BL":      { "r": 0.13, "g": 0.59, "b": 0.95 },
+    "TL":      { "r": 0.00, "g": 0.74, "b": 0.83 },
+    "STK":     { "r": 0.10, "g": 0.18, "b": 0.30 },
+    "WARN":    { "r": 1.00, "g": 0.76, "b": 0.28 },
+    "ERR":     { "r": 0.95, "g": 0.30, "b": 0.35 },
+    "SUCCESS": { "r": 0.18, "g": 0.80, "b": 0.60 }
+  },
+
+  "type": {
+    "h1":    { "fontSize": 72, "style": "Bold",      "lineHeight": 86 },
+    "h2":    { "fontSize": 48, "style": "Bold",      "lineHeight": 58 },
+    "h3":    { "fontSize": 32, "style": "Semi Bold", "lineHeight": 40 },
+    "h4":    { "fontSize": 22, "style": "Semi Bold", "lineHeight": 30 },
+    "body":  { "fontSize": 16, "style": "Regular",   "lineHeight": 26 },
+    "small": { "fontSize": 13, "style": "Regular",   "lineHeight": 20 },
+    "label": { "fontSize": 11, "style": "Medium",    "lineHeight": null },
+    "mono":  { "fontSize": 11, "style": "Medium",    "lineHeight": null, "family": "Geist Mono" }
+  },
+
+  "fonts": {
+    "heading": "Inter",
+    "body":    "Inter",
+    "mono":    "Geist Mono",
+    "weights": ["Bold", "Semi Bold", "Medium", "Regular"]
+  },
+
+  "effects": {
+    "glass": {
+      "subtle":  { "r": 16, "f": 0.03, "s": 0.06, "ga": 0.04, "bl": 20 },
+      "default": { "r": 20, "f": 0.04, "s": 0.08, "ga": 0.06, "bl": 24 },
+      "strong":  { "r": 24, "f": 0.06, "s": 0.12, "ga": 0.12, "bl": 24 }
+    },
+    "shadow": {
+      "card": { "type": "DROP_SHADOW", "color": { "r": 0.02, "g": 0.04, "b": 0.12, "a": 0.12 }, "offset": { "x": 0, "y": 2 }, "radius": 16, "spread": 0, "visible": true, "blendMode": "NORMAL" },
+      "glow": { "type": "DROP_SHADOW", "color": { "r": 0.13, "g": 0.59, "b": 0.95, "a": 0.20 }, "offset": { "x": 0, "y": 4 }, "radius": 32, "spread": 0, "visible": true, "blendMode": "NORMAL" }
+    }
+  },
+
+  "spacing": {
+    "page":    { "padding": 80, "gap": 16 },
+    "card":    { "padding": 24, "gap": 12 },
+    "slide":   { "width": 1080, "height": 1350, "padding": 80 },
+    "frame16": { "width": 1920, "height": 1080 },
+    "letter":  { "width": 1224, "height": 1584, "margin": 60 }
+  },
+
+  "gradients": {
+    "accent": {
+      "type": "GRADIENT_LINEAR",
+      "gradientTransform": [[1,0,0],[0,1,0]],
+      "gradientStops": [
+        { "position": 0, "color": { "r": 0.13, "g": 0.59, "b": 0.95, "a": 1 } },
+        { "position": 1, "color": { "r": 0.00, "g": 0.74, "b": 0.83, "a": 1 } }
+      ]
+    }
+  }
+}

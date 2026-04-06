@@ -1,12 +1,14 @@
 # figma-kit
 
-**CLI for programmatic Figma design via the MCP server.**
+**AI-powered Figma design.**
 
 [![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/dop-amine/figma-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/dop-amine/figma-kit/actions/workflows/ci.yml)
 
-A single Go binary that generates `use_figma`-compatible JavaScript for the official [Figma MCP server](https://mcp.figma.com). 120+ commands across 8 layers of abstraction — from `node create frame` to `make carousel --content slides.yml`.
+Describe what you want in natural language — your AI agent picks the right figma-kit commands and the [Figma MCP server](https://mcp.figma.com) executes them. A single Go binary with 120+ commands across 8 layers of abstraction, from `node create frame` to `make carousel --content slides.yml`.
+
+**Works with [Cursor](https://cursor.com), [Claude Code](https://docs.anthropic.com/en/docs/claude-code), or any MCP-compatible AI agent.** Also runs standalone from the terminal.
 
 <img width="547" height="191" alt="image" src="https://github.com/user-attachments/assets/36c55805-a5c9-4ef4-8ff8-558620c414a1" />
 
@@ -20,12 +22,25 @@ brew install dop-amine/tap/figma-kit
 go install github.com/dop-amine/figma-kit@latest
 
 # curl one-liner
-curl -fsSL https://raw.githubusercontent.com/amine/figma-kit/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/dop-amine/figma-kit/main/install.sh | sh
 
 # Or download from GitHub Releases
 ```
 
 ## Quick Start
+
+### With AI (recommended)
+
+1. **Install figma-kit** and add the [Figma MCP server](https://mcp.figma.com) to your AI tool (Cursor, Claude Code, etc.)
+2. **Prompt in natural language:**
+
+```
+"Create a landing page with a hero section, 3 feature cards, and a dark theme"
+```
+
+Your AI agent selects the right figma-kit commands, generates Figma Plugin API code, and the MCP server executes it — your design appears in Figma.
+
+### Standalone CLI
 
 ```bash
 # 1. Initialize a project
@@ -48,14 +63,31 @@ figma-kit qa checklist --page 0
 ## How It Works
 
 ```
-figma-kit CLI → generates JavaScript → use_figma MCP tool → Figma Plugin API → Figma file
+You prompt → AI picks commands → figma-kit generates JS → Figma MCP executes → design appears
 ```
 
-The CLI doesn't connect to Figma directly. It generates JavaScript compatible with Figma's `use_figma` MCP tool, which executes it inside the Plugin API sandbox. The workflow is:
+figma-kit generates JavaScript compatible with Figma's `use_figma` MCP tool, which executes inside the Plugin API sandbox. The AI workflow is:
 
-1. Run a `figma-kit` command to produce JS
-2. Feed the JS to `use_figma` via the MCP server
-3. Verify the result with `get_screenshot`
+1. **You describe** what you want in your AI tool (Cursor, Claude Code, etc.)
+2. **The AI reasons** about which figma-kit commands to use and in what order
+3. **figma-kit generates** Figma Plugin API JavaScript for each command
+4. **The MCP server executes** the code inside your Figma file
+5. **Verify** the result with `get_screenshot`
+
+You can also run commands directly from the terminal — every command works standalone.
+
+## AI Integration
+
+figma-kit is designed to be an **AI agent tool**. Each command is a self-contained, composable unit that an LLM can select, sequence, and execute without human intervention.
+
+| AI Client | How it works |
+|-----------|-------------|
+| **Cursor** | AI calls figma-kit commands via the Figma MCP server automatically |
+| **Claude Code** | Connect the Figma MCP server; Claude uses figma-kit output in `use_figma` |
+| **Any MCP client** | Any MCP-compatible agent can invoke figma-kit -> `use_figma` |
+| **Terminal** | Run commands directly — pipe output to the MCP tool manually |
+
+The entire [marketing site](https://dop-amine.github.io/figma-kit/) and its [Figma design](https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo) were built using figma-kit with AI.
 
 ## Command Layers
 

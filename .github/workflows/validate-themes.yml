@@ -1,0 +1,38 @@
+name: Validate Community Themes
+
+on:
+  pull_request:
+    paths:
+      - 'assets/themes/community/*.json'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - run: go build -o figma-kit ./cmd/figma-kit
+
+      - name: Validate changed themes
+        run: |
+          CHANGED=$(git diff --name-only --diff-filter=ACMR ${{ github.event.pull_request.base.sha }} HEAD -- 'assets/themes/community/*.json')
+          if [ -z "$CHANGED" ]; then
+            echo "No community theme files changed."
+            exit 0
+          fi
+          FAIL=0
+          for f in $CHANGED; do
+            echo "Validating $f ..."
+            if ./figma-kit validate theme "$f"; then
+              echo "  ✓ $f"
+            else
+              echo "  ✗ $f"
+              FAIL=1
+            fi
+          done
+          exit $FAIL

@@ -129,15 +129,16 @@ type Theme struct {
 	Brand       *BrandSpec              `json:"brand,omitempty"`
 }
 
-// Load reads a theme by name, searching embedded themes first, then user directories.
+// Load reads a theme by name, searching embedded, community, user config, then local directories.
 func Load(name string) (*Theme, error) {
-	// Check embedded themes
-	data, ok := embeddedThemes[name]
-	if ok {
+	if data, ok := embeddedThemes[name]; ok {
 		return parseTheme(data)
 	}
 
-	// Check user config dir
+	if data, ok := communityThemes[name]; ok {
+		return parseTheme(data)
+	}
+
 	configDir, err := os.UserConfigDir()
 	if err == nil {
 		p := filepath.Join(configDir, "figma-kit", "themes", name+".json")
@@ -146,13 +147,12 @@ func Load(name string) (*Theme, error) {
 		}
 	}
 
-	// Check local ./themes directory
 	p := filepath.Join("themes", name+".json")
 	if d, err := os.ReadFile(p); err == nil {
 		return parseTheme(d)
 	}
 
-	return nil, fmt.Errorf("theme %q not found (searched: embedded, ~/.config/figma-kit/themes/, ./themes/)", name)
+	return nil, fmt.Errorf("theme %q not found (searched: embedded, community, ~/.config/figma-kit/themes/, ./themes/)", name)
 }
 
 // LoadFile reads a theme from an explicit file path.
@@ -164,33 +164,109 @@ func LoadFile(path string) (*Theme, error) {
 	return parseTheme(data)
 }
 
-// List returns the names and descriptions of all available themes (embedded only).
-func List() []ThemeInfo {
-	var infos []ThemeInfo
-	for name, data := range embeddedThemes {
-		var partial struct {
-			Name        string `json:"name"`
-			Description string `json:"description"`
-		}
-		if err := json.Unmarshal(data, &partial); err == nil {
-			infos = append(infos, ThemeInfo{
-				Key:         name,
-				Name:        partial.Name,
-				Description: partial.Description,
-			})
-		}
-	}
-	sort.Slice(infos, func(i, j int) bool {
-		return infos[i].Key < infos[j].Key
-	})
-	return infos
-}
+// ThemeSource indicates where a theme was discovered.
+type ThemeSource string
+
+const (
+	SourceBuiltIn   ThemeSource = "built-in"
+	SourceCommunity ThemeSource = "community"
+	SourceUser      ThemeSource = "user"
+	SourceLocal     ThemeSource = "local"
+)
 
 // ThemeInfo holds summary data for listing themes.
 type ThemeInfo struct {
 	Key         string
 	Name        string
 	Description string
+	Source      ThemeSource
+}
+
+// List returns all discoverable themes grouped by source.
+func List() []ThemeInfo {
+	seen := map[string]bool{}
+	var infos []ThemeInfo
+
+	for name, data := range embeddedThemes {
+		if info, ok := infoFromJSON(name, data, SourceBuiltIn); ok {
+			infos = append(infos, info)
+			seen[name] = true
+		}
+	}
+
+	for name, data := range communityThemes {
+		if seen[name] {
+			continue
+		}
+		if info, ok := infoFromJSON(name, data, SourceCommunity); ok {
+			infos = append(infos, info)
+			seen[name] = true
+		}
+	}
+
+	configDir, err := os.UserConfigDir()
+	if err == nil {
+		scanDir(filepath.Join(configDir, "figma-kit", "themes"), SourceUser, seen, &infos)
+	}
+
+	scanDir("themes", SourceLocal, seen, &infos)
+
+	sort.Slice(infos, func(i, j int) bool {
+		if infos[i].Source != infos[j].Source {
+			return sourceOrder(infos[i].Source) < sourceOrder(infos[j].Source)
+		}
+		return infos[i].Key < infos[j].Key
+	})
+	return infos
+}
+
+func sourceOrder(s ThemeSource) int {
+	switch s {
+	case SourceBuiltIn:
+		return 0
+	case SourceCommunity:
+		return 1
+	case SourceUser:
+		return 2
+	case SourceLocal:
+		return 3
+	}
+	return 4
+}
+
+func infoFromJSON(key string, data []byte, src ThemeSource) (ThemeInfo, bool) {
+	var partial struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+	if err := json.Unmarshal(data, &partial); err != nil {
+		return ThemeInfo{}, false
+	}
+	return ThemeInfo{Key: key, Name: partial.Name, Description: partial.Description, Source: src}, true
+}
+
+func scanDir(dir string, src ThemeSource, seen map[string]bool, infos *[]ThemeInfo) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".json") {
+			continue
+		}
+		key := strings.TrimSuffix(e.Name(), ".json")
+		if seen[key] {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(dir, e.Name()))
+		if err != nil {
+			continue
+		}
+		if info, ok := infoFromJSON(key, data, src); ok {
+			*infos = append(*infos, info)
+			seen[key] = true
+		}
+	}
 }
 
 // ColorNames returns the color key names in sorted order.

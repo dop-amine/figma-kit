@@ -74,9 +74,30 @@ func newThemesCmd() *cobra.Command {
 		Use:   "themes",
 		Short: "List available themes",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Print("\nAvailable themes:\n\n")
-			for _, info := range theme.List() {
-				fmt.Printf("  %-12s %s\n", info.Key, info.Description)
+			infos := theme.List()
+			if len(infos) == 0 {
+				fmt.Println("No themes found.")
+				return
+			}
+
+			currentSource := theme.ThemeSource("")
+			sourceLabels := map[theme.ThemeSource]string{
+				theme.SourceBuiltIn:   "Built-in",
+				theme.SourceCommunity: "Community (bundled)",
+				theme.SourceUser:      "User (~/.config/figma-kit/themes/)",
+				theme.SourceLocal:     "Local (./themes/)",
+			}
+
+			fmt.Println()
+			for _, info := range infos {
+				if info.Source != currentSource {
+					if currentSource != "" {
+						fmt.Println()
+					}
+					currentSource = info.Source
+					fmt.Printf("%s:\n", sourceLabels[info.Source])
+				}
+				fmt.Printf("  %-14s %s\n", info.Key, info.Description)
 			}
 			fmt.Println()
 		},
