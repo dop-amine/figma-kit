@@ -1,0 +1,19 @@
+{
+  "name": "figma-kit",
+  "version": "0.1.0",
+  "description": "CLI for programmatic Figma design using the Design Kit helpers and themes",
+  "type": "module",
+  "bin": {
+    "figma-kit": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "commander": "^13.0.0",
+    "chalk": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
