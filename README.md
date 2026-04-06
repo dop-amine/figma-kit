@@ -114,18 +114,26 @@ Three built-in themes, switchable with `-t`:
 | `light` | Light mode for print-friendly deliverables. |
 | `noir` | Brand theme. Primary blue `#3366FF`, dark premium aesthetic. |
 
-Custom themes: place a JSON file in `~/.config/figma-kit/themes/` or `./themes/`.
+Create themes from colors, screenshots, or existing sites — AI agents handle the extraction:
 
 ```bash
-# List themes
+# AI workflow: paste a screenshot into Cursor, ask it to create a theme
+figma-kit theme init --name "Brand" --bg "#1a1a2e" --primary "#e94560" --accent "#0f3460" -o brand.json
+
+# Preview in Figma
+figma-kit theme preview -t brand
+
+# Or use the visual web builder
+# → dop-amine.github.io/figma-kit/theme-builder.html
+
+# List all themes (built-in, community, user, local)
 figma-kit themes
 
-# Use a specific theme
-figma-kit make og-image --title "Hello" -t noir
-
-# Export theme as CSS variables
+# Export as CSS variables
 figma-kit export tokens -t default --format css
 ```
+
+Custom themes: place a JSON file in `~/.config/figma-kit/themes/` or `./themes/`. See [Theme Docs](docs/THEMES.md) for full details.
 
 ## Content Specs
 

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -23,12 +24,20 @@ func newThemeCmd() *cobra.Command {
 
 func newThemeInitCmd() *cobra.Command {
 	var (
-		name    string
-		desc    string
-		bgHex   string
-		priHex  string
-		accHex  string
-		outPath string
+		name        string
+		desc        string
+		bgHex       string
+		priHex      string
+		accHex      string
+		outPath     string
+		fontHeading string
+		fontBody    string
+		fontMono    string
+		warnHex     string
+		errorHex    string
+		successHex  string
+		spacing     string
+		fromPath    string
 	)
 
 	cmd := &cobra.Command{
@@ -36,14 +45,48 @@ func newThemeInitCmd() *cobra.Command {
 		Short: "Generate a new theme JSON from a few colors",
 		Long: `Create a complete figma-kit theme from 3 hex colors.
 
-Provide a background, primary, and accent color, and figma-kit will derive
-the full palette (card, text, muted, stroke, warn, error, success), plus
-sensible defaults for typography, effects, and spacing.
+Provide background, primary, and accent colors, and figma-kit derives the
+full palette (card, text, muted, stroke, warn, error, success) plus defaults
+for typography, effects, and spacing.
+
+Customize fonts, status colors, and spacing with optional flags. Use --from
+to base a new theme on an existing one and override specific values.
+
+AI workflow: paste a screenshot into Cursor or Claude Code, ask it to
+extract the dominant colors, then run this command with the hex values.
 
 If no flags are given, prints a starter template to stdout.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if bgHex == "" && priHex == "" && accHex == "" {
+			if bgHex == "" && priHex == "" && accHex == "" && fromPath == "" {
 				return printStarterTemplate()
+			}
+
+			opts := &theme.ThemeOptions{
+				FontHeading: fontHeading,
+				FontBody:    fontBody,
+				FontMono:    fontMono,
+				Spacing:     theme.SpacingMode(spacing),
+				FromPath:    fromPath,
+			}
+
+			if fromPath != "" {
+				base, err := theme.LoadFile(fromPath)
+				if err != nil {
+					return fmt.Errorf("loading base theme: %w", err)
+				}
+				if name == "" {
+					name = base.Name + " (copy)"
+				}
+				if desc == "" {
+					desc = base.Description
+				}
+				if bgHex == "" && priHex == "" && accHex == "" {
+					jsonStr, err := mergeBaseTheme(base, name, desc, opts, warnHex, errorHex, successHex)
+					if err != nil {
+						return err
+					}
+					return writeOrPrint(jsonStr, outPath)
+				}
 			}
 
 			if bgHex == "" {
@@ -75,25 +118,33 @@ If no flags are given, prints a starter template to stdout.`,
 				return err
 			}
 
-			jsonStr, err := theme.GenerateThemeJSON(name, desc, bg, primary, accent)
+			if warnHex != "" {
+				c, err := theme.HexToRGB(warnHex)
+				if err != nil {
+					return fmt.Errorf("--warn: %w", err)
+				}
+				opts.Warn = c
+			}
+			if errorHex != "" {
+				c, err := theme.HexToRGB(errorHex)
+				if err != nil {
+					return fmt.Errorf("--error: %w", err)
+				}
+				opts.Error = c
+			}
+			if successHex != "" {
+				c, err := theme.HexToRGB(successHex)
+				if err != nil {
+					return fmt.Errorf("--success: %w", err)
+				}
+				opts.Success = c
+			}
+
+			jsonStr, err := theme.GenerateThemeJSON(name, desc, bg, primary, accent, opts)
 			if err != nil {
 				return err
 			}
-
-			if outPath != "" {
-				dir := filepath.Dir(outPath)
-				if err := os.MkdirAll(dir, 0o755); err != nil {
-					return fmt.Errorf("creating directory: %w", err)
-				}
-				if err := os.WriteFile(outPath, []byte(jsonStr+"\n"), 0o644); err != nil {
-					return fmt.Errorf("writing file: %w", err)
-				}
-				_, _ = fmt.Fprintf(os.Stderr, "Theme written to %s\n", outPath)
-				return nil
-			}
-
-			fmt.Println(jsonStr)
-			return nil
+			return writeOrPrint(jsonStr, outPath)
 		},
 	}
 
@@ -103,8 +154,75 @@ If no flags are given, prints a starter template to stdout.`,
 	cmd.Flags().StringVar(&priHex, "primary", "", "Primary accent hex color (e.g. #3366FF)")
 	cmd.Flags().StringVar(&accHex, "accent", "", "Secondary accent hex color (e.g. #14B8A6)")
 	cmd.Flags().StringVarP(&outPath, "output", "o", "", "Output file path (default: stdout)")
+	cmd.Flags().StringVar(&fontHeading, "font-heading", "", "Heading font family (default: Inter)")
+	cmd.Flags().StringVar(&fontBody, "font-body", "", "Body font family (default: Inter)")
+	cmd.Flags().StringVar(&fontMono, "font-mono", "", "Monospace font family (default: Geist Mono)")
+	cmd.Flags().StringVar(&warnHex, "warn", "", "Warning color hex (default: derived)")
+	cmd.Flags().StringVar(&errorHex, "error", "", "Error color hex (default: derived)")
+	cmd.Flags().StringVar(&successHex, "success", "", "Success color hex (default: derived)")
+	cmd.Flags().StringVar(&spacing, "spacing", "", "Spacing preset: compact, spacious (default: standard)")
+	cmd.Flags().StringVar(&fromPath, "from", "", "Base theme file to extend (override specific flags)")
 
 	return cmd
+}
+
+func writeOrPrint(jsonStr, outPath string) error {
+	if outPath != "" {
+		dir := filepath.Dir(outPath)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return fmt.Errorf("creating directory: %w", err)
+		}
+		if err := os.WriteFile(outPath, []byte(jsonStr+"\n"), 0o644); err != nil {
+			return fmt.Errorf("writing file: %w", err)
+		}
+		_, _ = fmt.Fprintf(os.Stderr, "Theme written to %s\n", outPath)
+		return nil
+	}
+	fmt.Println(jsonStr)
+	return nil
+}
+
+func mergeBaseTheme(base *theme.Theme, name, desc string, opts *theme.ThemeOptions, warnHex, errorHex, successHex string) (string, error) {
+	base.Name = name
+	base.Description = desc
+	if opts.FontHeading != "" {
+		base.Fonts.Heading = opts.FontHeading
+	}
+	if opts.FontBody != "" {
+		base.Fonts.Body = opts.FontBody
+	}
+	if opts.FontMono != "" {
+		base.Fonts.Mono = opts.FontMono
+	}
+	if opts.Spacing != "" {
+		base.Spacing = theme.SpacingForMode(opts.Spacing)
+	}
+	if warnHex != "" {
+		c, err := theme.HexToRGB(warnHex)
+		if err != nil {
+			return "", err
+		}
+		base.Colors["WARN"] = c
+	}
+	if errorHex != "" {
+		c, err := theme.HexToRGB(errorHex)
+		if err != nil {
+			return "", err
+		}
+		base.Colors["ERR"] = c
+	}
+	if successHex != "" {
+		c, err := theme.HexToRGB(successHex)
+		if err != nil {
+			return "", err
+		}
+		base.Colors["SUCCESS"] = c
+	}
+	data, err := json.MarshalIndent(base, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 func printStarterTemplate() error {
@@ -113,17 +231,17 @@ func printStarterTemplate() error {
   "description": "Describe your theme aesthetic in one sentence.",
 
   "colors": {
-    "BG":      { "r": 0.05, "g": 0.06, "b": 0.09 },
-    "CARD":    { "r": 0.09, "g": 0.10, "b": 0.15 },
-    "WT":      { "r": 0.96, "g": 0.97, "b": 0.98 },
-    "BD":      { "r": 0.78, "g": 0.81, "b": 0.85 },
-    "MT":      { "r": 0.45, "g": 0.48, "b": 0.55 },
-    "BL":      { "r": 0.20, "g": 0.40, "b": 1.00 },
-    "TL":      { "r": 0.08, "g": 0.72, "b": 0.65 },
-    "STK":     { "r": 0.14, "g": 0.16, "b": 0.22 },
-    "WARN":    { "r": 1.00, "g": 0.60, "b": 0.20 },
-    "ERR":     { "r": 1.00, "g": 0.35, "b": 0.35 },
-    "SUCCESS": { "r": 0.20, "g": 0.80, "b": 0.50 }
+    "BG":      "#0D0F17",
+    "CARD":    "#161A25",
+    "WT":      "#F5F7FA",
+    "BD":      "#C7CFD9",
+    "MT":      "#737A8C",
+    "BL":      "#3366FF",
+    "TL":      "#14B8A6",
+    "STK":     "#242938",
+    "WARN":    "#FF9933",
+    "ERR":     "#FF5959",
+    "SUCCESS": "#33CC80"
   }
 }
 `
@@ -136,7 +254,8 @@ func newThemePreviewCmd() *cobra.Command {
 		Use:   "preview",
 		Short: "Generate a Figma preview page for a theme",
 		Long: `Outputs use_figma JS that creates a compact theme preview in Figma:
-color swatches, type scale specimens, and sample components.`,
+color swatches, type scale using the theme's actual fonts, sample components,
+gradient swatches, and brand info (if present).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -144,94 +263,195 @@ color swatches, type scale specimens, and sample components.`,
 			}
 			page := resolvePage()
 
+			headingFont := "Inter"
+			bodyFont := "Inter"
+			monoFont := "Geist Mono"
+			if t.Fonts.Heading != "" {
+				headingFont = t.Fonts.Heading
+			}
+			if t.Fonts.Body != "" {
+				bodyFont = t.Fonts.Body
+			}
+			if t.Fonts.Mono != "" {
+				monoFont = t.Fonts.Mono
+			}
+
 			b := codegen.New()
 			codegen.PreambleWithPage(b, t, page)
+
+			b.Comment("Load theme fonts")
+			for _, style := range []string{"Bold", "Semi Bold", "Medium", "Regular"} {
+				b.Linef("await figma.loadFontAsync({family:%q, style:%q});", headingFont, style)
+			}
+			if bodyFont != headingFont {
+				for _, style := range []string{"Bold", "Semi Bold", "Medium", "Regular"} {
+					b.Linef("await figma.loadFontAsync({family:%q, style:%q});", bodyFont, style)
+				}
+			}
+			b.Linef("await figma.loadFontAsync({family:%q, style:'Medium'});", monoFont)
+			b.Linef("await figma.loadFontAsync({family:%q, style:'Regular'});", monoFont)
+			b.Blank()
 
 			b.Comment("Theme Preview: " + t.Name)
 			b.Line("const root = figma.createFrame();")
 			b.Linef("root.name = 'Theme Preview: %s';", t.Name)
-			b.Line("root.resize(1200, 800);")
+			b.Line("root.resize(1200, 900);")
 			b.Line("root.fills = [{type:'SOLID', color:BG}];")
 			b.Line("root.layoutMode = 'VERTICAL';")
-			b.Line("root.paddingTop = 60; root.paddingBottom = 60;")
-			b.Line("root.paddingLeft = 60; root.paddingRight = 60;")
-			b.Line("root.itemSpacing = 40;")
+			b.Line("root.paddingTop = 48; root.paddingBottom = 48;")
+			b.Line("root.paddingLeft = 48; root.paddingRight = 48;")
+			b.Line("root.itemSpacing = 32;")
 			b.Line("root.primaryAxisSizingMode = 'AUTO';")
 			b.Line("figma.currentPage.appendChild(root);")
 			b.Blank()
 
-			b.Comment("Title")
+			b.Comment("Title + description")
 			b.Line("{ const t = figma.createText();")
-			b.Line("  await figma.loadFontAsync({family:'Inter', style:'Bold'});")
-			b.Line("  t.fontName = {family:'Inter', style:'Bold'};")
+			b.Linef("  t.fontName = {family:%q, style:'Bold'};", headingFont)
 			b.Linef("  t.characters = 'Theme: %s';", t.Name)
-			b.Line("  t.fontSize = 36; t.fills = [{type:'SOLID', color:WT}];")
+			b.Line("  t.fontSize = 32; t.fills = [{type:'SOLID', color:WT}];")
 			b.Line("  root.appendChild(t); }")
+			if t.Description != "" {
+				b.Line("{ const d = figma.createText();")
+				b.Linef("  d.fontName = {family:%q, style:'Regular'};", bodyFont)
+				b.Linef("  d.characters = %q;", t.Description)
+				b.Line("  d.fontSize = 14; d.fills = [{type:'SOLID', color:MT}];")
+				b.Line("  root.appendChild(d); }")
+			}
 			b.Blank()
 
-			b.Comment("Color swatches row")
+			b.Comment("Color swatches")
 			b.Line("const swatchRow = figma.createFrame();")
 			b.Line("swatchRow.name = 'Color Swatches';")
-			b.Line("swatchRow.layoutMode = 'HORIZONTAL';")
-			b.Line("swatchRow.itemSpacing = 12;")
-			b.Line("swatchRow.fills = [];")
-			b.Line("swatchRow.counterAxisSizingMode = 'AUTO';")
-			b.Line("swatchRow.primaryAxisSizingMode = 'AUTO';")
+			b.Line("swatchRow.layoutMode = 'HORIZONTAL'; swatchRow.itemSpacing = 10;")
+			b.Line("swatchRow.fills = []; swatchRow.counterAxisSizingMode = 'AUTO'; swatchRow.primaryAxisSizingMode = 'AUTO';")
 			b.Line("root.appendChild(swatchRow);")
 
 			for _, name := range t.ColorNames() {
-				b.Linef("{ const f = figma.createFrame(); f.name = %q; f.resize(80,80);", name)
-				b.Linef("  f.fills = [{type:'SOLID', color:%s}];", name)
-				b.Line("  f.cornerRadius = 12;")
+				b.Linef("{ const f = figma.createFrame(); f.name = %q; f.resize(64,64);", name)
+				b.Linef("  f.fills = [{type:'SOLID', color:%s}]; f.cornerRadius = 10;", name)
 				b.Line("  const lb = figma.createText();")
-				b.Line("  await figma.loadFontAsync({family:'Geist Mono', style:'Medium'});")
-				b.Line("  lb.fontName = {family:'Geist Mono', style:'Medium'};")
-				b.Linef("  lb.characters = %q; lb.fontSize = 9;", name)
-				b.Line("  lb.fills = [{type:'SOLID', color:WT}];")
-				b.Line("  lb.x = 8; lb.y = 60; f.appendChild(lb);")
+				b.Linef("  lb.fontName = {family:%q, style:'Medium'};", monoFont)
+				b.Linef("  lb.characters = %q; lb.fontSize = 8;", name)
+				b.Line("  lb.fills = [{type:'SOLID', color:WT}]; lb.x = 6; lb.y = 48; f.appendChild(lb);")
 				b.Line("  swatchRow.appendChild(f); }")
 			}
 			b.Blank()
 
-			b.Comment("Type scale specimens")
-			typeEntries := []struct{ key, label string }{
-				{"h1", "h1 — Heading One"},
-				{"h2", "h2 — Heading Two"},
-				{"h3", "h3 — Heading Three"},
-				{"body", "body — Body text"},
-				{"small", "small — Small text"},
+			b.Comment("Type scale")
+			typeEntries := []struct{ key, label, font, style string }{
+				{"h1", "h1 — Heading One", headingFont, ""},
+				{"h2", "h2 — Heading Two", headingFont, ""},
+				{"h3", "h3 — Heading Three", headingFont, ""},
+				{"body", "body — Body text in " + bodyFont, bodyFont, ""},
+				{"small", "small — Small caption text", bodyFont, ""},
+				{"mono", "mono — const theme = load();", monoFont, ""},
 			}
 			for _, entry := range typeEntries {
 				ts, ok := t.Type[entry.key]
 				if !ok {
 					continue
 				}
-				family := "Inter"
+				family := entry.font
 				if ts.Family != "" {
 					family = ts.Family
 				}
-				b.Linef("{ const t = figma.createText();")
-				b.Linef("  await figma.loadFontAsync({family:%q, style:%q});", family, ts.Style)
-				b.Linef("  t.fontName = {family:%q, style:%q};", family, ts.Style)
-				b.Linef("  t.characters = %q;", entry.label)
-				b.Linef("  t.fontSize = %d;", ts.FontSize)
-				b.Line("  t.fills = [{type:'SOLID', color:WT}];")
-				b.Line("  root.appendChild(t); }")
+				style := ts.Style
+				b.Line("{ const t = figma.createText();")
+				b.Linef("  t.fontName = {family:%q, style:%q};", family, style)
+				b.Linef("  t.characters = %q; t.fontSize = %d;", entry.label, ts.FontSize)
+				b.Line("  t.fills = [{type:'SOLID', color:WT}]; root.appendChild(t); }")
 			}
 			b.Blank()
 
-			b.Comment("Sample button")
-			b.Line("{ const btn = figma.createFrame(); btn.name = 'Sample Button';")
-			b.Line("  btn.resize(160, 44); btn.cornerRadius = 10;")
-			b.Line("  btn.fills = [{type:'SOLID', color:BL}];")
-			b.Line("  btn.layoutMode = 'HORIZONTAL'; btn.primaryAxisAlignItems = 'CENTER';")
-			b.Line("  btn.counterAxisAlignItems = 'CENTER'; btn.paddingLeft = 24; btn.paddingRight = 24;")
+			b.Comment("Sample components row")
+			b.Line("const compRow = figma.createFrame();")
+			b.Line("compRow.name = 'Components'; compRow.layoutMode = 'HORIZONTAL'; compRow.itemSpacing = 16;")
+			b.Line("compRow.fills = []; compRow.counterAxisSizingMode = 'AUTO'; compRow.primaryAxisSizingMode = 'AUTO';")
+			b.Line("root.appendChild(compRow);")
+
+			b.Comment("Button")
+			b.Line("{ const btn = figma.createFrame(); btn.name = 'Button';")
+			b.Line("  btn.resize(160, 44); btn.cornerRadius = 10; btn.fills = [{type:'SOLID', color:BL}];")
+			b.Line("  btn.layoutMode = 'HORIZONTAL'; btn.primaryAxisAlignItems = 'CENTER'; btn.counterAxisAlignItems = 'CENTER';")
+			b.Line("  btn.paddingLeft = 24; btn.paddingRight = 24;")
 			b.Line("  const lb = figma.createText();")
-			b.Line("  await figma.loadFontAsync({family:'Inter', style:'Semi Bold'});")
-			b.Line("  lb.fontName = {family:'Inter', style:'Semi Bold'};")
-			b.Line("  lb.characters = 'Get Started'; lb.fontSize = 15;")
-			b.Line("  lb.fills = [{type:'SOLID', color:WT}];")
-			b.Line("  btn.appendChild(lb); root.appendChild(btn); }")
+			b.Linef("  lb.fontName = {family:%q, style:'Semi Bold'}; lb.characters = 'Get Started'; lb.fontSize = 15;", bodyFont)
+			b.Line("  lb.fills = [{type:'SOLID', color:WT}]; btn.appendChild(lb); compRow.appendChild(btn); }")
+
+			b.Comment("Badge")
+			b.Line("{ const bg = figma.createFrame(); bg.name = 'Badge';")
+			b.Line("  bg.resize(100, 28); bg.cornerRadius = 14;")
+			b.Line("  bg.fills = [{type:'SOLID', color:TL, opacity: 0.15}];")
+			b.Line("  bg.layoutMode = 'HORIZONTAL'; bg.primaryAxisAlignItems = 'CENTER'; bg.counterAxisAlignItems = 'CENTER';")
+			b.Line("  bg.paddingLeft = 14; bg.paddingRight = 14;")
+			b.Line("  const lb = figma.createText();")
+			b.Linef("  lb.fontName = {family:%q, style:'Medium'}; lb.characters = 'Open Source'; lb.fontSize = 11;", monoFont)
+			b.Line("  lb.fills = [{type:'SOLID', color:TL}]; bg.appendChild(lb); compRow.appendChild(bg); }")
+
+			b.Comment("Status chips")
+			for _, s := range []struct{ label, color string }{{"Warning", "WARN"}, {"Error", "ERR"}, {"Success", "SUCCESS"}} {
+				b.Linef("{ const ch = figma.createFrame(); ch.name = %q;", s.label)
+				b.Line("  ch.resize(80, 28); ch.cornerRadius = 6;")
+				b.Linef("  ch.fills = [{type:'SOLID', color:%s, opacity: 0.15}];", s.color)
+				b.Line("  ch.layoutMode = 'HORIZONTAL'; ch.primaryAxisAlignItems = 'CENTER'; ch.counterAxisAlignItems = 'CENTER';")
+				b.Line("  ch.paddingLeft = 12; ch.paddingRight = 12;")
+				b.Line("  const lb = figma.createText();")
+				b.Linef("  lb.fontName = {family:%q, style:'Medium'}; lb.characters = %q; lb.fontSize = 11;", bodyFont, s.label)
+				b.Linef("  lb.fills = [{type:'SOLID', color:%s}]; ch.appendChild(lb); compRow.appendChild(ch); }", s.color)
+			}
+			b.Blank()
+
+			if len(t.Gradients) > 0 {
+				b.Comment("Gradient swatches")
+				b.Line("const gradRow = figma.createFrame();")
+				b.Line("gradRow.name = 'Gradients'; gradRow.layoutMode = 'HORIZONTAL'; gradRow.itemSpacing = 12;")
+				b.Line("gradRow.fills = []; gradRow.counterAxisSizingMode = 'AUTO'; gradRow.primaryAxisSizingMode = 'AUTO';")
+				b.Line("root.appendChild(gradRow);")
+				for gname, grad := range t.Gradients {
+					stopsJS := "["
+					for i, stop := range grad.GradientStops {
+						if i > 0 {
+							stopsJS += ","
+						}
+						stopsJS += fmt.Sprintf("{position:%s,color:{r:%s,g:%s,b:%s,a:%s}}",
+							codegen.FmtFloat(stop.Position),
+							codegen.FmtFloat(stop.Color.R), codegen.FmtFloat(stop.Color.G),
+							codegen.FmtFloat(stop.Color.B), codegen.FmtFloat(stop.Color.A))
+					}
+					stopsJS += "]"
+					transform := fmt.Sprintf("[[%s,%s,%s],[%s,%s,%s]]",
+						codegen.FmtFloat(grad.GradientTransform[0][0]), codegen.FmtFloat(grad.GradientTransform[0][1]), codegen.FmtFloat(grad.GradientTransform[0][2]),
+						codegen.FmtFloat(grad.GradientTransform[1][0]), codegen.FmtFloat(grad.GradientTransform[1][1]), codegen.FmtFloat(grad.GradientTransform[1][2]))
+
+					b.Linef("{ const g = figma.createFrame(); g.name = 'Gradient: %s'; g.resize(200, 48); g.cornerRadius = 10;", gname)
+					b.Linef("  g.fills = [{type:%q, gradientTransform:%s, gradientStops:%s}];", grad.Type, transform, stopsJS)
+					b.Line("  const lb = figma.createText();")
+					b.Linef("  lb.fontName = {family:%q, style:'Medium'}; lb.characters = %q; lb.fontSize = 10;", monoFont, gname)
+					b.Line("  lb.fills = [{type:'SOLID', color:WT}]; lb.x = 12; lb.y = 16; g.appendChild(lb);")
+					b.Line("  gradRow.appendChild(g); }")
+				}
+				b.Blank()
+			}
+
+			if t.Brand != nil {
+				b.Comment("Brand info")
+				b.Line("const brandRow = figma.createFrame();")
+				b.Line("brandRow.name = 'Brand'; brandRow.layoutMode = 'VERTICAL'; brandRow.itemSpacing = 4;")
+				b.Line("brandRow.fills = []; brandRow.counterAxisSizingMode = 'AUTO'; brandRow.primaryAxisSizingMode = 'AUTO';")
+				b.Line("root.appendChild(brandRow);")
+				if t.Brand.Tagline != "" {
+					b.Line("{ const t = figma.createText();")
+					b.Linef("  t.fontName = {family:%q, style:'Medium'}; t.characters = %q; t.fontSize = 14;", bodyFont, t.Brand.Tagline)
+					b.Line("  t.fills = [{type:'SOLID', color:BD}]; brandRow.appendChild(t); }")
+				}
+				if t.Brand.URL != "" {
+					b.Line("{ const t = figma.createText();")
+					b.Linef("  t.fontName = {family:%q, style:'Regular'}; t.characters = %q; t.fontSize = 12;", monoFont, t.Brand.URL)
+					b.Line("  t.fills = [{type:'SOLID', color:MT}]; brandRow.appendChild(t); }")
+				}
+				b.Blank()
+			}
 
 			b.ReturnIDs("root.id")
 			output(b.String())

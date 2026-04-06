@@ -117,10 +117,6 @@ func darken(c RGB, amount float64) RGB {
 	return hslToRGB(h, s, clamp01(l-amount))
 }
 
-func desaturate(c RGB, amount float64) RGB {
-	h, s, l := rgbToHSL(c)
-	return hslToRGB(h, clamp01(s-amount), l)
-}
 
 func isDark(c RGB) bool {
 	luminance := 0.299*c.R + 0.587*c.G + 0.114*c.B
@@ -128,7 +124,8 @@ func isDark(c RGB) bool {
 }
 
 // DerivePalette generates a full color palette from background, primary, and accent colors.
-func DerivePalette(bg, primary, accent RGB) map[string]RGB {
+// Optional overrides in opts are applied after derivation.
+func DerivePalette(bg, primary, accent RGB, opts *ThemeOptions) map[string]RGB {
 	dark := isDark(bg)
 
 	colors := map[string]RGB{
@@ -139,28 +136,115 @@ func DerivePalette(bg, primary, accent RGB) map[string]RGB {
 
 	if dark {
 		colors["CARD"] = lighten(bg, 0.04)
+		colors["CARD2"] = lighten(bg, 0.07)
 		colors["STK"] = lighten(bg, 0.08)
 		colors["WT"] = RGB{R: 0.96, G: 0.97, B: 0.98}
 		colors["BD"] = RGB{R: 0.78, G: 0.81, B: 0.85}
 		colors["MT"] = RGB{R: 0.45, G: 0.48, B: 0.55}
+		colors["HOVER"] = lighten(bg, 0.05)
 	} else {
 		colors["CARD"] = darken(bg, 0.03)
+		colors["CARD2"] = darken(bg, 0.05)
 		colors["STK"] = darken(bg, 0.08)
 		colors["WT"] = RGB{R: 0.08, G: 0.09, B: 0.12}
 		colors["BD"] = RGB{R: 0.25, G: 0.27, B: 0.32}
 		colors["MT"] = RGB{R: 0.50, G: 0.52, B: 0.56}
+		colors["HOVER"] = darken(bg, 0.04)
 	}
 
+	colors["LINK"] = primary
 	colors["WARN"] = RGB{R: 1.00, G: 0.60, B: 0.20}
 	colors["ERR"] = RGB{R: 1.00, G: 0.35, B: 0.35}
 	colors["SUCCESS"] = RGB{R: 0.20, G: 0.80, B: 0.50}
 
+	if opts != nil {
+		if (opts.Warn != RGB{}) {
+			colors["WARN"] = opts.Warn
+		}
+		if (opts.Error != RGB{}) {
+			colors["ERR"] = opts.Error
+		}
+		if (opts.Success != RGB{}) {
+			colors["SUCCESS"] = opts.Success
+		}
+	}
+
 	return colors
 }
 
-// GenerateThemeJSON creates a complete, valid theme JSON string from the given parameters.
-func GenerateThemeJSON(name, description string, bg, primary, accent RGB) (string, error) {
-	colors := DerivePalette(bg, primary, accent)
+// ThemeOptions controls theme generation beyond the 3 seed colors.
+type ThemeOptions struct {
+	FontHeading string
+	FontBody    string
+	FontMono    string
+	Warn        RGB
+	Error       RGB
+	Success     RGB
+	Spacing     SpacingMode
+	FromPath    string
+}
+
+// SpacingMode selects a spacing preset.
+type SpacingMode string
+
+const (
+	SpacingDefault  SpacingMode = ""
+	SpacingCompact  SpacingMode = "compact"
+	SpacingSpacious SpacingMode = "spacious"
+)
+
+// SpacingForMode returns the spacing preset for the given mode.
+func SpacingForMode(mode SpacingMode) SpacingSpec {
+	switch mode {
+	case SpacingCompact:
+		return SpacingSpec{
+			Page:    SpacingPreset{Padding: 48, Gap: 12},
+			Card:    SpacingPreset{Padding: 16, Gap: 8},
+			Slide:   SpacingPreset{Width: 1080, Height: 1350, Padding: 48},
+			Frame16: SpacingPreset{Width: 1920, Height: 1080},
+			Letter:  SpacingPreset{Width: 1224, Height: 1584, Margin: 40},
+		}
+	case SpacingSpacious:
+		return SpacingSpec{
+			Page:    SpacingPreset{Padding: 120, Gap: 24},
+			Card:    SpacingPreset{Padding: 36, Gap: 16},
+			Slide:   SpacingPreset{Width: 1080, Height: 1350, Padding: 120},
+			Frame16: SpacingPreset{Width: 1920, Height: 1080},
+			Letter:  SpacingPreset{Width: 1224, Height: 1584, Margin: 80},
+		}
+	default:
+		return SpacingSpec{
+			Page:    SpacingPreset{Padding: 80, Gap: 16},
+			Card:    SpacingPreset{Padding: 24, Gap: 12},
+			Slide:   SpacingPreset{Width: 1080, Height: 1350, Padding: 80},
+			Frame16: SpacingPreset{Width: 1920, Height: 1080},
+			Letter:  SpacingPreset{Width: 1224, Height: 1584, Margin: 60},
+		}
+	}
+}
+
+// GenerateThemeJSON creates a complete, valid theme JSON string.
+// If opts is nil, defaults are used for fonts, status colors, and spacing.
+func GenerateThemeJSON(name, description string, bg, primary, accent RGB, opts *ThemeOptions) (string, error) {
+	colors := DerivePalette(bg, primary, accent, opts)
+
+	fontHeading := "Inter"
+	fontBody := "Inter"
+	fontMono := "Geist Mono"
+	spacing := SpacingForMode(SpacingDefault)
+
+	if opts != nil {
+		if opts.FontHeading != "" {
+			fontHeading = opts.FontHeading
+		}
+		if opts.FontBody != "" {
+			fontBody = opts.FontBody
+		}
+		if opts.FontMono != "" {
+			fontMono = opts.FontMono
+		}
+		spacing = SpacingForMode(opts.Spacing)
+	}
 
 	t := Theme{
 		Name:        name,
@@ -174,12 +258,12 @@ func GenerateThemeJSON(name, description string, bg, primary, accent RGB) (strin
 			"body":  {FontSize: 16, Style: "Regular", LineHeight: intPtr(26)},
 			"small": {FontSize: 13, Style: "Regular", LineHeight: intPtr(20)},
 			"label": {FontSize: 11, Style: "Medium"},
-			"mono":  {FontSize: 11, Style: "Medium", Family: "Geist Mono"},
+			"mono":  {FontSize: 11, Style: "Medium", Family: fontMono},
 		},
 		Fonts: FontSpec{
-			Heading: "Inter",
-			Body:    "Inter",
-			Mono:    "Geist Mono",
+			Heading: fontHeading,
+			Body:    fontBody,
+			Mono:    fontMono,
 			Weights: []string{"Bold", "Semi Bold", "Medium", "Regular"},
 		},
 		Effects: EffectsSpec{
@@ -193,13 +277,7 @@ func GenerateThemeJSON(name, description string, bg, primary, accent RGB) (strin
 				"glow": {Type: "DROP_SHADOW", Color: RGBA{R: primary.R, G: primary.G, B: primary.B, A: 0.20}, Offset: XY{X: 0, Y: 4}, Radius: 32, Visible: true, BlendMode: "NORMAL"},
 			},
 		},
-		Spacing: SpacingSpec{
-			Page:    SpacingPreset{Padding: 80, Gap: 16},
-			Card:    SpacingPreset{Padding: 24, Gap: 12},
-			Slide:   SpacingPreset{Width: 1080, Height: 1350, Padding: 80},
-			Frame16: SpacingPreset{Width: 1920, Height: 1080},
-			Letter:  SpacingPreset{Width: 1224, Height: 1584, Margin: 60},
-		},
+		Spacing: spacing,
 		Gradients: map[string]GradientSpec{
 			"accent": {
 				Type:              "GRADIENT_LINEAR",

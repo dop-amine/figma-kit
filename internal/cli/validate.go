@@ -46,7 +46,6 @@ func newValidateThemeCmd() *cobra.Command {
 				}
 			}
 
-			// Summary report.
 			_, _ = fmt.Fprintf(os.Stdout, "✓ theme: %q\n", th.Name)
 			_, _ = fmt.Fprintf(os.Stdout, "  colors:   %d tokens\n", len(th.Colors))
 			_, _ = fmt.Fprintf(os.Stdout, "  type:     %d scale entries\n", len(th.Type))
@@ -54,6 +53,33 @@ func newValidateThemeCmd() *cobra.Command {
 			if th.Brand != nil {
 				_, _ = fmt.Fprintf(os.Stdout, "  brand:    primary=%q  url=%q\n", th.Brand.Primary, th.Brand.URL)
 			}
+
+			var warnings []string
+			for _, key := range []string{"BG", "WT", "BL", "CARD", "STK"} {
+				if _, ok := th.Colors[key]; !ok {
+					warnings = append(warnings, fmt.Sprintf("missing conventional color token %q (used by most templates)", key))
+				}
+			}
+			if len(th.Type) == 0 {
+				warnings = append(warnings, "no type scale defined (needed for text-heavy templates)")
+			}
+			if th.Fonts.Heading == "" && th.Fonts.Body == "" {
+				warnings = append(warnings, "no fonts defined (heading/body will default to Inter)")
+			}
+			if th.Effects.Glass == nil && th.Effects.Shadow == nil {
+				warnings = append(warnings, "no effects defined (glass/shadow presets used by card and make commands)")
+			}
+			if th.Spacing == (theme.SpacingSpec{}) {
+				warnings = append(warnings, "no spacing defined (used by make carousel, one-pager, storyboard)")
+			}
+
+			if len(warnings) > 0 {
+				_, _ = fmt.Fprintf(os.Stdout, "  warnings: %d\n", len(warnings))
+				for _, w := range warnings {
+					_, _ = fmt.Fprintf(os.Stdout, "    ⚠ %s\n", w)
+				}
+			}
+
 			_, _ = fmt.Fprintln(os.Stdout, "  → OK")
 			return nil
 		},

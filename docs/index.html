@@ -81,8 +81,9 @@
 
     /* ── HERO ── */
     .hero {
-      min-height: 100vh; padding-top: 120px; padding-bottom: 80px;
+      min-height: 100vh; padding-top: 80px; padding-bottom: 80px;
       position: relative; overflow: hidden;
+      display: flex; align-items: center;
     }
     .hero::before {
       content: '';
@@ -114,6 +115,17 @@
       line-height: 1.7; margin-bottom: 36px; max-width: 520px;
     }
     .hero .cta-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: var(--mt); font-size: 11px; font-weight: 500; letter-spacing: .08em;
+      text-transform: uppercase; opacity: .6; z-index: 2;
+    }
+    .scroll-hint svg { animation: bounce 2s ease-in-out infinite; }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(6px); }
+    }
     .btn-primary {
       display: inline-flex; align-items: center; gap: 8px;
       background: var(--bl); color: var(--wt);
@@ -359,7 +371,7 @@
   <div class="container">
     <div class="inner">
       <div>
-        <span class="badge">v0.2.0</span>
+        <span class="badge">Open Source</span>
         <h1>figma-kit</h1>
         <p class="subtitle">AI-powered Figma design. Describe what you want in natural language &mdash; your AI agent and figma-kit handle the rest. 120+ commands via the Figma MCP server.</p>
         <div class="cta-row">
@@ -387,6 +399,10 @@
       </div>
     </div>
   </div>
+  <a href="#how" class="scroll-hint">
+    <span>Scroll</span>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </a>
 </section>
 
 <!-- HOW IT WORKS — matches Figma frame 21:2 -->

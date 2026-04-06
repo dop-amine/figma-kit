@@ -2492,7 +2492,7 @@ figma-kit batch ./recipe.yaml > combined.js
 
 **Usage:** `figma-kit theme init [flags]`
 
-**Description:** Generate a complete, valid theme JSON from a few hex colors. If no color flags are given, prints a starter template to stdout.
+**Description:** Generate a complete theme JSON from hex colors. Derives a full palette (14 color tokens), typography, effects, spacing, and gradients from 3 seed colors. Use `--from` to extend an existing theme. With no flags, prints a starter template.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
@@ -2501,10 +2501,26 @@ figma-kit batch ./recipe.yaml > combined.js
 | `--bg` | string | `#0D0F17` | Background hex color |
 | `--primary` | string | `#3366FF` | Primary accent hex color |
 | `--accent` | string | `#14B8A6` | Secondary accent hex color |
+| `--font-heading` | string | `Inter` | Heading font family |
+| `--font-body` | string | `Inter` | Body font family |
+| `--font-mono` | string | `Geist Mono` | Monospace font family |
+| `--warn` | string | *(derived)* | Warning color hex |
+| `--error` | string | *(derived)* | Error color hex |
+| `--success` | string | *(derived)* | Success color hex |
+| `--spacing` | string | *(standard)* | Spacing preset: `compact`, `spacious` |
+| `--from` | string | — | Base theme file to extend (override specific flags) |
 | `--output` / `-o` | string | *(stdout)* | Output file path |
 
 ```bash
+# Basic: 3 colors
 figma-kit theme init --name "Ocean" --bg "#0A1628" --primary "#2196F3" --accent "#00BCD4" -o themes/ocean.json
+
+# Full: custom fonts, status colors, compact spacing
+figma-kit theme init --name "Brand" --bg "#1a1a2e" --primary "#e94560" --accent "#0f3460" \
+  --font-heading "Poppins" --font-body "DM Sans" --spacing compact -o brand.json
+
+# Extend an existing theme
+figma-kit theme init --from themes/brand.json --name "Brand Light" --bg "#F8F9FA" -o brand-light.json
 ```
 
 ---
@@ -2513,7 +2529,7 @@ figma-kit theme init --name "Ocean" --bg "#0A1628" --primary "#2196F3" --accent 
 
 **Usage:** `figma-kit theme preview [flags]`
 
-**Description:** Outputs `use_figma` JS that creates a compact theme preview page in Figma with color swatches, type scale specimens, and sample components.
+**Description:** Outputs `use_figma` JS that creates a theme preview page in Figma. Includes: color swatches for all tokens, type scale using the theme's actual fonts, sample UI components (button, badge, status chips), gradient swatches from actual theme data, and brand info if present.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
@@ -2522,6 +2538,40 @@ figma-kit theme init --name "Ocean" --bg "#0A1628" --primary "#2196F3" --accent 
 
 ```bash
 figma-kit theme preview -t noir
+figma-kit theme preview -t themes/brand.json
+```
+
+---
+
+### `export tokens`
+
+**Usage:** `figma-kit export tokens [flags]`
+
+**Description:** Output theme tokens in JSON or CSS. Runs locally (no Figma plugin needed).
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--format` | string | `json` | Output format: `json` or `css` |
+| `--theme` / `-t` | string | *(resolved)* | Theme to export |
+
+The `css` format emits CSS custom properties for colors, fonts, typography scale, and spacing:
+
+```bash
+figma-kit export tokens --format css -t noir
+# → :root { --fk-BG: #0D0F17; --fk-font-heading: 'Inter'; --fk-h1-size: 72px; ... }
+```
+
+---
+
+### `validate theme`
+
+**Usage:** `figma-kit validate theme <path-or-name>`
+
+**Description:** Parse and validate a theme. Reports color count, type scale, fonts, brand info. Warns (without failing) about missing conventional tokens (BG, WT, BL, CARD, STK), empty type/fonts/effects/spacing sections.
+
+```bash
+figma-kit validate theme themes/my-theme.json
+figma-kit validate theme noir
 ```
 
 ---

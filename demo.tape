@@ -50,7 +50,7 @@ Type "figma-kit node create frame --name 'Hero' -w 1440 --height 900"
 Enter
 Sleep 1.2s
 
-Type "figma-kit ui badge -t noir --label 'v0.2.0'"
+Type "figma-kit ui badge -t noir --label 'Open Source'"
 Enter
 Sleep 1.2s
 

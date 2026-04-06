@@ -53,18 +53,19 @@ func TestLoad_nonexistent(t *testing.T) {
 	}
 }
 
-func TestList_threeEmbeddedThemes(t *testing.T) {
+func TestList_includesBuiltInAndCommunity(t *testing.T) {
 	infos := List()
-	if len(infos) != 3 {
-		t.Fatalf("expected 3 themes, got %d: %+v", len(infos), infos)
+	if len(infos) < 4 {
+		t.Fatalf("expected at least 4 themes (3 built-in + community), got %d: %+v", len(infos), infos)
 	}
-	keys := make([]string, len(infos))
-	for i, info := range infos {
-		keys[i] = info.Key
+	keys := make(map[string]bool)
+	for _, info := range infos {
+		keys[info.Key] = true
 	}
-	want := []string{"default", "light", "noir"}
-	if !slices.Equal(keys, want) {
-		t.Errorf("keys = %v, want %v", keys, want)
+	for _, want := range []string{"default", "light", "noir", "ocean"} {
+		if !keys[want] {
+			t.Errorf("missing expected theme %q in list", want)
+		}
 	}
 }
 
@@ -145,6 +146,38 @@ func TestLoadFile_missingColors(t *testing.T) {
 	_, err := LoadFile(p)
 	if err == nil {
 		t.Fatal("expected error")
+	}
+}
+
+func TestLoadFile_hexColors(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "hex.json")
+	js := `{
+  "name": "Hex Test",
+  "colors": {
+    "BG": "#0D0F17",
+    "BL": "#3366FF",
+    "mixed": { "r": 0.5, "g": 0.5, "b": 0.5 }
+  }
+}`
+	if err := os.WriteFile(p, []byte(js), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	th, err := LoadFile(p)
+	if err != nil {
+		t.Fatalf("LoadFile hex theme: %v", err)
+	}
+	bg := th.Colors["BG"]
+	if bg.R != 0.05 || bg.G != 0.06 || bg.B != 0.09 {
+		t.Errorf("BG hex parse: got %+v", bg)
+	}
+	bl := th.Colors["BL"]
+	if bl.R != 0.2 || bl.G != 0.4 || bl.B != 1.0 {
+		t.Errorf("BL hex parse: got %+v", bl)
+	}
+	mixed := th.Colors["mixed"]
+	if mixed.R != 0.5 {
+		t.Errorf("mixed obj parse: got %+v", mixed)
 	}
 }
 

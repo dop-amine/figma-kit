@@ -163,15 +163,52 @@ func newExportTokensCmd() *cobra.Command {
 				enc.SetIndent("", "  ")
 				return enc.Encode(t)
 			case "css":
-				_, _ = fmt.Fprintf(os.Stdout, "/* export tokens — %s */\n:root {\n", t.Name)
+				_, _ = fmt.Fprintf(os.Stdout, "/* figma-kit tokens — %s */\n:root {\n", t.Name)
+
+				_, _ = fmt.Fprintln(os.Stdout, "  /* Colors */")
 				names := t.ColorNames()
 				sort.Strings(names)
 				for _, name := range names {
 					c := t.Colors[name]
 					h := codegen.RGBToHex(codegen.RGB{R: c.R, G: c.G, B: c.B})
-					key := name
-					_, _ = fmt.Fprintf(os.Stdout, "  --fk-%s: %s;\n", key, h)
+					_, _ = fmt.Fprintf(os.Stdout, "  --fk-%s: %s;\n", name, h)
 				}
+
+				if t.Fonts.Heading != "" || t.Fonts.Body != "" || t.Fonts.Mono != "" {
+					_, _ = fmt.Fprintln(os.Stdout, "\n  /* Fonts */")
+					if t.Fonts.Heading != "" {
+						_, _ = fmt.Fprintf(os.Stdout, "  --fk-font-heading: '%s', sans-serif;\n", t.Fonts.Heading)
+					}
+					if t.Fonts.Body != "" {
+						_, _ = fmt.Fprintf(os.Stdout, "  --fk-font-body: '%s', sans-serif;\n", t.Fonts.Body)
+					}
+					if t.Fonts.Mono != "" {
+						_, _ = fmt.Fprintf(os.Stdout, "  --fk-font-mono: '%s', monospace;\n", t.Fonts.Mono)
+					}
+				}
+
+				if len(t.Type) > 0 {
+					_, _ = fmt.Fprintln(os.Stdout, "\n  /* Typography */")
+					typeKeys := make([]string, 0, len(t.Type))
+					for k := range t.Type {
+						typeKeys = append(typeKeys, k)
+					}
+					sort.Strings(typeKeys)
+					for _, k := range typeKeys {
+						ts := t.Type[k]
+						_, _ = fmt.Fprintf(os.Stdout, "  --fk-%s-size: %dpx;\n", k, ts.FontSize)
+						if ts.LineHeight != nil {
+							_, _ = fmt.Fprintf(os.Stdout, "  --fk-%s-lh: %dpx;\n", k, *ts.LineHeight)
+						}
+					}
+				}
+
+				_, _ = fmt.Fprintln(os.Stdout, "\n  /* Spacing */")
+				_, _ = fmt.Fprintf(os.Stdout, "  --fk-page-padding: %dpx;\n", t.Spacing.Page.Padding)
+				_, _ = fmt.Fprintf(os.Stdout, "  --fk-page-gap: %dpx;\n", t.Spacing.Page.Gap)
+				_, _ = fmt.Fprintf(os.Stdout, "  --fk-card-padding: %dpx;\n", t.Spacing.Card.Padding)
+				_, _ = fmt.Fprintf(os.Stdout, "  --fk-card-gap: %dpx;\n", t.Spacing.Card.Gap)
+
 				_, _ = fmt.Fprintln(os.Stdout, "}")
 				return nil
 			default:

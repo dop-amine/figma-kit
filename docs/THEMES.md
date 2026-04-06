@@ -68,6 +68,22 @@ Community-contributed themes ship bundled in `assets/themes/community/`. Anyone 
 
 `figma-kit themes` lists all themes grouped by source (built-in, community, user, local).
 
+### Hex strings in JSON
+
+Colors can be specified as hex strings instead of `{r, g, b}` objects — this is the recommended format for AI agents:
+
+```json
+{
+  "colors": {
+    "BG": "#0D0F17",
+    "BL": "#3366FF",
+    "TL": "#14B8A6"
+  }
+}
+```
+
+Both formats are accepted. Hex is preferred for readability and because AI agents extract hex from websites and images, not 0-1 floats.
+
 ## Color tokens
 
 Themes use short names as **JavaScript identifiers** in generated code (`const BG = { r, g, b };`). Common tokens:
@@ -84,6 +100,9 @@ Themes use short names as **JavaScript identifiers** in generated code (`const B
 | `SUCCESS`, `ERR`, `WARN` | Semantic states |
 | `TL` | Teal or secondary accent |
 | `AC` | Accent (conventional; not all built-in themes define it) |
+| `LINK` | Link color (defaults to BL) |
+| `CARD2` | Second elevation surface |
+| `HOVER` | Subtle interactive highlight |
 
 **Not every theme defines every token.** Light adds `TH` (titles on light backgrounds) and `RL`; your templates or YAML should match the active theme or you should extend the JSON.
 
@@ -128,23 +147,128 @@ When a command needs a theme, `resolveTheme` applies:
 
 To use a one-off file path from the shell, place or symlink it under those directories with a stable `<name>.json`, or extend the CLI to call `theme.LoadFile` (Go API today: `theme.LoadFile(path)`).
 
+## AI-Driven Theme Creation
+
+The recommended workflow uses an AI agent to create themes from visual references:
+
+```
+1. Paste screenshot or URL into Cursor / Claude Code
+2. AI extracts dominant colors (background, primary, accent)
+3. AI runs: figma-kit theme init --name "Brand" --bg "#1a1a2e" --primary "#e94560" --accent "#0f3460"
+4. AI runs: figma-kit theme preview -t "Brand"
+5. Verify the preview in Figma
+6. AI uses the theme to build: figma-kit make landing -t "Brand"
+```
+
+### Example prompts for your AI agent
+
+```
+"Create a figma-kit theme matching this website: https://stripe.com"
+
+"Look at this screenshot and create a figma-kit theme from the dominant colors. Use Poppins for headings."
+
+"Create a dark, warm figma-kit theme with orange accents. Then build a landing page with it."
+```
+
+### Example AI session
+
+```
+User: Create a figma-kit theme inspired by the Linear app, then build a feature showcase.
+
+AI: I'll extract Linear's design language and create a matching theme.
+
+$ figma-kit theme init \
+    --name "Linear Dark" \
+    --bg "#1B1B25" \
+    --primary "#5E6AD2" \
+    --accent "#26B5CE" \
+    --font-heading "Inter" \
+    --font-body "Inter" \
+    --spacing compact \
+    -o themes/linear-dark.json
+
+Theme written to themes/linear-dark.json
+
+$ figma-kit theme preview -t themes/linear-dark.json
+# → Preview page appears in Figma
+
+$ figma-kit make landing -t themes/linear-dark.json --title "Issue Tracking" --subtitle "Reimagined"
+# → Full landing page with Linear-style colors
+```
+
+figma-kit does not do the AI extraction itself — the AI agent already can parse images and websites. figma-kit provides the **perfect API** for that agent: hex input everywhere, rich flags, clear output.
+
+### Every way to create a theme
+
+| Entry point | Who does the extraction? | What you say / do | figma-kit command |
+|---|---|---|---|
+| **Website URL** | AI reads the live site, extracts colors and fonts | *"Create a figma-kit theme matching stripe.com"* | `theme init --name "Stripe" --bg "#0A2540" --primary "#635BFF" --accent "#00D4AA" --font-heading "Sohne"` |
+| **Screenshot / image** | AI analyzes pixels, picks dominant palette | *"Create a figma-kit theme from the dominant colors in this screenshot"* | `theme init --bg "#..." --primary "#..." --accent "#..."` |
+| **Photoshop / PSD** | AI reads layer styles, color swatches, type | *"Use the colors and fonts from this PSD to create a figma-kit theme"* | `theme init --bg "#..." --primary "#..." --font-heading "Montserrat"` |
+| **Mood / description** | AI interprets the aesthetic, chooses colors | *"Create a warm, minimal figma-kit theme with earth tones"* | `theme init --name "Earth" --bg "#2C2418" --primary "#D4956A" --accent "#8B9E6B"` |
+| **Existing theme** | You specify overrides on a base | `--from ocean.json --bg "#F8F9FA"` | `theme init --from themes/ocean.json --name "Ocean Light" --bg "#F8F9FA"` |
+| **Web builder** | You pick colors visually | Visit [theme-builder.html](https://dop-amine.github.io/figma-kit/theme-builder.html) | Download JSON, place in `themes/` |
+| **Manual JSON** | You write it by hand | Copy a built-in theme and edit hex values | Place in `~/.config/figma-kit/themes/` or `./themes/` |
+
+### What you can customize
+
+Everything `theme init` (and the web builder) can control:
+
+| Category | Flags | What it affects |
+|---|---|---|
+| **Seed colors** | `--bg`, `--primary`, `--accent` | Derives 14 tokens: BG, CARD, CARD2, WT, BD, MT, BL, TL, LINK, STK, HOVER, WARN, ERR, SUCCESS |
+| **Fonts** | `--font-heading`, `--font-body`, `--font-mono` | Typography across all type scale entries; used in theme preview and templates |
+| **Status colors** | `--warn`, `--error`, `--success` | Override the auto-derived status colors |
+| **Spacing** | `--spacing compact` or `--spacing spacious` | Page padding, card padding, slide margins — affects `make` layout templates |
+| **Base theme** | `--from <path>` | Start from any existing theme and override specific values |
+| **Brand** | (JSON only) `brand.tagline`, `brand.url` | Shown in theme preview; available to templates |
+
+### Architectural limits
+
+These are intentional design choices:
+
+- **figma-kit does not fetch URLs or parse images** — the AI agent (Cursor, Claude Code, etc.) does all visual perception. figma-kit is the execution API.
+- **figma-kit does not read .psd / .sketch / .ai files** — but AI agents like Claude can analyze screenshots of those files and extract colors.
+- **Font availability depends on Figma** — the font must be available in Figma (Google Fonts, uploaded fonts) for the generated JS to work.
+- **Effects use fixed presets** — glass and shadow effects have named presets (subtle/default/strong), not arbitrary CSS.
+- **`theme preview` is a static Figma frame** — not an interactive component.
+
 ## Creating themes
 
-There are three ways to create a custom theme:
+There are four ways to create a custom theme:
 
 ### 1. Web Theme Builder (recommended for designers)
 
 Visit [dop-amine.github.io/figma-kit/theme-builder.html](https://dop-amine.github.io/figma-kit/theme-builder.html) to pick colors visually, see a live preview, and download ready-to-use JSON.
 
-### 2. `figma-kit theme init` (CLI)
+### 2. AI agent (let your AI create it)
+
+Paste a screenshot, URL, or color description into Cursor or Claude Code and ask it to create a theme. See [AI-Driven Theme Creation](#ai-driven-theme-creation) above.
+
+### 3. `figma-kit theme init` (CLI)
 
 ```bash
+# Basic: 3 colors
 figma-kit theme init --name "Ocean" --bg "#0A1628" --primary "#2196F3" --accent "#00BCD4" -o themes/ocean.json
+
+# Full: custom fonts, status colors, compact spacing
+figma-kit theme init \
+  --name "Brand Kit" \
+  --bg "#1a1a2e" --primary "#e94560" --accent "#0f3460" \
+  --font-heading "Poppins" --font-body "DM Sans" --font-mono "JetBrains Mono" \
+  --warn "#FFAA00" --error "#FF4444" --success "#22CC66" \
+  --spacing compact \
+  -o themes/brand.json
+
+# Extend an existing theme
+figma-kit theme init --from themes/brand.json --name "Brand Light" --bg "#F8F9FA" -o themes/brand-light.json
 ```
 
-Provide 3 hex colors and the CLI derives the full palette (card, text, muted, stroke, warn, error, success), plus typography, effects, and spacing defaults. Run with no flags to print a starter template.
+Available flags: `--name`, `--desc`, `--bg`, `--primary`, `--accent`, `--font-heading`, `--font-body`, `--font-mono`, `--warn`, `--error`, `--success`, `--spacing` (compact/spacious), `--from` (base theme), `-o` (output path).
 
-### 3. Copy and edit
+Run with no flags to print a starter template.
+
+### 4. Copy and edit
 
 1. Copy `assets/themes/default.json` (or `light.json`) as a starting point.
 2. Save as either:
@@ -188,14 +312,39 @@ For real work, start from a full built-in file and edit values.
 
 ## Exporting tokens (no plugin)
 
-Theme tokens can be dumped from Go without running Figma:
+Theme tokens can be exported from Go without running Figma:
 
 ```bash
 figma-kit export tokens --format json
-figma-kit export tokens --format css
+figma-kit export tokens --format css -t noir
 ```
 
 - **`json`**: Full theme object as JSON (default).
-- **`css`**: `:root { --fk-<COLORNAME>: #hex; }` for each color key (sorted).
+- **`css`**: CSS custom properties for colors, fonts, typography scale, and spacing:
+
+```css
+:root {
+  /* Colors */
+  --fk-BG: #0D0F17;
+  --fk-BL: #3366FF;
+  /* ... all color tokens ... */
+
+  /* Fonts */
+  --fk-font-heading: 'Inter', sans-serif;
+  --fk-font-body: 'Inter', sans-serif;
+  --fk-font-mono: 'Geist Mono', monospace;
+
+  /* Typography */
+  --fk-h1-size: 72px;
+  --fk-h1-lh: 86px;
+  --fk-body-size: 16px;
+  /* ... all type scale entries ... */
+
+  /* Spacing */
+  --fk-page-padding: 80px;
+  --fk-card-padding: 24px;
+  /* ... */
+}
+```
 
 Both commands respect `-t` / `.figmarc.json` / `default` the same way as other commands.

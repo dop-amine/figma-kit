@@ -3,6 +3,7 @@ package theme
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -10,10 +11,35 @@ import (
 )
 
 // RGB holds a Figma-compatible color in 0-1 range.
+// JSON accepts either {"r":0.2,"g":0.4,"b":1.0} or "#3366FF".
 type RGB struct {
 	R float64 `json:"r"`
 	G float64 `json:"g"`
 	B float64 `json:"b"`
+}
+
+// UnmarshalJSON accepts hex strings ("#RRGGBB") or standard {r,g,b} objects.
+func (c *RGB) UnmarshalJSON(data []byte) error {
+	if len(data) > 0 && data[0] == '"' {
+		var hex string
+		if err := json.Unmarshal(data, &hex); err != nil {
+			return err
+		}
+		hex = strings.TrimPrefix(hex, "#")
+		if len(hex) != 6 {
+			return fmt.Errorf("invalid hex color %q: must be 6 hex digits", hex)
+		}
+		var r, g, b uint8
+		if _, err := fmt.Sscanf(hex, "%02x%02x%02x", &r, &g, &b); err != nil {
+			return fmt.Errorf("invalid hex color %q: %w", hex, err)
+		}
+		c.R = math.Round(float64(r)/255*100) / 100
+		c.G = math.Round(float64(g)/255*100) / 100
+		c.B = math.Round(float64(b)/255*100) / 100
+		return nil
+	}
+	type plain RGB
+	return json.Unmarshal(data, (*plain)(c))
 }
 
 // TypeSpec defines a typography preset.
