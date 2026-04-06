@@ -1,8 +1,13 @@
 # figma-kit command reference
 
-`figma-kit` is a CLI that mostly prints **JavaScript** meant to run inside Figma via the **`use_figma`** / MCP workflow (theme preamble, helpers, and plugin-style API calls). A few commands only print **instructions**, **token/CSS/JSON** to stdout, or perform **local** actions (`init`, `open`).
+`figma-kit` is a CLI with **150+ commands** that generates JavaScript for Figma's `use_figma` MCP tool. It covers everything from low-level node primitives to complete design templates, all powered by a built-in theme system.
 
-Unless noted, **pipe or paste the output** into your Figma MCP execution path. Commands that resolve a theme use **`--theme` / `-t`** and page index **`--page` / `-p`** when relevant.
+**Two ways to use commands:**
+- **AI workflow:** Let your AI agent (Cursor, Claude Code) select and sequence commands. The JS output is piped to `use_figma` automatically.
+- **Direct execution:** Run `figma-kit exec <command>` to generate JS and send it to Figma in one shot (requires `figma-kit auth login` first).
+- **Standalone:** Run any command and pipe/paste the output into your Figma MCP execution path.
+
+Commands that resolve a theme use **`--theme` / `-t`** and page index **`--page` / `-p`** when relevant.
 
 ---
 
@@ -131,6 +136,74 @@ figma-kit open
 
 ```bash
 figma-kit status
+```
+
+---
+
+### `auth login`
+
+**Usage:** `figma-kit auth login`
+
+**Description:** Initiate Figma OAuth flow. Opens a browser for authorization, caches the token at `~/.config/figma-kit/token.json`. Required for `exec` and direct MCP commands.
+
+```bash
+figma-kit auth login
+```
+
+---
+
+### `auth logout`
+
+**Usage:** `figma-kit auth logout`
+
+**Description:** Clear the cached OAuth token.
+
+```bash
+figma-kit auth logout
+```
+
+---
+
+### `auth status`
+
+**Usage:** `figma-kit auth status`
+
+**Description:** Check whether a valid OAuth token exists.
+
+```bash
+figma-kit auth status
+```
+
+---
+
+### `exec`
+
+**Usage:** `figma-kit exec <sub-command> [flags]`
+
+**Description:** Generate JS from any figma-kit command and execute it directly in Figma via the MCP server in one shot. No AI middleman required. Requires prior `auth login`.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--file-key` | string | *(from config)* | Figma file key to target |
+| `--screenshot` | bool | `false` | Take a screenshot after execution |
+| `--timeout` | duration | `30s` | MCP call timeout |
+
+```bash
+figma-kit exec make carousel -t noir --content slides.yml
+figma-kit exec card glass -t noir --title "Feature" --screenshot
+figma-kit exec ui hero -t noir --title "Ship Faster"
+```
+
+---
+
+### `new-file`
+
+**Usage:** `figma-kit new-file <name>`
+
+**Description:** Create a new Figma file via MCP. Requires prior `auth login`.
+
+```bash
+figma-kit new-file "My Landing Page"
 ```
 
 ---
@@ -349,6 +422,55 @@ figma-kit node component "2:3"
 
 ```bash
 figma-kit node flatten "4:5"
+```
+
+---
+
+### `node boolean`
+
+**Usage:** `figma-kit node boolean <operation> <nodeA> <nodeB>`
+
+**Description:** Perform a boolean shape operation on two nodes. Operations: `union`, `subtract`, `intersect`, `exclude`.
+
+```bash
+figma-kit node boolean union "1:2" "1:3"
+figma-kit node boolean subtract "1:2" "1:3"
+figma-kit node boolean intersect "1:2" "1:3"
+```
+
+---
+
+### `node svg`
+
+**Usage:** `figma-kit node svg <path-data>`
+
+**Description:** Create a vector node from SVG path data.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--fill` | string | `""` | Fill color hex |
+| `--stroke` | string | `""` | Stroke color hex |
+| `--size` | int | `100` | Viewbox size |
+
+```bash
+figma-kit node svg "M10 10 L90 90 L10 90 Z" --fill "#3B82F6"
+figma-kit node svg "M50 0 L100 100 L0 100 Z" --fill "#EF4444" --size 200
+```
+
+---
+
+### `node variant-set`
+
+**Usage:** `figma-kit node variant-set <componentId>`
+
+**Description:** Create a component set with variant rows from a base component.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--variants` | string (JSON) | `[]` | Array of variant definitions |
+
+```bash
+figma-kit node variant-set "5:10" --variants '[{"name":"Size=Small","width":100},{"name":"Size=Large","width":200}]'
 ```
 
 ---
@@ -804,6 +926,63 @@ figma-kit card bento --cols 4 --rows 3 --gap 12
 
 ---
 
+### `card neumorphic`
+
+**Usage:** `figma-kit card neumorphic`
+
+**Description:** Soft UI (neumorphism) card with inset/outset shadow pairs.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--title` | string | `Card` | Card title |
+| `--desc` | string | `""` | Description text |
+| `--depth` | string | `medium` | `shallow`, `medium`, `deep` |
+| `--inset` | bool | `false` | Inset (pressed) shadow style |
+
+```bash
+figma-kit card neumorphic --title "Settings" --depth deep
+figma-kit card neumorphic --title "Volume" --inset
+```
+
+---
+
+### `card clay`
+
+**Usage:** `figma-kit card clay`
+
+**Description:** Claymorphism / puffy 3D card with soft shadows and rounded corners.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--title` | string | `Card` | Card title |
+| `--desc` | string | `""` | Description text |
+| `--color` | string | `""` | Accent color hex (overrides theme primary) |
+
+```bash
+figma-kit card clay --title "Welcome" --color "#A78BFA"
+```
+
+---
+
+### `card outline`
+
+**Usage:** `figma-kit card outline`
+
+**Description:** Ghost / outline card with optional glow border effect.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--title` | string | `Card` | Card title |
+| `--desc` | string | `""` | Description text |
+| `--glow-color` | string | `""` | Glow border color hex |
+| `--glow-spread` | float | `4` | Glow spread radius |
+
+```bash
+figma-kit card outline --title "API Docs" --glow-color "#3B82F6" --glow-spread 8
+```
+
+---
+
 ### `ui button`
 
 **Usage:** `figma-kit ui button`
@@ -1030,6 +1209,400 @@ figma-kit ui footer --cols 4 --copyright "© 2026 Acme"
 
 ---
 
+### `ui checkbox`
+
+**Usage:** `figma-kit ui checkbox`
+
+**Description:** Themed checkbox with label.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--label` | string | `Option` | Checkbox label |
+| `--checked` | bool | `false` | Pre-checked state |
+
+```bash
+figma-kit ui checkbox --label "Accept terms" --checked
+```
+
+---
+
+### `ui radio`
+
+**Usage:** `figma-kit ui radio`
+
+**Description:** Themed radio button with label.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--label` | string | `Option` | Radio label |
+| `--selected` | bool | `false` | Pre-selected state |
+
+```bash
+figma-kit ui radio --label "Monthly" --selected
+```
+
+---
+
+### `ui tabs`
+
+**Usage:** `figma-kit ui tabs`
+
+**Description:** Tab bar with selectable items.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--items` | string | `Tab 1,Tab 2,Tab 3` | Comma-separated tab labels |
+| `--active` | int | `0` | Index of active tab |
+
+```bash
+figma-kit ui tabs --items "Overview,Features,Pricing" --active 1
+```
+
+---
+
+### `ui dropdown`
+
+**Usage:** `figma-kit ui dropdown`
+
+**Description:** Dropdown / select component.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--options` | string | `Option 1,Option 2,Option 3` | Comma-separated options |
+| `--selected` | string | `""` | Pre-selected value |
+
+```bash
+figma-kit ui dropdown --options "Draft,Published,Archived" --selected "Draft"
+```
+
+---
+
+### `ui breadcrumb`
+
+**Usage:** `figma-kit ui breadcrumb`
+
+**Description:** Breadcrumb navigation trail.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--items` | string | `Home,Products,Detail` | Comma-separated breadcrumb items |
+
+```bash
+figma-kit ui breadcrumb --items "Home,Dashboard,Settings,Profile"
+```
+
+---
+
+### `ui skeleton`
+
+**Usage:** `figma-kit ui skeleton`
+
+**Description:** Skeleton loading placeholder.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--rows` | int | `3` | Number of skeleton rows |
+
+```bash
+figma-kit ui skeleton --rows 5
+```
+
+---
+
+### `ui chip`
+
+**Usage:** `figma-kit ui chip`
+
+**Description:** Tag / filter chip component.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--label` | string | `Tag` | Chip label |
+| `--variant` | string | `filled` | `filled`, `outlined`, `tonal` |
+| `--dismissible` | bool | `false` | Show dismiss icon |
+
+```bash
+figma-kit ui chip --label "React" --variant outlined
+figma-kit ui chip --label "Filter" --dismissible
+```
+
+---
+
+### `ui toast`
+
+**Usage:** `figma-kit ui toast`
+
+**Description:** Notification / toast popup.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--message` | string | `Notification` | Toast message |
+| `--type` | string | `info` | `info`, `success`, `warning`, `error` |
+
+```bash
+figma-kit ui toast --message "Changes saved" --type success
+figma-kit ui toast --message "Connection lost" --type error
+```
+
+---
+
+### `ui modal`
+
+**Usage:** `figma-kit ui modal`
+
+**Description:** Modal / dialog with overlay.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--title` | string | `Modal` | Modal title |
+| `--body` | string | `""` | Body content text |
+| `--primary-action` | string | `Confirm` | Primary button label |
+| `--secondary-action` | string | `Cancel` | Secondary button label |
+
+```bash
+figma-kit ui modal --title "Delete item?" --body "This action cannot be undone." --primary-action "Delete"
+```
+
+---
+
+### `ui card-list`
+
+**Usage:** `figma-kit ui card-list`
+
+**Description:** Vertical list of data cards.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--items` | string (JSON) | `[]` | Array of `{title, desc}` objects |
+
+```bash
+figma-kit ui card-list --items '[{"title":"Item 1","desc":"Description"},{"title":"Item 2","desc":"Details"}]'
+```
+
+---
+
+### `ui sidebar`
+
+**Usage:** `figma-kit ui sidebar`
+
+**Description:** Sidebar navigation panel.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--items` | string | `Dashboard,Settings,Profile` | Comma-separated nav items |
+| `--active` | int | `0` | Active item index |
+
+```bash
+figma-kit ui sidebar --items "Home,Projects,Team,Settings" --active 1
+```
+
+---
+
+### `ui avatar-group`
+
+**Usage:** `figma-kit ui avatar-group`
+
+**Description:** Overlapping avatar stack.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--count` | int | `4` | Number of avatars |
+| `--size` | int | `40` | Avatar diameter in px |
+| `--overlap` | int | `12` | Overlap in px |
+
+```bash
+figma-kit ui avatar-group --count 5 --size 48 --overlap 16
+```
+
+---
+
+### `ui rating`
+
+**Usage:** `figma-kit ui rating`
+
+**Description:** Star rating display.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--value` | float | `3.5` | Rating value (0–5) |
+| `--max` | int | `5` | Maximum stars |
+
+```bash
+figma-kit ui rating --value 4.5
+```
+
+---
+
+### `ui search`
+
+**Usage:** `figma-kit ui search`
+
+**Description:** Search input with icon.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--placeholder` | string | `Search...` | Placeholder text |
+
+```bash
+figma-kit ui search --placeholder "Search components..."
+```
+
+---
+
+### `ui pagination`
+
+**Usage:** `figma-kit ui pagination`
+
+**Description:** Page number navigation bar.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--pages` | int | `5` | Total page count |
+| `--current` | int | `1` | Current active page |
+
+```bash
+figma-kit ui pagination --pages 10 --current 3
+```
+
+---
+
+### `ui color-picker`
+
+**Usage:** `figma-kit ui color-picker`
+
+**Description:** Color swatch grid.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--colors` | string | `""` | Comma-separated hex colors (defaults to theme palette) |
+| `--cols` | int | `6` | Grid columns |
+
+```bash
+figma-kit ui color-picker --colors "#FF0000,#00FF00,#0000FF,#FFFF00" --cols 4
+```
+
+---
+
+### `ui hero`
+
+**Usage:** `figma-kit ui hero`
+
+**Description:** Complete hero section with headline, subtitle, CTA button, and optional badge.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--title` | string | `Headline` | Hero headline |
+| `--subtitle` | string | `""` | Subtitle text |
+| `--cta` | string | `Get Started` | CTA button label |
+| `--badge` | string | `""` | Optional top badge text |
+
+```bash
+figma-kit ui hero -t noir --title "Ship Faster" --subtitle "Build with AI" --cta "Start Free" --badge "New"
+```
+
+---
+
+### `ui pricing`
+
+**Usage:** `figma-kit ui pricing`
+
+**Description:** Pricing table with tier cards. Highlighted tier gets accent border.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--tiers` | string (JSON) | *(3 defaults)* | Array of `{name, price, features[], highlighted?}` |
+
+```bash
+figma-kit ui pricing -t noir --tiers '[{"name":"Free","price":"$0","features":["5 projects"]},{"name":"Pro","price":"$29","highlighted":true,"features":["Unlimited","Priority support"]}]'
+```
+
+---
+
+### `ui feature-grid`
+
+**Usage:** `figma-kit ui feature-grid`
+
+**Description:** Grid of feature cards with icon placeholders.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--cols` | int | `3` | Number of columns |
+| `--features` | string (JSON) | *(3 defaults)* | Array of `{title, desc}` |
+
+```bash
+figma-kit ui feature-grid -t noir --cols 3
+```
+
+---
+
+### `ui testimonial`
+
+**Usage:** `figma-kit ui testimonial`
+
+**Description:** Quote / testimonial card with avatar, name, and star rating.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--name` | string | `Jane Doe` | Author name |
+| `--role` | string | `""` | Author role/title |
+| `--quote` | string | `""` | Quote text |
+| `--rating` | int | `5` | Star rating (0–5) |
+
+```bash
+figma-kit ui testimonial -t noir --name "Jane" --quote "Changed everything" --rating 5
+```
+
+---
+
+### `ui timeline`
+
+**Usage:** `figma-kit ui timeline`
+
+**Description:** Vertical timeline with date markers and event descriptions.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--entries` | string (JSON) | *(3 defaults)* | Array of `{date, title, desc?}` |
+
+```bash
+figma-kit ui timeline -t noir --entries '[{"date":"Jan 2024","title":"Launch"},{"date":"Mar 2024","title":"1K users"}]'
+```
+
+---
+
+### `ui stepper`
+
+**Usage:** `figma-kit ui stepper`
+
+**Description:** Step progress indicator (wizard / form steps).
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--steps` | string | `Step 1,Step 2,Step 3` | Comma-separated step labels |
+| `--current` | int | `1` | Current active step (1-based) |
+
+```bash
+figma-kit ui stepper --steps "Account,Profile,Billing,Confirm" --current 2
+```
+
+---
+
+### `ui accordion`
+
+**Usage:** `figma-kit ui accordion`
+
+**Description:** Expandable FAQ / accordion section.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--items` | string (JSON) | *(3 defaults)* | Array of `{question, answer}` |
+
+```bash
+figma-kit ui accordion -t noir --items '[{"question":"Is it free?","answer":"Yes, MIT licensed."}]'
+```
+
+---
+
 ### `fx glow`
 
 **Usage:** `figma-kit fx glow <nodeId>`
@@ -1179,6 +1752,94 @@ figma-kit fx shadow "123:456" --preset xl
 
 ```bash
 figma-kit fx parallax-layer "123:456" --layers 5
+```
+
+---
+
+### `fx aurora`
+
+**Usage:** `figma-kit fx aurora <nodeId>`
+
+**Description:** Northern lights gradient overlay effect with layered ellipses.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--palette` | string | `default` | Color palette: `default`, `sunset`, `ocean`, `forest` |
+
+```bash
+figma-kit fx aurora "123:456" --palette sunset
+```
+
+---
+
+### `fx morph`
+
+**Usage:** `figma-kit fx morph <nodeId>`
+
+**Description:** Organic blob / morphism shapes inside a parent frame.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--count` | int | `3` | Number of blobs |
+| `--spread` | float | `0.8` | Spread factor (0–1) |
+
+```bash
+figma-kit fx morph "123:456" --count 5 --spread 0.6
+```
+
+---
+
+### `fx gradient-border`
+
+**Usage:** `figma-kit fx gradient-border <nodeId>`
+
+**Description:** Simulated gradient stroke by layering a slightly larger gradient-filled frame behind the target.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--from` | string | theme primary | Start color hex |
+| `--to` | string | theme accent | End color hex |
+| `--width` | int | `2` | Border thickness in px |
+
+```bash
+figma-kit fx gradient-border "123:456" --from "#3B82F6" --to "#8B5CF6"
+```
+
+---
+
+### `fx spotlight`
+
+**Usage:** `figma-kit fx spotlight <nodeId>`
+
+**Description:** Circular radial highlight effect.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--x` | float | `0.5` | Horizontal position (0–1) |
+| `--y` | float | `0.3` | Vertical position (0–1) |
+| `--intensity` | float | `0.4` | Opacity of the highlight |
+
+```bash
+figma-kit fx spotlight "123:456" --x 0.7 --y 0.2 --intensity 0.6
+```
+
+---
+
+### `fx pattern`
+
+**Usage:** `figma-kit fx pattern <nodeId>`
+
+**Description:** Repeating geometric background patterns.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--type` | string | `dots` | Pattern type: `dots`, `lines`, `crosses`, `diagonal`, `grid` |
+| `--scale` | float | `1.0` | Scale factor |
+| `--opacity` | float | `0.1` | Pattern opacity |
+
+```bash
+figma-kit fx pattern "123:456" --type crosses --scale 1.5
+figma-kit fx pattern "123:456" --type diagonal --opacity 0.15
 ```
 
 ---
@@ -1790,6 +2451,22 @@ figma-kit make menu --sections 3 --format letter
 
 ---
 
+### `make changelog`
+
+**Usage:** `figma-kit make changelog`
+
+**Description:** Styled changelog / release notes page with version entries, date stamps, and type badges (added, changed, fixed, removed).
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--entries` | string (JSON) | *(defaults)* | Array of `{version, date, changes: [{type, text}]}` |
+
+```bash
+figma-kit make changelog -t noir --entries '[{"version":"1.0.0","date":"2026-04-01","changes":[{"type":"added","text":"Direct MCP execution"},{"type":"added","text":"30 new design commands"}]}]'
+```
+
+---
+
 ## Layer 4 — Design system (`ds`)
 
 ### `ds create`
@@ -2030,6 +2707,22 @@ figma-kit ds audit -t default
 
 ```bash
 figma-kit ds tokens -t light > theme-light.json
+```
+
+---
+
+### `ds component-sheet`
+
+**Usage:** `figma-kit ds component-sheet`
+
+**Description:** Generate a component inventory page showing all theme-aware components in a labeled grid. Useful for design system documentation.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--cols` | int | `4` | Grid columns |
+
+```bash
+figma-kit ds component-sheet -t noir --cols 3
 ```
 
 ---
@@ -2580,4 +3273,4 @@ figma-kit validate theme noir
 
 - Root help: `figma-kit --help`
 - Command help: `figma-kit <command> --help`
-- Additional top-level commands (not in layers 0–7 above): `preamble`, `helpers`, `template`, `themes`, `scaffold`, `info`, `theme`, `completion`.
+- Additional top-level commands (not in layers 0–7 above): `preamble`, `helpers`, `template`, `themes`, `scaffold`, `info`, `theme`, `cookbook`, `examples`, `docs`, `completion`.

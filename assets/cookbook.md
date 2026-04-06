@@ -40,24 +40,29 @@ figma-kit theme preview -t stripe
 figma-kit preamble -t stripe
 # → AI executes via use_figma
 
-# 4. Create the hero section
-figma-kit node create frame --name "Hero" -w 1440 --height 800
-figma-kit fx mesh <hero-id> -t stripe
-figma-kit text create --content "Payments infrastructure\nfor the internet" \
-  --font "Sohne" --weight Bold --size 72 --color "#FFFFFF" --parent <hero-id>
-figma-kit text create --content "Millions of companies use Stripe to accept payments, send payouts, and manage their businesses online." \
-  --font "Sohne" --size 20 --color "#87909E" --parent <hero-id>
-figma-kit ui button --variant primary -t stripe --parent <hero-id>
+# 4. Create the hero section (one command)
+figma-kit ui hero -t stripe \
+  --title "Payments infrastructure for the internet" \
+  --subtitle "Millions of companies use Stripe to accept payments" \
+  --cta "Start now" \
+  --badge "New"
 
-# 5. Build the feature grid
-figma-kit card glass -t stripe --title "Payments" --desc "Accept and optimise payments globally" -w 400 --height 280
-figma-kit card glass -t stripe --title "Billing" --desc "Build and scale your recurring business model" -w 400 --height 280
-figma-kit card glass -t stripe --title "Connect" --desc "Set up multi-party payments and payouts" -w 400 --height 280
+# 5. Build the feature grid (one command)
+figma-kit ui feature-grid -t stripe --cols 3
 
-# 6. Add pricing section
-figma-kit make screen --type pricing --sections "pricing,cta" -t stripe
+# 6. Add individual feature cards with glass effect
+figma-kit card glass -t stripe --title "Payments" --desc "Accept and optimise payments globally"
+figma-kit card glass -t stripe --title "Billing" --desc "Build and scale your recurring business model"
+figma-kit card glass -t stripe --title "Connect" --desc "Set up multi-party payments and payouts"
 
-# 7. QA the full page
+# 7. Add pricing table (one command)
+figma-kit ui pricing -t stripe --tiers '[
+  {"name":"Starter","price":"Free","features":["Core APIs","Test mode"]},
+  {"name":"Pro","price":"$29","highlighted":true,"features":["All APIs","Priority support"]},
+  {"name":"Enterprise","price":"Custom","features":["Everything","Dedicated CSM"]}
+]'
+
+# 8. QA the full page
 figma-kit qa checklist --page 0
 ```
 

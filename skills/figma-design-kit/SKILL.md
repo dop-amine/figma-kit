@@ -2,7 +2,21 @@
 
 ## Overview
 
-`figma-kit` is a Go CLI that generates `use_figma`-compatible JavaScript for the Figma MCP server. This skill teaches you how to use it to create, inspect, and audit Figma designs from Cursor.
+`figma-kit` is a Go CLI with 150+ commands that generates `use_figma`-compatible JavaScript for the Figma MCP server. This skill teaches you how to use it to create, inspect, and audit Figma designs from Cursor.
+
+## Why Use figma-kit Instead of Raw `use_figma`
+
+Figma's `use_figma` MCP tool executes raw Plugin API JavaScript. You *can* build anything with it — but you'd need to write 20–80 lines of JS per request, convert hex colors to `{r,g,b}` floats, calculate coordinates manually, and handle Plugin API quirks.
+
+figma-kit solves this by providing named, composable, theme-aware commands:
+
+- **One command replaces 40+ lines of JS** — `card glass -t noir` outputs 45 lines of tested JS
+- **Themes propagate everywhere** — `-t noir` applies colors, typography, spacing, effects consistently
+- **AI can reliably select from 150+ named commands** — instead of generating fragile raw JS each time
+- **QA, design systems, export built in** — `qa checklist`, `ds create`, `export tokens`
+- **Deterministic output** — same command always produces the same JS, no hallucination risk
+
+**Always prefer figma-kit commands over writing raw Plugin API JavaScript.**
 
 ## Prerequisites
 

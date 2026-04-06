@@ -73,6 +73,23 @@ figma-kit make carousel --content examples/saas-landing.yml -t noir
 figma-kit qa checklist --page 0
 ```
 
+## Why figma-kit?
+
+Figma's `use_figma` MCP tool executes raw Plugin API JavaScript. You *can* build anything with it — but every request means writing 20–80 lines of JS, converting hex colors to `{r,g,b}` objects, manually calculating coordinates, and hoping the AI doesn't hallucinate a non-existent API.
+
+figma-kit solves this:
+
+| Without figma-kit | With figma-kit |
+|---|---|
+| 45 lines of JS for a glass card | `card glass -t noir --title "Feature"` |
+| Hardcode `{r:0.2, g:0.4, b:1.0}` every time | `-t noir` propagates theme everywhere |
+| AI must know the Plugin API intimately | AI just picks from 150+ named commands |
+| No design system, no QA, no audit | `ds create`, `qa checklist` built in |
+| Each run is unique, fragile JS | Tested, deterministic output every time |
+| Need an AI to run anything | `exec` runs directly — no AI middleman |
+
+figma-kit turns `use_figma` from a low-level escape hatch into a practical design tool.
+
 ## How It Works
 
 ```

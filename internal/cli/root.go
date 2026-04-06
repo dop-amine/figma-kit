@@ -22,15 +22,24 @@ func newRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "figma-kit",
 		Short: "CLI for programmatic Figma design via the MCP server",
-		Long: `figma-kit generates use_figma-compatible JavaScript for the Figma MCP server.
-It covers everything from low-level node primitives to high-level design
-deliverable templates, all powered by a built-in theme system.
+		Long: `figma-kit — 150+ commands for AI-powered Figma design.
 
-Describe what you want in Cursor, Claude Code, or any MCP-compatible AI agent.
-The AI picks the right figma-kit commands and Figma executes them.
+Figma's use_figma MCP tool runs raw Plugin API JavaScript. figma-kit turns
+that into named, composable, theme-aware commands — so you (or your AI agent)
+don't have to write 40 lines of JS for a glass card.
+
+  AI workflow:   Prompt in Cursor / Claude Code → AI picks commands → Figma renders
+  Direct exec:   figma-kit exec make carousel -t noir --content slides.yml
+  Standalone:    figma-kit card glass -t noir | pipe to use_figma
+
+Commands span 8 layers: node primitives, styles, cards (glass, neumorphic,
+clay, outline), 29 UI components (hero, pricing, modal, pagination...),
+14 effects (aurora, morph, spotlight...), 37 templates, design systems,
+QA audits, export, and batch orchestration.
 
 Run 'figma-kit cookbook' to browse real-world prompt examples.
-Run 'figma-kit examples' to get starter content YAML files.`,
+Run 'figma-kit examples' to get starter content YAML files.
+Run 'figma-kit docs' to read the full documentation.`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Version:       Version,

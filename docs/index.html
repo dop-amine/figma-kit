@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>figma-kit — AI-Powered Figma Design</title>
-  <meta name="description" content="AI-powered Figma design. Describe what you want in natural language — your AI agent and figma-kit handle the rest. 120+ commands via the Figma MCP server.">
+  <meta name="description" content="AI-powered Figma design. Describe what you want in natural language — your AI agent and figma-kit handle the rest. 150+ commands via the Figma MCP server.">
   <meta property="og:title" content="figma-kit — AI-Powered Figma Design">
-  <meta property="og:description" content="Describe what you want. AI and figma-kit build it in Figma. 120+ commands. Open source.">
+  <meta property="og:description" content="Describe what you want. AI and figma-kit build it in Figma. 150+ commands. Open source.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://dop-amine.github.io/figma-kit/og.png">
   <meta name="twitter:card" content="summary_large_image">
@@ -391,7 +391,7 @@
       <div>
         <span class="badge">Open Source</span>
         <h1>figma-kit</h1>
-        <p class="subtitle">AI-powered Figma design. Describe what you want in natural language &mdash; your AI agent and figma-kit handle the rest. 120+ commands via the Figma MCP server.</p>
+        <p class="subtitle">AI-powered Figma design. Describe what you want in natural language &mdash; your AI agent and figma-kit handle the rest. 150+ commands via the Figma MCP server.</p>
         <div class="cta-row">
           <a href="https://github.com/dop-amine/figma-kit" class="btn-primary">Get Started</a>
           <span class="brew-hint">brew install dop-amine/tap/figma-kit</span>
@@ -499,22 +499,42 @@
 <!-- FEATURES — matches Figma frame 3:2 -->
 <section id="features">
   <div class="container">
-    <div class="section-label fade-in" style="color: var(--bl);">WHY FIGMA-KIT + AI?</div>
+    <div class="section-label fade-in" style="color: var(--bl);">WHY FIGMA-KIT?</div>
+    <div class="section-title fade-in">What you get that <code style="font-family:var(--mono);color:var(--tl)">use_figma</code> alone can&rsquo;t do</div>
+    <div class="section-desc fade-in">Figma&rsquo;s <code style="font-family:var(--mono);color:var(--tl)">use_figma</code> MCP tool runs raw Plugin API JavaScript. figma-kit is the layer on top that makes it practical.</div>
     <div class="features-grid">
       <div class="feature-card fade-in">
         <div class="icon">&#129302;</div>
-        <h3>AI-Native Workflow</h3>
-        <p>Prompt in Cursor, Claude Code, or any MCP-compatible AI. figma-kit translates your intent into Figma Plugin API code. Designs appear instantly.</p>
+        <h3>One command, not 40 lines of JS</h3>
+        <p><code style="font-family:var(--mono);color:var(--tl);font-size:12px">figma-kit card glass -t noir</code> compresses 45 lines of Plugin API JavaScript into a single command. A hero section? <code style="font-family:var(--mono);color:var(--tl);font-size:12px">ui hero</code>. Pricing table? <code style="font-family:var(--mono);color:var(--tl);font-size:12px">ui pricing</code>. Without figma-kit, an AI must generate and debug raw JS every time.</p>
       </div>
       <div class="feature-card fade-in">
         <div class="icon">&#127912;</div>
-        <h3>120+ Commands</h3>
-        <p>From buttons to full design systems. Every primitive, component, and template &mdash; all generated as executable Figma code through the MCP server.</p>
+        <h3>150+ composable commands</h3>
+        <p>8 card styles. 29 UI components. 14 effects. 37 production templates. Theme system. QA audits. Design system generation. Boolean ops. SVG paths. Each is a tested, deterministic building block an AI can reliably select.</p>
       </div>
       <div class="feature-card fade-in">
         <div class="icon">&#128279;</div>
-        <h3>Terminal + AI</h3>
-        <p>Use standalone from the CLI or let AI pick the right commands. One Go binary. Works with Cursor, Claude Code, any MCP-compatible agent.</p>
+        <h3>Themes, not hex codes</h3>
+        <p>Raw <code style="font-family:var(--mono);color:var(--tl);font-size:12px">use_figma</code> means hardcoding <code style="font-family:var(--mono);font-size:12px">{r:0.23,g:0.51,b:0.96}</code> everywhere. figma-kit themes propagate colors, typography, spacing, and effects to every command with <code style="font-family:var(--mono);color:var(--tl);font-size:12px">-t noir</code>.</p>
+      </div>
+    </div>
+
+    <div class="features-grid" style="margin-top: 24px;">
+      <div class="feature-card fade-in">
+        <div class="icon">&#9889;</div>
+        <h3>Direct execution with <code style="font-family:var(--mono);color:var(--tl);font-size:16px">exec</code></h3>
+        <p>Run <code style="font-family:var(--mono);color:var(--tl);font-size:12px">figma-kit exec make carousel -t noir</code> &mdash; generates JS and sends it to Figma in one shot. No AI middleman. Built-in OAuth. Self-contained.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">&#128202;</div>
+        <h3>QA &amp; design system in seconds</h3>
+        <p><code style="font-family:var(--mono);color:var(--tl);font-size:12px">qa checklist</code> walks every node checking contrast, touch targets, naming, spacing. <code style="font-family:var(--mono);color:var(--tl);font-size:12px">ds create</code> generates a full design system page from your theme. No manual work.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">&#128230;</div>
+        <h3>Works everywhere: AI + Terminal</h3>
+        <p>AI agent picks the right commands automatically in Cursor or Claude Code. Or run standalone from the terminal. One Go binary. No Node.js, no browser extensions, no plugins.</p>
       </div>
     </div>
   </div>
