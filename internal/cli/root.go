@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/dop-amine/figma-kit/internal/config"
 	"github.com/dop-amine/figma-kit/internal/theme"
-	"github.com/spf13/cobra"
 )
 
 var (

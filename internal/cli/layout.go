@@ -3,8 +3,9 @@ package cli
 import (
 	"strings"
 
-	"github.com/dop-amine/figma-kit/internal/codegen"
 	"github.com/spf13/cobra"
+
+	"github.com/dop-amine/figma-kit/internal/codegen"
 )
 
 func newLayoutCmd() *cobra.Command {

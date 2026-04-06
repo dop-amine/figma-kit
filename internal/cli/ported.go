@@ -7,10 +7,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/dop-amine/figma-kit/assets"
 	"github.com/dop-amine/figma-kit/internal/codegen"
 	"github.com/dop-amine/figma-kit/internal/theme"
-	"github.com/spf13/cobra"
 )
 
 var embeddedTemplates = map[string]string{

@@ -5,9 +5,10 @@ import (
 	"os/exec"
 	"runtime"
 
+	"github.com/spf13/cobra"
+
 	"github.com/dop-amine/figma-kit/internal/codegen"
 	"github.com/dop-amine/figma-kit/internal/config"
-	"github.com/spf13/cobra"
 )
 
 func newInitCmd() *cobra.Command {
