@@ -8,6 +8,8 @@
 
 A single Go binary that generates `use_figma`-compatible JavaScript for the official [Figma MCP server](https://mcp.figma.com). 120+ commands across 8 layers of abstraction — from `node create frame` to `make carousel --content slides.yml`.
 
+<img width="547" height="191" alt="image" src="https://github.com/user-attachments/assets/36c55805-a5c9-4ef4-8ff8-558620c414a1" />
+
 ## Install
 
 ```bash
