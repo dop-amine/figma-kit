@@ -36,6 +36,9 @@ func newCardCmd() *cobra.Command {
 	cmd.AddCommand(newCardGradientCmd())
 	cmd.AddCommand(newCardImageCmd())
 	cmd.AddCommand(newCardBentoCmd())
+	cmd.AddCommand(newCardNeumorphicCmd())
+	cmd.AddCommand(newCardClayCmd())
+	cmd.AddCommand(newCardOutlineCmd())
 	return cmd
 }
 
@@ -387,5 +390,235 @@ func newCardBentoCmd() *cobra.Command {
 	cmd.Flags().IntVar(&cols, "cols", 3, "Column count")
 	cmd.Flags().IntVar(&rows, "rows", 2, "Row count")
 	cmd.Flags().IntVar(&gap, "gap", 16, "Gap between cells (px)")
+	return cmd
+}
+
+func cond(b bool, t, f string) string {
+	if b {
+		return t
+	}
+	return f
+}
+
+func minF(a, b float64) float64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxF(a, b float64) float64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func newCardNeumorphicCmd() *cobra.Command {
+	var (
+		w, h  int
+		title string
+		desc  string
+		depth string
+		inset bool
+	)
+	cmd := &cobra.Command{
+		Use:   "neumorphic",
+		Short: "Neumorphic (soft UI) card with inset/outset shadow pair",
+		Example: `  # "Create a soft UI card for settings"
+  figma-kit card neumorphic -t light --title "Settings" --depth deep`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			page := resolvePage()
+			b := codegen.New()
+			b.PageSetup(page)
+
+			var offset, blur, spread int
+			switch depth {
+			case "subtle":
+				offset, blur, spread = 3, 6, 0
+			case "deep":
+				offset, blur, spread = 8, 20, -2
+			default:
+				offset, blur, spread = 5, 12, 0
+			}
+
+			_ = t
+			b.Line("const frame = figma.createFrame();")
+			b.Linef("frame.name = %q;", cond(title != "", title, "Neumorphic Card"))
+			b.Linef("frame.resize(%d, %d);", w, h)
+			b.Line("frame.cornerRadius = 20;")
+			b.Line("frame.fills = [{type:'SOLID', color:{r:0.93,g:0.93,b:0.95}}];")
+			b.Line("frame.layoutMode = 'VERTICAL';")
+			b.Line("frame.paddingLeft = frame.paddingRight = 24;")
+			b.Line("frame.paddingTop = frame.paddingBottom = 24;")
+			b.Line("frame.itemSpacing = 12;")
+			b.Line("frame.primaryAxisSizingMode = 'FIXED';")
+			b.Line("frame.counterAxisSizingMode = 'FIXED';")
+
+			if inset {
+				b.Linef("frame.effects = [")
+				b.Linef("  {type:'INNER_SHADOW', color:{r:1,g:1,b:1,a:0.7}, offset:{x:-%d,y:-%d}, radius:%d, spread:%d, visible:true, blendMode:'NORMAL'},", offset, offset, blur, spread)
+				b.Linef("  {type:'INNER_SHADOW', color:{r:0,g:0,b:0,a:0.15}, offset:{x:%d,y:%d}, radius:%d, spread:%d, visible:true, blendMode:'NORMAL'}", offset, offset, blur, spread)
+				b.Line("];")
+			} else {
+				b.Linef("frame.effects = [")
+				b.Linef("  {type:'DROP_SHADOW', color:{r:1,g:1,b:1,a:0.7}, offset:{x:-%d,y:-%d}, radius:%d, spread:%d, visible:true, blendMode:'NORMAL'},", offset, offset, blur, spread)
+				b.Linef("  {type:'DROP_SHADOW', color:{r:0,g:0,b:0,a:0.15}, offset:{x:%d,y:%d}, radius:%d, spread:%d, visible:true, blendMode:'NORMAL'}", offset, offset, blur, spread)
+				b.Line("];")
+			}
+
+			if title != "" {
+				b.Linef("{ const tx = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); tx.fontName = {family:'Inter',style:'Semi Bold'}; tx.fontSize = 18; tx.characters = %q; tx.fills = [{type:'SOLID',color:{r:0.2,g:0.2,b:0.25}}]; frame.appendChild(tx); }", title)
+			}
+			if desc != "" {
+				b.Linef("{ const tx = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); tx.fontName = {family:'Inter',style:'Regular'}; tx.fontSize = 14; tx.characters = %q; tx.fills = [{type:'SOLID',color:{r:0.45,g:0.45,b:0.5}}]; frame.appendChild(tx); }", desc)
+			}
+
+			b.Line("pg.appendChild(frame);")
+			b.ReturnIDs("frame.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().IntVar(&w, "width", defaultCardW, "Card width")
+	cmd.Flags().IntVar(&h, "height", defaultCardH, "Card height")
+	cmd.Flags().StringVar(&title, "title", "", "Card title")
+	cmd.Flags().StringVar(&desc, "desc", "", "Card description")
+	cmd.Flags().StringVar(&depth, "depth", "default", "Shadow depth: subtle, default, deep")
+	cmd.Flags().BoolVar(&inset, "inset", false, "Use inset shadows (pressed state)")
+	return cmd
+}
+
+func newCardClayCmd() *cobra.Command {
+	var (
+		w, h  int
+		title string
+		desc  string
+		color string
+	)
+	cmd := &cobra.Command{
+		Use:   "clay",
+		Short: "Claymorphism card with puffy 3D appearance",
+		Example: `  # "Create a playful clay card for onboarding"
+  figma-kit card clay --title "Welcome" --color "#A78BFA"`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			_, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			page := resolvePage()
+			b := codegen.New()
+			b.PageSetup(page)
+
+			rgb, cErr := codegen.HexToRGB(color)
+			if cErr != nil {
+				rgb = codegen.RGB{R: 0.65, G: 0.55, B: 0.98}
+			}
+
+			b.Line("const frame = figma.createFrame();")
+			b.Linef("frame.name = %q;", cond(title != "", title, "Clay Card"))
+			b.Linef("frame.resize(%d, %d);", w, h)
+			b.Line("frame.cornerRadius = 24;")
+			b.Linef("frame.fills = [{type:'GRADIENT_LINEAR', gradientStops:[")
+			b.Linef("  {position:0,color:{r:%.3f,g:%.3f,b:%.3f,a:1}},", minF(rgb.R+0.12, 1), minF(rgb.G+0.12, 1), minF(rgb.B+0.12, 1))
+			b.Linef("  {position:1,color:{r:%.3f,g:%.3f,b:%.3f,a:1}}", rgb.R, rgb.G, rgb.B)
+			b.Line("], gradientTransform:[[1,0,0],[0,1,0]]}];")
+			b.Line("frame.effects = [")
+			b.Linef("  {type:'INNER_SHADOW', color:{r:1,g:1,b:1,a:0.3}, offset:{x:-2,y:-2}, radius:4, spread:0, visible:true, blendMode:'NORMAL'},")
+			b.Linef("  {type:'DROP_SHADOW', color:{r:%.3f,g:%.3f,b:%.3f,a:0.4}, offset:{x:0,y:8}, radius:20, spread:-4, visible:true, blendMode:'NORMAL'}", maxF(rgb.R-0.2, 0), maxF(rgb.G-0.2, 0), maxF(rgb.B-0.2, 0))
+			b.Line("];")
+			b.Line("frame.layoutMode = 'VERTICAL';")
+			b.Line("frame.paddingLeft = frame.paddingRight = 28;")
+			b.Line("frame.paddingTop = frame.paddingBottom = 28;")
+			b.Line("frame.itemSpacing = 12;")
+			b.Line("frame.primaryAxisSizingMode = 'FIXED';")
+			b.Line("frame.counterAxisSizingMode = 'FIXED';")
+
+			if title != "" {
+				b.Linef("{ const tx = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Bold'}); tx.fontName = {family:'Inter',style:'Bold'}; tx.fontSize = 20; tx.characters = %q; tx.fills = [{type:'SOLID',color:{r:1,g:1,b:1}}]; frame.appendChild(tx); }", title)
+			}
+			if desc != "" {
+				b.Linef("{ const tx = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); tx.fontName = {family:'Inter',style:'Regular'}; tx.fontSize = 14; tx.characters = %q; tx.fills = [{type:'SOLID',color:{r:1,g:1,b:1,a:0.8}}]; frame.appendChild(tx); }", desc)
+			}
+
+			b.Line("pg.appendChild(frame);")
+			b.ReturnIDs("frame.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().IntVar(&w, "width", defaultCardW, "Card width")
+	cmd.Flags().IntVar(&h, "height", defaultCardH, "Card height")
+	cmd.Flags().StringVar(&title, "title", "", "Card title")
+	cmd.Flags().StringVar(&desc, "desc", "", "Card description")
+	cmd.Flags().StringVar(&color, "color", "#A78BFA", "Base pastel color (hex)")
+	return cmd
+}
+
+func newCardOutlineCmd() *cobra.Command {
+	var (
+		w, h       int
+		title      string
+		desc       string
+		glowColor  string
+		glowSpread int
+	)
+	cmd := &cobra.Command{
+		Use:   "outline",
+		Short: "Ghost/outline card with glow border (dark-mode SaaS staple)",
+		Example: `  # "Create an outline feature card for dark mode"
+  figma-kit card outline -t noir --title "API Access" --glow-color "#3B82F6"`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			_, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			page := resolvePage()
+			b := codegen.New()
+			b.PageSetup(page)
+
+			glow, cErr := codegen.HexToRGB(glowColor)
+			if cErr != nil {
+				glow = codegen.RGB{R: 0.23, G: 0.51, B: 0.96}
+			}
+
+			b.Line("const frame = figma.createFrame();")
+			b.Linef("frame.name = %q;", cond(title != "", title, "Outline Card"))
+			b.Linef("frame.resize(%d, %d);", w, h)
+			b.Line("frame.cornerRadius = 12;")
+			b.Line("frame.fills = [{type:'SOLID', color:{r:0,g:0,b:0}, opacity:0}];")
+			b.Linef("frame.strokes = [{type:'SOLID', color:{r:%.3f,g:%.3f,b:%.3f}}];", glow.R, glow.G, glow.B)
+			b.Line("frame.strokeWeight = 1;")
+			b.Linef("frame.effects = [{type:'DROP_SHADOW', color:{r:%.3f,g:%.3f,b:%.3f,a:0.3}, offset:{x:0,y:0}, radius:%d, spread:0, visible:true, blendMode:'NORMAL'}];", glow.R, glow.G, glow.B, glowSpread)
+			b.Line("frame.layoutMode = 'VERTICAL';")
+			b.Line("frame.paddingLeft = frame.paddingRight = 24;")
+			b.Line("frame.paddingTop = frame.paddingBottom = 24;")
+			b.Line("frame.itemSpacing = 12;")
+			b.Line("frame.primaryAxisSizingMode = 'FIXED';")
+			b.Line("frame.counterAxisSizingMode = 'FIXED';")
+
+			if title != "" {
+				b.Linef("{ const tx = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); tx.fontName = {family:'Inter',style:'Semi Bold'}; tx.fontSize = 18; tx.characters = %q; tx.fills = [{type:'SOLID',color:{r:0.95,g:0.95,b:0.97}}]; frame.appendChild(tx); }", title)
+			}
+			if desc != "" {
+				b.Linef("{ const tx = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); tx.fontName = {family:'Inter',style:'Regular'}; tx.fontSize = 14; tx.characters = %q; tx.fills = [{type:'SOLID',color:{r:0.65,g:0.65,b:0.7}}]; frame.appendChild(tx); }", desc)
+			}
+
+			b.Line("pg.appendChild(frame);")
+			b.ReturnIDs("frame.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().IntVar(&w, "width", defaultCardW, "Card width")
+	cmd.Flags().IntVar(&h, "height", defaultCardH, "Card height")
+	cmd.Flags().StringVar(&title, "title", "", "Card title")
+	cmd.Flags().StringVar(&desc, "desc", "", "Card description")
+	cmd.Flags().StringVar(&glowColor, "glow-color", "#3B82F6", "Glow/border color (hex)")
+	cmd.Flags().IntVar(&glowSpread, "glow-spread", 12, "Glow spread radius")
 	return cmd
 }

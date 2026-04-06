@@ -6,9 +6,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/dop-amine/figma-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/dop-amine/figma-kit/actions/workflows/ci.yml)
 
-Describe what you want in natural language — your AI agent picks the right figma-kit commands and the [Figma MCP server](https://mcp.figma.com) executes them. A single Go binary with 120+ commands across 8 layers of abstraction, from `node create frame` to `make carousel --content slides.yml`.
+Describe what you want in natural language — your AI agent picks the right figma-kit commands and the [Figma MCP server](https://mcp.figma.com) executes them. A single Go binary with 150+ commands across 8 layers of abstraction, from `node create frame` to `make carousel --content slides.yml`.
 
-**Works with [Cursor](https://cursor.com), [Claude Code](https://docs.anthropic.com/en/docs/claude-code), or any MCP-compatible AI agent.** Also runs standalone from the terminal.
+**Works with [Cursor](https://cursor.com), [Claude Code](https://docs.anthropic.com/en/docs/claude-code), or any MCP-compatible AI agent.** Also runs standalone with `figma-kit exec` for direct MCP execution.
 
 <img width="547" height="191" alt="image" src="https://github.com/user-attachments/assets/36c55805-a5c9-4ef4-8ff8-558620c414a1" />
 
@@ -79,7 +79,9 @@ figma-kit qa checklist --page 0
 You prompt → AI picks commands → figma-kit generates JS → Figma MCP executes → design appears
 ```
 
-figma-kit generates JavaScript compatible with Figma's `use_figma` MCP tool, which executes inside the Plugin API sandbox. The AI workflow is:
+figma-kit generates JavaScript compatible with Figma's `use_figma` MCP tool, which executes inside the Plugin API sandbox. Two ways to use it:
+
+### AI Agent Workflow (recommended)
 
 1. **You describe** what you want in your AI tool (Cursor, Claude Code, etc.)
 2. **The AI reasons** about which figma-kit commands to use and in what order
@@ -87,7 +89,19 @@ figma-kit generates JavaScript compatible with Figma's `use_figma` MCP tool, whi
 4. **The MCP server executes** the code inside your Figma file
 5. **Verify** the result with `get_screenshot`
 
-You can also run commands directly from the terminal — every command works standalone.
+### Direct Execution with `exec`
+
+```bash
+# One-time auth
+figma-kit auth login
+
+# Execute any command directly — no AI middleman needed
+figma-kit exec make carousel -t noir --content slides.yml
+figma-kit exec card glass -t noir --title "Feature" --screenshot
+figma-kit exec ui hero -t noir --title "Ship Faster"
+```
+
+The `exec` command generates JS and sends it to the Figma MCP server in one shot.
 
 ## AI Integration
 
@@ -106,12 +120,12 @@ The entire [marketing site](https://dop-amine.github.io/figma-kit/) and its [Fig
 
 | Layer | Group | Commands | Description |
 |-------|-------|----------|-------------|
-| 0 | Session | `init`, `config`, `whoami`, `open`, `status` | File & project management |
-| 1 | Primitives | `node`, `style`, `text`, `layout` | Low-level Figma node operations |
-| 2 | Patterns | `card`, `ui`, `fx`, `image` | Components, effects & local image upload |
-| 3 | Deliverables | `make` | Full production designs (36 templates) |
-| 4 | Design System | `ds` | Token management, specimens, audit |
-| 5 | Inspect & QA | `inspect`, `tree`, `find`, `qa` | Quality checks & inspection |
+| 0 | Session | `init`, `config`, `whoami`, `open`, `status`, `auth`, `exec`, `new-file` | File, auth & direct execution |
+| 1 | Primitives | `node`, `style`, `text`, `layout` | Low-level node ops + boolean, svg, variant-set |
+| 2 | Patterns | `card`, `ui`, `fx`, `image` | 8 card types, 29 UI components, 14 effects |
+| 3 | Deliverables | `make` | 37 production templates + changelog |
+| 4 | Design System | `ds` | Token management, specimens, component-sheet, audit |
+| 5 | Inspect & QA | `inspect`, `tree`, `find`, `screenshot`, `qa` | Quality checks & MCP-backed screenshot |
 | 6 | Export | `export`, `handoff` | PNG/SVG/PDF, CSS, React specs |
 | 7 | Orchestration | `batch` | YAML-driven multi-step recipes |
 
@@ -199,11 +213,17 @@ The binary is pure Go. JavaScript files in `assets/` are embedded at compile tim
 
 ```
 cmd/figma-kit/main.go          # Entry point
-internal/cli/                   # Cobra command definitions
+internal/cli/                   # Cobra command definitions (150+ commands)
 internal/codegen/               # Fluent JS code builder
+internal/mcpclient/             # Embedded MCP client for direct execution
 internal/theme/                 # Theme loading & validation
 internal/config/                # .figmarc.json management
 assets/                         # Embedded JS helpers, themes, templates, examples, cookbook
+```
+
+Build with OAuth support (for `exec` and `auth` commands):
+```bash
+go build -tags mcp_go_client_oauth ./cmd/figma-kit
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.

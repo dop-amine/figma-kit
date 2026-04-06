@@ -7,6 +7,8 @@ builds:
     binary: figma-kit
     ldflags:
       - -s -w -X github.com/dop-amine/figma-kit/internal/cli.Version={{.Version}}
+    tags:
+      - mcp_go_client_oauth
     goos:
       - darwin
       - linux

@@ -710,6 +710,57 @@ figma-kit image place http://127.0.0.1:8741/hero.jpg --width 1440 --height 900
 
 The AI runs `figma-kit image place ./brand/logo.png --width 200 --height 60`, and if the background is too large for inline, it starts `figma-kit image serve ./brand` and fetches from the local URL.
 
+### Direct execution (no AI middleman)
+
+If you want to run commands directly without an AI agent:
+
+```bash
+# One-time authentication
+figma-kit auth login
+
+# Execute any command directly in your Figma file
+figma-kit exec make carousel -t noir --content slides.yml
+figma-kit exec card glass -t noir --title "Feature" --screenshot
+figma-kit exec ui hero -t noir --title "Build Faster"
+
+# Create a new file
+figma-kit new-file "My Landing Page"
+```
+
+### New design patterns
+
+**Trending card styles:**
+```bash
+figma-kit card neumorphic --title "Settings" --depth deep     # Soft UI
+figma-kit card clay --title "Welcome" --color "#A78BFA"        # Puffy 3D
+figma-kit card outline --title "API" --glow-color "#3B82F6"    # Ghost card
+```
+
+**Layout compositions:**
+```bash
+figma-kit ui hero -t noir --title "Ship Faster" --cta "Get Started" --badge "New"
+figma-kit ui pricing -t noir --tiers '[{"name":"Pro","price":"$29","highlighted":true}]'
+figma-kit ui feature-grid -t noir --cols 3
+figma-kit ui testimonial -t noir --name "Jane" --quote "Changed everything" --rating 5
+figma-kit ui timeline -t noir --entries '[{"date":"2024","title":"Launch"}]'
+figma-kit ui accordion -t noir  # FAQ section
+```
+
+**Effects:**
+```bash
+figma-kit fx aurora <frameId> --palette sunset    # Northern lights
+figma-kit fx morph <frameId> --count 5            # Organic blobs
+figma-kit fx gradient-border <frameId>            # Gradient stroke
+figma-kit fx spotlight <frameId>                  # Radial highlight
+figma-kit fx pattern <frameId> --type dots        # Geometric patterns
+```
+
+**Shape operations:**
+```bash
+figma-kit node boolean union "1:2" "1:3"          # Boolean ops
+figma-kit node svg "M10 10 L90 90" --fill "#3B82F6"  # SVG paths
+```
+
 ### Export for developers
 
 Once your design is done:

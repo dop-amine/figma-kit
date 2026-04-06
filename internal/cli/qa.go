@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/dop-amine/figma-kit/internal/codegen"
+	"github.com/dop-amine/figma-kit/internal/mcpclient"
 )
 
 func newInspectCmd() *cobra.Command {
@@ -46,23 +47,39 @@ func newInspectCmd() *cobra.Command {
 }
 
 func newScreenshotCmd() *cobra.Command {
-	return &cobra.Command{
+	var nodeID string
+	cmd := &cobra.Command{
 		Use:   "screenshot",
-		Short: "How to capture screenshots via the Figma MCP get_screenshot tool",
+		Short: "Capture a screenshot of a Figma node via MCP (falls back to instructions)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			msg := strings.TrimSpace(`
-Use the Figma MCP tool **get_screenshot** to rasterize a node or frame.
+			fk := resolveFileKey()
+			if fk == "" || nodeID == "" {
+				msg := strings.TrimSpace(`
+Usage: figma-kit screenshot --node <nodeId>
 
-1. Pass the target node ID from your file (the same IDs returned by figma-kit node commands).
-2. Set optional parameters supported by your MCP server (scale, format) if available.
-3. The tool returns image data suitable for attaching to reviews or visual regression baselines.
-
-figma-kit only generates plugin JS; it does not perform screenshots itself.
+Requires authentication (figma-kit auth login) and a file key.
+Set the file key via .figmarc.json or FIGMA_FILE_KEY env var.
 `)
-			_, _ = fmt.Fprint(os.Stdout, msg, "\n")
+				_, _ = fmt.Fprint(os.Stdout, msg, "\n")
+				return nil
+			}
+			ctx := cmd.Context()
+			session, err := mcpclient.Connect(ctx)
+			if err != nil {
+				fmt.Println("Not authenticated. Run 'figma-kit auth login' first.")
+				return nil
+			}
+			defer session.Close()
+			result, sErr := session.CallScreenshot(ctx, fk, nodeID)
+			if sErr != nil {
+				return sErr
+			}
+			fmt.Println(result)
 			return nil
 		},
 	}
+	cmd.Flags().StringVar(&nodeID, "node", "", "Node ID to screenshot")
+	return cmd
 }
 
 func newTreeCmd() *cobra.Command {

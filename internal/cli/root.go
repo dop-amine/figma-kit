@@ -101,6 +101,11 @@ Run 'figma-kit examples' to get starter content YAML files.`,
 	cmd.AddCommand(newExamplesCmd())
 	cmd.AddCommand(newDocsCmd())
 
+	// Phase 13: Direct MCP execution
+	cmd.AddCommand(newExecCmd())
+	cmd.AddCommand(newAuthCmd())
+	cmd.AddCommand(newNewFileCmd())
+
 	return cmd
 }
 
@@ -133,6 +138,18 @@ func resolvePage() int {
 		return c.Page
 	}
 	return 0
+}
+
+// resolveFileKey returns the file key from env or config.
+func resolveFileKey() string {
+	if fk := os.Getenv("FIGMA_FILE_KEY"); fk != "" {
+		return fk
+	}
+	c, err := config.Load()
+	if err == nil && c.FileKey != "" {
+		return c.FileKey
+	}
+	return ""
 }
 
 // output writes the generated JS to stdout.

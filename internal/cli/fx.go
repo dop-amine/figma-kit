@@ -32,6 +32,11 @@ func newFXCmd() *cobra.Command {
 	cmd.AddCommand(newFXAccentBarCmd())
 	cmd.AddCommand(newFXShadowCmd())
 	cmd.AddCommand(newFXParallaxLayerCmd())
+	cmd.AddCommand(newFXAuroraCmd())
+	cmd.AddCommand(newFXMorphCmd())
+	cmd.AddCommand(newFXGradientBorderCmd())
+	cmd.AddCommand(newFXSpotlightCmd())
+	cmd.AddCommand(newFXPatternCmd())
 	return cmd
 }
 
@@ -673,5 +678,323 @@ for (let i = 0; i < __n; i++) {
 		},
 	}
 	cmd.Flags().IntVar(&layersN, "layers", 3, "Number of depth layers")
+	return cmd
+}
+
+// --- aurora ---
+
+func newFXAuroraCmd() *cobra.Command {
+	var palette string
+	cmd := &cobra.Command{
+		Use:     "aurora <nodeId>",
+		Short:   "Apply aurora borealis gradient overlay to a frame",
+		Example: `  figma-kit fx aurora <frameId> --palette sunset`,
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			_, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			b := codegen.New()
+			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
+			b.Line("if (!node) throw new Error('Node not found');")
+
+			var colors string
+			switch palette {
+			case "sunset":
+				colors = "{r:0.95,g:0.3,b:0.2},{r:0.85,g:0.15,b:0.5},{r:0.6,g:0.2,b:0.8},{r:0.3,g:0.2,b:0.7}"
+			case "custom":
+				colors = "{r:0.2,g:0.8,b:0.6},{r:0.4,g:0.3,b:0.9},{r:0.8,g:0.2,b:0.5},{r:0.2,g:0.5,b:0.9}"
+			default: // northern
+				colors = "{r:0.1,g:0.8,b:0.4},{r:0.2,g:0.5,b:0.9},{r:0.5,g:0.2,b:0.8},{r:0.1,g:0.6,b:0.7}"
+			}
+
+			b.Linef("const auroraColors = [%s];", colors)
+			b.Line("const existing = node.fills ? [...node.fills] : [];")
+			b.Line("const newFills = auroraColors.map((c, i) => ({")
+			b.Line("  type: 'GRADIENT_RADIAL',")
+			b.Line("  gradientStops: [")
+			b.Line("    {position: 0, color: {...c, a: 0.6 - i * 0.1}},")
+			b.Line("    {position: 1, color: {...c, a: 0}}")
+			b.Line("  ],")
+			b.Line("  gradientTransform: [")
+			b.Line("    [1.5 + i * 0.3, 0, -0.2 + i * 0.15],")
+			b.Line("    [0, 1.2 + i * 0.2, -0.1 + i * 0.1]")
+			b.Line("  ],")
+			b.Line("  blendMode: i % 2 === 0 ? 'SCREEN' : 'LINEAR_DODGE',")
+			b.Line("  opacity: 0.7,")
+			b.Line("  visible: true")
+			b.Line("}));")
+			b.Line("node.fills = [...existing, ...newFills];")
+			b.ReturnExpr("'Applied aurora effect with ' + auroraColors.length + ' layers'")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&palette, "palette", "northern", "Color palette: northern, sunset, custom")
+	return cmd
+}
+
+// --- morph ---
+
+func newFXMorphCmd() *cobra.Command {
+	var (
+		count   int
+		spread  int
+		palette string
+	)
+	cmd := &cobra.Command{
+		Use:     "morph <nodeId>",
+		Short:   "Add organic blob shapes as background elements",
+		Example: `  figma-kit fx morph <frameId> --count 5 --spread 200`,
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			_, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			b := codegen.New()
+			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
+			b.Line("if (!node) throw new Error('Node not found');")
+
+			var colors string
+			switch palette {
+			case "warm":
+				colors = "[{r:0.95,g:0.3,b:0.3},{r:0.95,g:0.6,b:0.2},{r:0.9,g:0.4,b:0.5}]"
+			case "cool":
+				colors = "[{r:0.2,g:0.5,b:0.9},{r:0.4,g:0.8,b:0.7},{r:0.3,g:0.3,b:0.8}]"
+			default:
+				colors = "[{r:0.5,g:0.3,b:0.9},{r:0.3,g:0.7,b:0.9},{r:0.9,g:0.4,b:0.6}]"
+			}
+
+			b.Linef("const blobColors = %s;", colors)
+			b.Linef("const spread = %d;", spread)
+			b.Linef("const count = %d;", count)
+			b.Line("const w = node.width || 400; const h = node.height || 300;")
+			b.Line("for (let i = 0; i < count; i++) {")
+			b.Line("  const blob = figma.createEllipse();")
+			b.Line("  const size = 80 + (i * 37) % 120;")
+			b.Line("  blob.resize(size, size * (0.7 + (i * 0.13) % 0.6));")
+			b.Line("  blob.x = (i * 97 + 30) % w;")
+			b.Line("  blob.y = (i * 73 + 20) % h;")
+			b.Line("  blob.name = 'blob-' + i;")
+			b.Line("  const c = blobColors[i % blobColors.length];")
+			b.Line("  blob.fills = [{type:'SOLID', color:c, opacity:0.15 + (i % 3) * 0.05}];")
+			b.Line("  blob.effects = [{type:'LAYER_BLUR', radius:30 + i * 5, visible:true}];")
+			b.Line("  if ('appendChild' in node) node.appendChild(blob);")
+			b.Line("  else node.parent.appendChild(blob);")
+			b.Line("}")
+			b.ReturnExpr("'Added ' + count + ' blob shapes'")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().IntVar(&count, "count", 4, "Number of blobs")
+	cmd.Flags().IntVar(&spread, "spread", 150, "Spread area in pixels")
+	cmd.Flags().StringVar(&palette, "palette", "default", "Color palette: default, warm, cool")
+	return cmd
+}
+
+// --- gradient-border ---
+
+func newFXGradientBorderCmd() *cobra.Command {
+	var (
+		fromHex string
+		toHex   string
+		width   int
+	)
+	cmd := &cobra.Command{
+		Use:     "gradient-border <nodeId>",
+		Short:   "Simulate a gradient border around a node",
+		Example: `  figma-kit fx gradient-border <frameId> --from "#3B82F6" --to "#8B5CF6"`,
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			_, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			fromRGB, e1 := codegen.HexToRGB(fromHex)
+			if e1 != nil {
+				fromRGB = codegen.RGB{R: 0.23, G: 0.51, B: 0.96}
+			}
+			toRGB, e2 := codegen.HexToRGB(toHex)
+			if e2 != nil {
+				toRGB = codegen.RGB{R: 0.55, G: 0.36, B: 0.96}
+			}
+
+			b := codegen.New()
+			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
+			b.Line("if (!node) throw new Error('Node not found');")
+			b.Line("const w = node.width; const h = node.height;")
+			b.Line("const parent = node.parent;")
+			b.Linef("const bw = %d;", width)
+			b.Line("const outer = figma.createFrame();")
+			b.Line("outer.name = node.name + ' / gradient-border';")
+			b.Line("outer.resize(w + bw * 2, h + bw * 2);")
+			b.Line("outer.x = ('x' in node ? node.x : 0) - bw;")
+			b.Line("outer.y = ('y' in node ? node.y : 0) - bw;")
+			b.Line("outer.cornerRadius = ('cornerRadius' in node ? node.cornerRadius + bw : bw);")
+			b.Linef("outer.fills = [{type:'GRADIENT_LINEAR', gradientStops:[")
+			b.Linef("  {position:0, color:{r:%.3f,g:%.3f,b:%.3f,a:1}},", fromRGB.R, fromRGB.G, fromRGB.B)
+			b.Linef("  {position:1, color:{r:%.3f,g:%.3f,b:%.3f,a:1}}", toRGB.R, toRGB.G, toRGB.B)
+			b.Line("], gradientTransform:[[1,0,0],[0,1,0]]}];")
+			b.Line("outer.clipsContent = true;")
+			b.Line("if (parent && 'appendChild' in parent) {")
+			b.Line("  const idx = parent.children.indexOf(node);")
+			b.Line("  parent.insertChild(idx, outer);")
+			b.Line("}")
+			b.Line("node.x = bw; node.y = bw;")
+			b.Line("outer.appendChild(node);")
+			b.ReturnIDs("outer.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&fromHex, "from", "#3B82F6", "Start gradient color (hex)")
+	cmd.Flags().StringVar(&toHex, "to", "#8B5CF6", "End gradient color (hex)")
+	cmd.Flags().IntVar(&width, "width", 2, "Border width in pixels")
+	return cmd
+}
+
+// --- spotlight ---
+
+func newFXSpotlightCmd() *cobra.Command {
+	var (
+		x, y      float64
+		radius    int
+		intensity float64
+	)
+	cmd := &cobra.Command{
+		Use:     "spotlight <nodeId>",
+		Short:   "Add a circular spotlight/highlight effect",
+		Example: `  figma-kit fx spotlight <frameId> --x 0.5 --y 0.3 --radius 300`,
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			_, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			b := codegen.New()
+			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
+			b.Line("if (!node) throw new Error('Node not found');")
+			b.Line("const existing = node.fills ? [...node.fills] : [];")
+			b.Linef("const spotlight = {")
+			b.Line("  type: 'GRADIENT_RADIAL',")
+			b.Line("  gradientStops: [")
+			b.Linef("    {position: 0, color: {r:1, g:1, b:1, a:%.2f}},", intensity)
+			b.Line("    {position: 0.6, color: {r:1, g:1, b:1, a:0.02}},")
+			b.Line("    {position: 1, color: {r:0, g:0, b:0, a:0.15}}")
+			b.Line("  ],")
+			b.Linef("  gradientTransform: [[%.2f, 0, %.2f], [0, %.2f, %.2f]],",
+				float64(radius)/200.0, x-float64(radius)/400.0,
+				float64(radius)/200.0, y-float64(radius)/400.0)
+			b.Line("  visible: true")
+			b.Line("};")
+			b.Line("node.fills = [...existing, spotlight];")
+			b.ReturnExpr("'Applied spotlight effect'")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().Float64Var(&x, "x", 0.5, "Spotlight center X (0-1)")
+	cmd.Flags().Float64Var(&y, "y", 0.3, "Spotlight center Y (0-1)")
+	cmd.Flags().IntVar(&radius, "radius", 200, "Spotlight radius in pixels")
+	cmd.Flags().Float64Var(&intensity, "intensity", 0.25, "Spotlight intensity (0-1)")
+	return cmd
+}
+
+// --- pattern ---
+
+func newFXPatternCmd() *cobra.Command {
+	var (
+		patternType string
+		spacing     int
+		size        int
+		colorHex    string
+	)
+	cmd := &cobra.Command{
+		Use:     "pattern <nodeId>",
+		Short:   "Add a repeating geometric pattern to a frame",
+		Example: `  figma-kit fx pattern <frameId> --type dots --spacing 24 --size 3`,
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			_, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			rgb, cErr := codegen.HexToRGB(colorHex)
+			if cErr != nil {
+				rgb = codegen.RGB{R: 0.4, G: 0.4, B: 0.45}
+			}
+
+			b := codegen.New()
+			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
+			b.Line("if (!node) throw new Error('Node not found');")
+			b.Line("const w = node.width || 400; const h = node.height || 300;")
+			b.Linef("const spacing = %d;", spacing)
+			b.Linef("const sz = %d;", size)
+			b.Linef("const pColor = {r:%.3f,g:%.3f,b:%.3f};", rgb.R, rgb.G, rgb.B)
+			b.Line("const container = figma.createFrame();")
+			b.Line("container.name = 'pattern-' + " + fmt.Sprintf("%q", patternType) + ";")
+			b.Line("container.resize(w, h);")
+			b.Line("container.fills = [];")
+			b.Line("container.clipsContent = true;")
+
+			switch patternType {
+			case "lines":
+				b.Line("for (let x = 0; x < w; x += spacing) {")
+				b.Line("  const line = figma.createRectangle();")
+				b.Line("  line.resize(1, h); line.x = x; line.y = 0;")
+				b.Line("  line.fills = [{type:'SOLID', color:pColor, opacity:0.2}];")
+				b.Line("  container.appendChild(line);")
+				b.Line("}")
+			case "crosses":
+				b.Line("for (let y = spacing; y < h; y += spacing) {")
+				b.Line("  for (let x = spacing; x < w; x += spacing) {")
+				b.Line("    const h1 = figma.createRectangle(); h1.resize(sz*2, 1); h1.x = x-sz; h1.y = y;")
+				b.Line("    h1.fills = [{type:'SOLID', color:pColor, opacity:0.2}]; container.appendChild(h1);")
+				b.Line("    const v1 = figma.createRectangle(); v1.resize(1, sz*2); v1.x = x; v1.y = y-sz;")
+				b.Line("    v1.fills = [{type:'SOLID', color:pColor, opacity:0.2}]; container.appendChild(v1);")
+				b.Line("  }")
+				b.Line("}")
+			case "diagonal":
+				b.Line("for (let i = -Math.max(w,h); i < Math.max(w,h)*2; i += spacing) {")
+				b.Line("  const line = figma.createRectangle();")
+				b.Line("  line.resize(1, Math.max(w,h)*2); line.x = i; line.y = -h/2;")
+				b.Line("  line.rotation = 45;")
+				b.Line("  line.fills = [{type:'SOLID', color:pColor, opacity:0.15}];")
+				b.Line("  container.appendChild(line);")
+				b.Line("}")
+			case "grid":
+				b.Line("for (let x = 0; x < w; x += spacing) {")
+				b.Line("  const vl = figma.createRectangle(); vl.resize(1, h); vl.x = x; vl.y = 0;")
+				b.Line("  vl.fills = [{type:'SOLID', color:pColor, opacity:0.1}]; container.appendChild(vl);")
+				b.Line("}")
+				b.Line("for (let y = 0; y < h; y += spacing) {")
+				b.Line("  const hl = figma.createRectangle(); hl.resize(w, 1); hl.x = 0; hl.y = y;")
+				b.Line("  hl.fills = [{type:'SOLID', color:pColor, opacity:0.1}]; container.appendChild(hl);")
+				b.Line("}")
+			default: // dots
+				b.Line("for (let y = spacing; y < h; y += spacing) {")
+				b.Line("  for (let x = spacing; x < w; x += spacing) {")
+				b.Line("    const dot = figma.createEllipse();")
+				b.Line("    dot.resize(sz, sz); dot.x = x - sz/2; dot.y = y - sz/2;")
+				b.Line("    dot.fills = [{type:'SOLID', color:pColor, opacity:0.25}];")
+				b.Line("    container.appendChild(dot);")
+				b.Line("  }")
+				b.Line("}")
+			}
+
+			b.Line("if ('appendChild' in node) node.appendChild(container);")
+			b.Line("else node.parent.appendChild(container);")
+			b.ReturnIDs("container.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&patternType, "type", "dots", "Pattern type: dots, lines, crosses, diagonal, grid")
+	cmd.Flags().IntVar(&spacing, "spacing", 24, "Space between pattern elements")
+	cmd.Flags().IntVar(&size, "size", 3, "Size of pattern elements")
+	cmd.Flags().StringVar(&colorHex, "color", "#6B7280", "Pattern color (hex)")
 	return cmd
 }

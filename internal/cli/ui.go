@@ -47,6 +47,23 @@ func newUICmd() *cobra.Command {
 	cmd.AddCommand(newUIDropdownCmd())
 	cmd.AddCommand(newUIBreadcrumbCmd())
 	cmd.AddCommand(newUISkeletonCmd())
+	cmd.AddCommand(newUIHeroCmd())
+	cmd.AddCommand(newUIPricingCmd())
+	cmd.AddCommand(newUIFeatureGridCmd())
+	cmd.AddCommand(newUITestimonialCmd())
+	cmd.AddCommand(newUITimelineCmd())
+	cmd.AddCommand(newUIStepperCmd())
+	cmd.AddCommand(newUIAccordionCmd())
+	cmd.AddCommand(newUIChipCmd())
+	cmd.AddCommand(newUIToastCmd())
+	cmd.AddCommand(newUIModalCmd())
+	cmd.AddCommand(newUICardListCmd())
+	cmd.AddCommand(newUISidebarCmd())
+	cmd.AddCommand(newUIAvatarGroupCmd())
+	cmd.AddCommand(newUIRatingCmd())
+	cmd.AddCommand(newUISearchCmd())
+	cmd.AddCommand(newUIPaginationCmd())
+	cmd.AddCommand(newUIColorPickerCmd())
 	return cmd
 }
 
@@ -1516,4 +1533,417 @@ func splitTrimmed(s string) []string {
 		}
 	}
 	return out
+}
+
+func mustMarshalJSON(v any) string {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return "[]"
+	}
+	return string(data)
+}
+
+func newUIHeroCmd() *cobra.Command {
+	var (
+		title    string
+		subtitle string
+		cta      string
+		badge    string
+	)
+	cmd := &cobra.Command{
+		Use:     "hero",
+		Short:   "Complete hero section with heading, subtitle, and CTA",
+		Example: `  figma-kit ui hero -t noir --title "Build Faster" --subtitle "Ship in days, not months" --cta "Get Started"`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			page := resolvePage()
+			b := codegen.New()
+			b.PageSetup(page)
+			emitUIThemeTokens(b, t)
+
+			if title == "" {
+				title = "Build Something Amazing"
+			}
+			if subtitle == "" {
+				subtitle = "The fastest way to ship beautiful products"
+			}
+			if cta == "" {
+				cta = "Get Started"
+			}
+
+			b.Line("const hero = figma.createFrame();")
+			b.Line("hero.name = 'Hero Section';")
+			b.Line("hero.resize(1440, 720);")
+			b.Line("hero.layoutMode = 'VERTICAL';")
+			b.Line("hero.primaryAxisAlignItems = 'CENTER';")
+			b.Line("hero.counterAxisAlignItems = 'CENTER';")
+			b.Line("hero.paddingTop = hero.paddingBottom = 120;")
+			b.Line("hero.paddingLeft = hero.paddingRight = 80;")
+			b.Line("hero.itemSpacing = 24;")
+			b.Line("hero.fills = typeof bg !== 'undefined' ? [{type:'SOLID', color:bg}] : [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
+
+			if badge != "" {
+				b.Linef("{ const badge = figma.createFrame(); badge.name = 'Badge'; badge.layoutMode = 'HORIZONTAL'; badge.paddingLeft = badge.paddingRight = 16; badge.paddingTop = badge.paddingBottom = 6; badge.cornerRadius = 999; badge.fills = [{type:'SOLID', color:typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96}, opacity:0.15}]; badge.counterAxisSizingMode = 'AUTO'; badge.primaryAxisSizingMode = 'AUTO';")
+				b.Linef("const bt = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Medium'}); bt.fontName = {family:'Inter',style:'Medium'}; bt.fontSize = 13; bt.characters = %q; bt.fills = [{type:'SOLID', color:typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96}}]; badge.appendChild(bt); hero.appendChild(badge); }", badge)
+			}
+
+			b.Linef("{ const h1 = figma.createText(); h1.name = 'Heading'; await figma.loadFontAsync({family:'Inter',style:'Bold'}); h1.fontName = {family:'Inter',style:'Bold'}; h1.fontSize = 64; h1.characters = %q; h1.fills = [{type:'SOLID', color:typeof fg !== 'undefined' ? fg : {r:0.95,g:0.95,b:0.97}}]; h1.textAlignHorizontal = 'CENTER'; h1.textAutoResize = 'WIDTH_AND_HEIGHT'; hero.appendChild(h1); }", title)
+			b.Linef("{ const sub = figma.createText(); sub.name = 'Subtitle'; await figma.loadFontAsync({family:'Inter',style:'Regular'}); sub.fontName = {family:'Inter',style:'Regular'}; sub.fontSize = 20; sub.characters = %q; sub.fills = [{type:'SOLID', color:typeof muted !== 'undefined' ? muted : {r:0.55,g:0.55,b:0.6}}]; sub.textAlignHorizontal = 'CENTER'; sub.textAutoResize = 'WIDTH_AND_HEIGHT'; hero.appendChild(sub); }", subtitle)
+			b.Linef("{ const btn = figma.createFrame(); btn.name = 'CTA Button'; btn.layoutMode = 'HORIZONTAL'; btn.paddingLeft = btn.paddingRight = 32; btn.paddingTop = btn.paddingBottom = 14; btn.cornerRadius = 8; btn.fills = [{type:'SOLID', color:typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96}}]; btn.counterAxisSizingMode = 'AUTO'; btn.primaryAxisSizingMode = 'AUTO';")
+			b.Linef("const ct = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); ct.fontName = {family:'Inter',style:'Semi Bold'}; ct.fontSize = 16; ct.characters = %q; ct.fills = [{type:'SOLID', color:{r:1,g:1,b:1}}]; btn.appendChild(ct); hero.appendChild(btn); }", cta)
+
+			b.Line("pg.appendChild(hero);")
+			b.ReturnIDs("hero.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&title, "title", "", "Hero heading text")
+	cmd.Flags().StringVar(&subtitle, "subtitle", "", "Hero subtitle text")
+	cmd.Flags().StringVar(&cta, "cta", "", "Call-to-action button text")
+	cmd.Flags().StringVar(&badge, "badge", "", "Optional badge text above heading")
+	return cmd
+}
+
+func newUIPricingCmd() *cobra.Command {
+	var tiersJSON string
+	cmd := &cobra.Command{
+		Use:     "pricing",
+		Short:   "Pricing table with tier cards",
+		Example: `  figma-kit ui pricing -t noir --tiers '[{"name":"Free","price":"$0","features":["5 projects","1GB storage"]},{"name":"Pro","price":"$29","features":["Unlimited","100GB"],"highlighted":true}]'`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			page := resolvePage()
+			b := codegen.New()
+			b.PageSetup(page)
+			emitUIThemeTokens(b, t)
+
+			if tiersJSON == "" {
+				tiersJSON = `[{"name":"Starter","price":"$0","period":"/mo","features":["5 projects","1GB storage","Email support"],"cta":"Start Free"},{"name":"Pro","price":"$29","period":"/mo","features":["Unlimited projects","100GB storage","Priority support","API access"],"cta":"Go Pro","highlighted":true},{"name":"Enterprise","price":"Custom","features":["Everything in Pro","SSO","Dedicated support","SLA"],"cta":"Contact Sales"}]`
+			}
+
+			b.Linef("const tiers = JSON.parse(%s);", jsStringLiteral(tiersJSON))
+			b.Line("const grid = figma.createFrame(); grid.name = 'Pricing'; grid.layoutMode = 'HORIZONTAL'; grid.itemSpacing = 24; grid.paddingLeft = grid.paddingRight = 48; grid.paddingTop = grid.paddingBottom = 48; grid.counterAxisAlignItems = 'CENTER';")
+			b.Line("grid.fills = typeof bg !== 'undefined' ? [{type:'SOLID', color:bg}] : [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
+			b.Line("const accColor = typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96};")
+			b.Line("for (const tier of tiers) {")
+			b.Line("  const card = figma.createFrame(); card.name = tier.name; card.layoutMode = 'VERTICAL'; card.itemSpacing = 16; card.paddingLeft = card.paddingRight = 28; card.paddingTop = card.paddingBottom = 32; card.resize(280, 400); card.cornerRadius = 16;")
+			b.Line("  if (tier.highlighted) { card.fills = [{type:'SOLID', color:{r:0.08,g:0.08,b:0.12}}]; card.strokes = [{type:'SOLID', color:accColor}]; card.strokeWeight = 2; card.effects = [{type:'DROP_SHADOW', color:{...accColor, a:0.2}, offset:{x:0,y:0}, radius:20, spread:0, visible:true, blendMode:'NORMAL'}]; }")
+			b.Line("  else { card.fills = [{type:'SOLID', color:{r:0.06,g:0.06,b:0.09}}]; card.strokes = [{type:'SOLID', color:{r:0.15,g:0.15,b:0.2}}]; card.strokeWeight = 1; }")
+			b.Line("  const nm = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); nm.fontName = {family:'Inter',style:'Semi Bold'}; nm.fontSize = 18; nm.characters = tier.name; nm.fills = [{type:'SOLID', color:{r:0.8,g:0.8,b:0.85}}]; card.appendChild(nm);")
+			b.Line("  const pr = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Bold'}); pr.fontName = {family:'Inter',style:'Bold'}; pr.fontSize = 36; pr.characters = tier.price + (tier.period || ''); pr.fills = [{type:'SOLID', color:{r:0.95,g:0.95,b:0.97}}]; card.appendChild(pr);")
+			b.Line("  if (tier.features) for (const f of tier.features) { const ft = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); ft.fontName = {family:'Inter',style:'Regular'}; ft.fontSize = 14; ft.characters = '✓ ' + f; ft.fills = [{type:'SOLID', color:{r:0.6,g:0.6,b:0.65}}]; card.appendChild(ft); }")
+			b.Line("  if (tier.cta) { const btn = figma.createFrame(); btn.name = 'CTA'; btn.layoutMode = 'HORIZONTAL'; btn.primaryAxisAlignItems = 'CENTER'; btn.counterAxisAlignItems = 'CENTER'; btn.paddingLeft = btn.paddingRight = 24; btn.paddingTop = btn.paddingBottom = 12; btn.cornerRadius = 8; btn.counterAxisSizingMode = 'AUTO'; btn.primaryAxisSizingMode = 'AUTO';")
+			b.Line("    if (tier.highlighted) btn.fills = [{type:'SOLID', color:accColor}]; else btn.fills = [{type:'SOLID', color:{r:0.12,g:0.12,b:0.16}}];")
+			b.Line("    const ct = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); ct.fontName = {family:'Inter',style:'Semi Bold'}; ct.fontSize = 14; ct.characters = tier.cta; ct.fills = [{type:'SOLID', color:{r:1,g:1,b:1}}]; btn.appendChild(ct); card.appendChild(btn); }")
+			b.Line("  grid.appendChild(card);")
+			b.Line("}")
+			b.Line("grid.resize(grid.children.length * 304 + 96, 500);")
+			b.Line("pg.appendChild(grid);")
+			b.ReturnIDs("grid.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&tiersJSON, "tiers", "", "Tiers as JSON array")
+	return cmd
+}
+
+func newUIFeatureGridCmd() *cobra.Command {
+	var (
+		featuresJSON string
+		cols         int
+	)
+	cmd := &cobra.Command{
+		Use:     "feature-grid",
+		Short:   "Grid of feature cards with icon, title, and description",
+		Example: `  figma-kit ui feature-grid -t noir --cols 3 --features '[{"title":"Fast","desc":"Sub-ms reads"},{"title":"Secure","desc":"E2E encrypted"},{"title":"Global","desc":"Edge network"}]'`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			page := resolvePage()
+			b := codegen.New()
+			b.PageSetup(page)
+			emitUIThemeTokens(b, t)
+
+			if featuresJSON == "" {
+				featuresJSON = `[{"title":"Lightning Fast","desc":"Sub-millisecond response times"},{"title":"Fully Secure","desc":"End-to-end encryption built in"},{"title":"Global Scale","desc":"Deployed on the edge worldwide"},{"title":"Developer First","desc":"APIs you'll love working with"},{"title":"Real-time","desc":"Live collaboration built in"},{"title":"Open Source","desc":"Community driven development"}]`
+			}
+
+			b.Linef("const features = JSON.parse(%s);", jsStringLiteral(featuresJSON))
+			b.Linef("const cols = %d;", cols)
+			b.Line("const grid = figma.createFrame(); grid.name = 'Feature Grid'; grid.layoutMode = 'VERTICAL'; grid.itemSpacing = 24; grid.paddingLeft = grid.paddingRight = 48; grid.paddingTop = grid.paddingBottom = 48;")
+			b.Line("grid.fills = typeof bg !== 'undefined' ? [{type:'SOLID', color:bg}] : [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
+			b.Line("let row;")
+			b.Line("for (let i = 0; i < features.length; i++) {")
+			b.Line("  if (i % cols === 0) { row = figma.createFrame(); row.name = 'Row'; row.layoutMode = 'HORIZONTAL'; row.itemSpacing = 24; row.fills = []; row.counterAxisSizingMode = 'AUTO'; row.primaryAxisSizingMode = 'AUTO'; grid.appendChild(row); }")
+			b.Line("  const f = features[i];")
+			b.Line("  const card = figma.createFrame(); card.name = f.title; card.layoutMode = 'VERTICAL'; card.itemSpacing = 12; card.paddingLeft = card.paddingRight = 24; card.paddingTop = card.paddingBottom = 24; card.resize(280, 180); card.cornerRadius = 12; card.fills = [{type:'SOLID', color:{r:0.06,g:0.06,b:0.09}}]; card.strokes = [{type:'SOLID', color:{r:0.12,g:0.12,b:0.16}}]; card.strokeWeight = 1;")
+			b.Line("  const icon = figma.createFrame(); icon.name = 'icon'; icon.resize(40, 40); icon.cornerRadius = 10; icon.fills = [{type:'SOLID', color:typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96}, opacity:0.15}]; card.appendChild(icon);")
+			b.Line("  const tt = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); tt.fontName = {family:'Inter',style:'Semi Bold'}; tt.fontSize = 16; tt.characters = f.title; tt.fills = [{type:'SOLID', color:{r:0.95,g:0.95,b:0.97}}]; card.appendChild(tt);")
+			b.Line("  const dd = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); dd.fontName = {family:'Inter',style:'Regular'}; dd.fontSize = 14; dd.characters = f.desc || ''; dd.fills = [{type:'SOLID', color:{r:0.55,g:0.55,b:0.6}}]; card.appendChild(dd);")
+			b.Line("  row.appendChild(card);")
+			b.Line("}")
+			b.Line("grid.resize(cols * 304 + 96, Math.ceil(features.length / cols) * 204 + 96);")
+			b.Line("pg.appendChild(grid);")
+			b.ReturnIDs("grid.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&featuresJSON, "features", "", "Features as JSON array [{title,desc}]")
+	cmd.Flags().IntVar(&cols, "cols", 3, "Number of columns (2, 3, or 4)")
+	return cmd
+}
+
+func newUITestimonialCmd() *cobra.Command {
+	var (
+		name    string
+		role    string
+		quote   string
+		rating  int
+		variant string
+	)
+	cmd := &cobra.Command{
+		Use:     "testimonial",
+		Short:   "Testimonial/quote card with avatar, name, and rating",
+		Example: `  figma-kit ui testimonial -t noir --name "Jane Doe" --role "CEO at Acme" --quote "This changed everything" --rating 5`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			page := resolvePage()
+			b := codegen.New()
+			b.PageSetup(page)
+			emitUIThemeTokens(b, t)
+
+			if name == "" {
+				name = "Alex Johnson"
+			}
+			if quote == "" {
+				quote = "This tool completely transformed our design workflow. We ship 3x faster now."
+			}
+			if role == "" {
+				role = "Head of Design"
+			}
+
+			width := 480
+			if variant == "large" {
+				width = 640
+			}
+
+			b.Line("const card = figma.createFrame(); card.name = 'Testimonial';")
+			b.Linef("card.resize(%d, 260); card.layoutMode = 'VERTICAL'; card.itemSpacing = 16; card.paddingLeft = card.paddingRight = 32; card.paddingTop = card.paddingBottom = 32; card.cornerRadius = 16;", width)
+			b.Line("card.fills = [{type:'SOLID', color:{r:0.06,g:0.06,b:0.09}}]; card.strokes = [{type:'SOLID', color:{r:0.12,g:0.12,b:0.16}}]; card.strokeWeight = 1;")
+
+			if rating > 0 {
+				stars := ""
+				for i := 0; i < rating && i < 5; i++ {
+					stars += "★"
+				}
+				for i := rating; i < 5; i++ {
+					stars += "☆"
+				}
+				b.Linef("{ const st = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); st.fontName = {family:'Inter',style:'Regular'}; st.fontSize = 18; st.characters = %q; st.fills = [{type:'SOLID', color:{r:0.96,g:0.76,b:0.05}}]; card.appendChild(st); }", stars)
+			}
+
+			b.Linef("{ const qt = figma.createText(); qt.name = 'Quote'; await figma.loadFontAsync({family:'Inter',style:'Regular'}); qt.fontName = {family:'Inter',style:'Regular'}; qt.fontSize = 16; qt.lineHeight = {unit:'PIXELS',value:24}; qt.characters = '\"' + %q + '\"'; qt.fills = [{type:'SOLID', color:{r:0.8,g:0.8,b:0.85}}]; qt.textAutoResize = 'HEIGHT'; qt.resize(%d - 64, 1); card.appendChild(qt); }", quote, width)
+
+			b.Line("const info = figma.createFrame(); info.name = 'Author'; info.layoutMode = 'HORIZONTAL'; info.itemSpacing = 12; info.counterAxisAlignItems = 'CENTER'; info.fills = []; info.counterAxisSizingMode = 'AUTO'; info.primaryAxisSizingMode = 'AUTO';")
+			b.Line("const av = figma.createEllipse(); av.name = 'Avatar'; av.resize(40, 40); av.fills = [{type:'SOLID', color:typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96}}]; info.appendChild(av);")
+			b.Line("const nameCol = figma.createFrame(); nameCol.layoutMode = 'VERTICAL'; nameCol.itemSpacing = 2; nameCol.fills = []; nameCol.counterAxisSizingMode = 'AUTO'; nameCol.primaryAxisSizingMode = 'AUTO';")
+			b.Linef("const nm = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); nm.fontName = {family:'Inter',style:'Semi Bold'}; nm.fontSize = 14; nm.characters = %q; nm.fills = [{type:'SOLID', color:{r:0.95,g:0.95,b:0.97}}]; nameCol.appendChild(nm);", name)
+			b.Linef("const rl = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); rl.fontName = {family:'Inter',style:'Regular'}; rl.fontSize = 13; rl.characters = %q; rl.fills = [{type:'SOLID', color:{r:0.5,g:0.5,b:0.55}}]; nameCol.appendChild(rl);", role)
+			b.Line("info.appendChild(nameCol); card.appendChild(info);")
+
+			b.Line("pg.appendChild(card);")
+			b.ReturnIDs("card.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&name, "name", "", "Person name")
+	cmd.Flags().StringVar(&role, "role", "", "Person role/company")
+	cmd.Flags().StringVar(&quote, "quote", "", "Testimonial quote text")
+	cmd.Flags().IntVar(&rating, "rating", 5, "Star rating (1-5)")
+	cmd.Flags().StringVar(&variant, "variant", "card", "Variant: card, inline, large")
+	return cmd
+}
+
+func newUITimelineCmd() *cobra.Command {
+	var entriesJSON string
+	cmd := &cobra.Command{
+		Use:     "timeline",
+		Short:   "Vertical timeline with dated entries",
+		Example: `  figma-kit ui timeline -t noir --entries '[{"date":"2024","title":"Founded","desc":"Started the journey"},{"date":"2025","title":"Series A","desc":"Raised $10M"}]'`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			page := resolvePage()
+			b := codegen.New()
+			b.PageSetup(page)
+			emitUIThemeTokens(b, t)
+
+			if entriesJSON == "" {
+				entriesJSON = `[{"date":"Jan 2024","title":"Project Started","desc":"Initial concept and research phase"},{"date":"Jun 2024","title":"Beta Launch","desc":"First public beta release"},{"date":"Jan 2025","title":"v1.0 Release","desc":"Production-ready with full feature set"},{"date":"Jun 2025","title":"10K Users","desc":"Growing community adoption"}]`
+			}
+
+			b.Linef("const entries = JSON.parse(%s);", jsStringLiteral(entriesJSON))
+			b.Line("const timeline = figma.createFrame(); timeline.name = 'Timeline'; timeline.layoutMode = 'VERTICAL'; timeline.itemSpacing = 0; timeline.paddingLeft = 60; timeline.paddingRight = 40; timeline.paddingTop = timeline.paddingBottom = 40;")
+			b.Line("timeline.resize(500, entries.length * 120 + 80);")
+			b.Line("timeline.fills = typeof bg !== 'undefined' ? [{type:'SOLID', color:bg}] : [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
+			b.Line("const accColor = typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96};")
+			b.Line("for (let i = 0; i < entries.length; i++) {")
+			b.Line("  const e = entries[i];")
+			b.Line("  const row = figma.createFrame(); row.name = e.title; row.layoutMode = 'HORIZONTAL'; row.itemSpacing = 20; row.paddingTop = row.paddingBottom = 16; row.fills = []; row.counterAxisSizingMode = 'AUTO'; row.primaryAxisSizingMode = 'AUTO';")
+			b.Line("  const dot = figma.createEllipse(); dot.resize(12, 12); dot.fills = [{type:'SOLID', color:accColor}]; row.appendChild(dot);")
+			b.Line("  const content = figma.createFrame(); content.layoutMode = 'VERTICAL'; content.itemSpacing = 4; content.fills = []; content.counterAxisSizingMode = 'AUTO'; content.primaryAxisSizingMode = 'AUTO';")
+			b.Line("  const dt = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Medium'}); dt.fontName = {family:'Inter',style:'Medium'}; dt.fontSize = 12; dt.characters = e.date; dt.fills = [{type:'SOLID', color:accColor}]; content.appendChild(dt);")
+			b.Line("  const tt = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); tt.fontName = {family:'Inter',style:'Semi Bold'}; tt.fontSize = 16; tt.characters = e.title; tt.fills = [{type:'SOLID', color:{r:0.95,g:0.95,b:0.97}}]; content.appendChild(tt);")
+			b.Line("  if (e.desc) { const dd = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); dd.fontName = {family:'Inter',style:'Regular'}; dd.fontSize = 14; dd.characters = e.desc; dd.fills = [{type:'SOLID', color:{r:0.55,g:0.55,b:0.6}}]; content.appendChild(dd); }")
+			b.Line("  row.appendChild(content); timeline.appendChild(row);")
+			b.Line("}")
+			b.Line("pg.appendChild(timeline);")
+			b.ReturnIDs("timeline.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&entriesJSON, "entries", "", "Timeline entries as JSON array")
+	return cmd
+}
+
+func newUIStepperCmd() *cobra.Command {
+	var (
+		steps     int
+		active    int
+		labelsCSV string
+		direction string
+	)
+	cmd := &cobra.Command{
+		Use:     "stepper",
+		Short:   "Step indicator / progress stepper",
+		Example: `  figma-kit ui stepper -t noir --steps 4 --active 2 --labels "Account,Profile,Settings,Done"`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			page := resolvePage()
+			b := codegen.New()
+			b.PageSetup(page)
+			emitUIThemeTokens(b, t)
+
+			labels := strings.Split(labelsCSV, ",")
+			for len(labels) < steps {
+				labels = append(labels, fmt.Sprintf("Step %d", len(labels)+1))
+			}
+
+			isVertical := direction == "vertical"
+			mode := "HORIZONTAL"
+			if isVertical {
+				mode = "VERTICAL"
+			}
+
+			b.Linef("const stepper = figma.createFrame(); stepper.name = 'Stepper'; stepper.layoutMode = %q; stepper.itemSpacing = 8; stepper.counterAxisAlignItems = 'CENTER'; stepper.paddingLeft = stepper.paddingRight = 32; stepper.paddingTop = stepper.paddingBottom = 24;", mode)
+			if isVertical {
+				b.Linef("stepper.resize(280, %d);", steps*80+48)
+			} else {
+				b.Linef("stepper.resize(%d, 80);", steps*120+64)
+			}
+			b.Line("stepper.fills = typeof bg !== 'undefined' ? [{type:'SOLID', color:bg}] : [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
+			b.Line("const accColor = typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96};")
+			b.Linef("const labels = %s;", mustMarshalJSON(labels[:steps]))
+			b.Linef("const activeIdx = %d;", active)
+			b.Line("for (let i = 0; i < labels.length; i++) {")
+			b.Line("  if (i > 0) { const conn = figma.createRectangle(); conn.name = 'connector';")
+			if isVertical {
+				b.Line("    conn.resize(2, 24);")
+			} else {
+				b.Line("    conn.resize(40, 2);")
+			}
+			b.Line("    conn.fills = [{type:'SOLID', color: i <= activeIdx ? accColor : {r:0.2,g:0.2,b:0.25}}]; stepper.appendChild(conn); }")
+			b.Line("  const step = figma.createFrame(); step.name = labels[i]; step.layoutMode = 'VERTICAL'; step.itemSpacing = 6; step.counterAxisAlignItems = 'CENTER'; step.fills = []; step.counterAxisSizingMode = 'AUTO'; step.primaryAxisSizingMode = 'AUTO';")
+			b.Line("  const circle = figma.createEllipse(); circle.resize(32, 32);")
+			b.Line("  if (i < activeIdx) circle.fills = [{type:'SOLID', color:accColor}];")
+			b.Line("  else if (i === activeIdx) { circle.fills = [{type:'SOLID', color:accColor}]; circle.effects = [{type:'DROP_SHADOW', color:{...accColor,a:0.3}, offset:{x:0,y:0}, radius:8, spread:0, visible:true, blendMode:'NORMAL'}]; }")
+			b.Line("  else circle.fills = [{type:'SOLID', color:{r:0.15,g:0.15,b:0.2}}];")
+			b.Line("  step.appendChild(circle);")
+			b.Line("  const num = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); num.fontName = {family:'Inter',style:'Semi Bold'}; num.fontSize = 13; num.characters = String(i + 1); num.fills = [{type:'SOLID', color:{r:1,g:1,b:1}}];")
+			b.Line("  const lbl = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); lbl.fontName = {family:'Inter',style:'Regular'}; lbl.fontSize = 12; lbl.characters = labels[i]; lbl.fills = [{type:'SOLID', color: i <= activeIdx ? {r:0.9,g:0.9,b:0.95} : {r:0.45,g:0.45,b:0.5}}];")
+			b.Line("  step.appendChild(lbl); stepper.appendChild(step);")
+			b.Line("}")
+			b.Line("pg.appendChild(stepper);")
+			b.ReturnIDs("stepper.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().IntVar(&steps, "steps", 4, "Number of steps")
+	cmd.Flags().IntVar(&active, "active", 1, "Current active step (0-indexed)")
+	cmd.Flags().StringVar(&labelsCSV, "labels", "", "Comma-separated step labels")
+	cmd.Flags().StringVar(&direction, "direction", "horizontal", "Direction: horizontal, vertical")
+	return cmd
+}
+
+func newUIAccordionCmd() *cobra.Command {
+	var (
+		itemsJSON string
+		openIdx   int
+	)
+	cmd := &cobra.Command{
+		Use:     "accordion",
+		Short:   "Expandable sections (FAQ accordion)",
+		Example: `  figma-kit ui accordion -t noir --items '[{"question":"What is this?","answer":"A powerful design tool"},{"question":"How much?","answer":"Free and open source"}]'`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			page := resolvePage()
+			b := codegen.New()
+			b.PageSetup(page)
+			emitUIThemeTokens(b, t)
+
+			if itemsJSON == "" {
+				itemsJSON = `[{"question":"What is figma-kit?","answer":"A CLI tool for programmatic Figma design, powered by AI and the MCP server."},{"question":"Do I need a Figma account?","answer":"Yes, you need at least a free Figma account to use figma-kit."},{"question":"Can I use it without AI?","answer":"Yes! All commands output JavaScript that can be pasted into Figma plugins."},{"question":"Is it open source?","answer":"Yes, figma-kit is MIT licensed and available on GitHub."}]`
+			}
+
+			b.Linef("const items = JSON.parse(%s);", jsStringLiteral(itemsJSON))
+			b.Linef("const openIdx = %d;", openIdx)
+			b.Line("const acc = figma.createFrame(); acc.name = 'Accordion'; acc.layoutMode = 'VERTICAL'; acc.itemSpacing = 0; acc.paddingLeft = acc.paddingRight = 32; acc.paddingTop = acc.paddingBottom = 16;")
+			b.Line("acc.resize(600, items.length * (openIdx >= 0 ? 100 : 60) + 80);")
+			b.Line("acc.fills = typeof bg !== 'undefined' ? [{type:'SOLID', color:bg}] : [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
+			b.Line("for (let i = 0; i < items.length; i++) {")
+			b.Line("  const item = items[i]; const isOpen = i === openIdx;")
+			b.Line("  const section = figma.createFrame(); section.name = item.question; section.layoutMode = 'VERTICAL'; section.itemSpacing = 8; section.paddingTop = section.paddingBottom = 16; section.fills = [];")
+			b.Line("  section.counterAxisSizingMode = 'AUTO'; section.primaryAxisSizingMode = 'AUTO';")
+			b.Line("  const header = figma.createFrame(); header.layoutMode = 'HORIZONTAL'; header.fills = []; header.counterAxisSizingMode = 'AUTO'; header.primaryAxisSizingMode = 'AUTO'; header.itemSpacing = 12;")
+			b.Line("  const chevron = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); chevron.fontName = {family:'Inter',style:'Regular'}; chevron.fontSize = 16; chevron.characters = isOpen ? '▾' : '▸'; chevron.fills = [{type:'SOLID', color:{r:0.5,g:0.5,b:0.55}}]; header.appendChild(chevron);")
+			b.Line("  const q = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); q.fontName = {family:'Inter',style:'Semi Bold'}; q.fontSize = 16; q.characters = item.question; q.fills = [{type:'SOLID', color:{r:0.95,g:0.95,b:0.97}}]; header.appendChild(q);")
+			b.Line("  section.appendChild(header);")
+			b.Line("  if (isOpen && item.answer) { const a = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); a.fontName = {family:'Inter',style:'Regular'}; a.fontSize = 14; a.lineHeight = {unit:'PIXELS',value:22}; a.characters = item.answer; a.fills = [{type:'SOLID', color:{r:0.6,g:0.6,b:0.65}}]; a.textAutoResize = 'HEIGHT'; a.resize(520, 1); section.appendChild(a); }")
+			b.Line("  if (i < items.length - 1) { const div = figma.createRectangle(); div.resize(536, 1); div.fills = [{type:'SOLID', color:{r:0.12,g:0.12,b:0.16}}]; section.appendChild(div); }")
+			b.Line("  acc.appendChild(section);")
+			b.Line("}")
+			b.Line("pg.appendChild(acc);")
+			b.ReturnIDs("acc.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&itemsJSON, "items", "", "FAQ items as JSON array [{question,answer}]")
+	cmd.Flags().IntVar(&openIdx, "open", 0, "Index of initially expanded item (-1 for all closed)")
+	return cmd
 }

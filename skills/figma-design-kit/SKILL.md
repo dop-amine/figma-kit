@@ -15,16 +15,23 @@
 
 ## Core Workflow
 
-Every interaction follows the same 3-step loop:
+Every interaction follows the same loop:
 
+**AI Agent Workflow (via Cursor/Claude Code):**
 1. **Generate JS** — run a `figma-kit` command to produce use_figma JavaScript
 2. **Execute** — feed the JS output to the `use_figma` MCP tool
 3. **Verify** — call `get_screenshot` to visually confirm the result
 
+**Direct Execution Workflow:**
+1. **Authenticate** — `figma-kit auth login` (one-time)
+2. **Execute** — `figma-kit exec <command>` generates JS and sends to MCP in one shot
+3. **Verify** — add `--screenshot` flag for automatic screenshot
+
 ```
 User: "Create a hero section"
-→ Run: figma-kit node create frame --name "Hero" -w 1440 --height 800
-→ Feed output to use_figma
+→ AI: figma-kit exec ui hero -t noir --title "Ship Faster" --cta "Get Started"
+  OR
+→ AI: figma-kit ui hero -t noir ... | feed output to use_figma
 → get_screenshot to verify
 ```
 
@@ -36,7 +43,10 @@ User: "Create a hero section"
 |---------|-------------|
 | `figma-kit init [name]` | Create `.figmarc.json` project config |
 | `figma-kit config set\|get\|list` | Manage config (fileKey, theme, page, exportDir) |
-| `figma-kit whoami` | Check Figma identity (wraps MCP) |
+| `figma-kit auth login\|logout\|status` | Manage Figma MCP authentication |
+| `figma-kit exec <command>` | Generate JS and execute directly via MCP |
+| `figma-kit new-file <name>` | Create a new Figma file via MCP |
+| `figma-kit whoami` | Check Figma identity via MCP |
 | `figma-kit open` | Open current file in browser |
 | `figma-kit status` | JS to inspect pages, frames, node counts |
 
@@ -54,6 +64,9 @@ User: "Create a hero section"
 | `reparent <id> <parentId>` | — |
 | `lock <id>` | `--unlock` |
 | `visible <id>` | `--hide` |
+| `boolean <op> <a> <b>` | `op`: union, subtract, intersect, exclude |
+| `svg <path-data>` | `--fill`, `--stroke`, `--size` |
+| `variant-set <compId>` | `--variants` JSON array |
 
 **Styling** — `figma-kit style <verb>`
 | Verb | Key Flags |
@@ -94,12 +107,22 @@ User: "Create a hero section"
 - `gradient` — gradient fill card
 - `image` — image fill with overlay
 - `bento` — grid layout of cards
+- `neumorphic` — soft UI with inset/outset shadow pair (`--depth`, `--inset`)
+- `clay` — claymorphism / puffy 3D (`--color`)
+- `outline` — ghost card with glow border (`--glow-color`, `--glow-spread`)
 
-**UI Primitives** — `figma-kit ui <component>`
-- `button`, `input`, `badge`, `avatar`, `divider`, `icon`, `progress`, `toggle`, `tooltip`, `stat`, `table`, `nav`, `footer`
+**UI Components** — `figma-kit ui <component>`
+- Primitives: `button`, `input`, `badge`, `avatar`, `divider`, `icon`, `progress`, `toggle`, `tooltip`, `stat`, `table`, `nav`, `footer`, `checkbox`, `radio`, `tabs`, `dropdown`, `breadcrumb`, `skeleton`
+- New primitives: `chip`, `toast`, `modal`, `card-list`, `sidebar`, `avatar-group`, `rating`, `search`, `pagination`, `color-picker`
+- Layout compositions: `hero`, `pricing`, `feature-grid`, `testimonial`, `timeline`, `stepper`, `accordion`
 
 **Visual Effects** — `figma-kit fx <effect>`
 - `glow`, `mesh`, `noise`, `vignette`, `grain`, `blur-bg`, `accent-bar`, `shadow`, `parallax-layer`
+- `aurora` — northern lights gradient overlay (`--palette`)
+- `morph` — organic blob shapes (`--count`, `--spread`)
+- `gradient-border` — simulated gradient stroke (`--from`, `--to`)
+- `spotlight` — radial highlight (`--x`, `--y`, `--intensity`)
+- `pattern` — repeating geometric patterns: dots, lines, crosses, diagonal, grid
 
 **Images** — `figma-kit image <action>`
 - `place <path-or-url>` — local files (base64 embedded, < 33 KB) or URLs
@@ -120,11 +143,13 @@ User: "Create a hero section"
 
 **Print:** `poster`, `brochure`, `packaging`, `signage`, `menu`
 
+**Meta:** `changelog` — styled release notes with version entries and type badges
+
 Many accept `--content <file.yml>` for data-driven generation.
 
 ### Layer 4 — Design System
 
-`figma-kit ds <verb>` — create, colors, type-scale, spacing, elevation, radius, icons, component, variables, search, import, sync-tokens, audit
+`figma-kit ds <verb>` — create, colors, type-scale, spacing, elevation, radius, icons, component, component-sheet, variables, variables-create, search, import, sync-tokens, audit, tokens
 
 ### Layer 5 — Inspect & QA
 
@@ -316,9 +341,10 @@ Run `figma-kit cookbook` to browse 15 complete prompt-to-design sessions, or see
 
 | figma-kit output | MCP tool to use |
 |------------------|-----------------|
-| JavaScript code | `use_figma` |
-| Screenshot instructions | `get_screenshot` |
-| Search instructions | `search_design_system` |
+| JavaScript code | `use_figma` (or `figma-kit exec` for direct execution) |
+| Screenshot requests | `get_screenshot` (or `figma-kit screenshot --node <id>`) |
+| Design system search | `search_design_system` (or `figma-kit ds search <query>`) |
+| File creation | `create_new_file` (or `figma-kit new-file <name>`) |
 | React/handoff | `get_design_context` |
 | Plain text (themes, info) | Display directly |
 

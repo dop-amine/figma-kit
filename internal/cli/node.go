@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -37,6 +38,9 @@ func newNodeCmd() *cobra.Command {
 	cmd.AddCommand(newNodeUngroupCmd())
 	cmd.AddCommand(newNodeComponentCmd())
 	cmd.AddCommand(newNodeFlattenCmd())
+	cmd.AddCommand(newNodeBooleanCmd())
+	cmd.AddCommand(newNodeSVGCmd())
+	cmd.AddCommand(newNodeVariantSetCmd())
 	return cmd
 }
 
@@ -378,6 +382,129 @@ func newNodeFlattenCmd() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func newNodeBooleanCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "boolean <operation> <nodeIdA> <nodeIdB>",
+		Short: "Boolean shape operation (union, subtract, intersect, exclude)",
+		Example: `  figma-kit node boolean union "1:2" "1:3"
+  figma-kit node boolean subtract "1:2" "1:3"`,
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			op := strings.ToLower(args[0])
+			var figmaOp string
+			switch op {
+			case "union":
+				figmaOp = "figma.union"
+			case "subtract":
+				figmaOp = "figma.subtract"
+			case "intersect":
+				figmaOp = "figma.intersect"
+			case "exclude":
+				figmaOp = "figma.exclude"
+			default:
+				return fmt.Errorf("unknown operation %q — use union, subtract, intersect, or exclude", op)
+			}
+			b := codegen.New()
+			b.Linef("const a = await figma.getNodeByIdAsync(%q);", args[1])
+			b.Linef("const b = await figma.getNodeByIdAsync(%q);", args[2])
+			b.Line("if (!a || !b) throw new Error('One or both nodes not found');")
+			b.Linef("const result = %s([a, b], figma.currentPage);", figmaOp)
+			b.Line("result.name = a.name + ' ' + '" + op + "' + ' ' + b.name;")
+			b.ReturnIDs("result.id")
+			output(b.String())
+			return nil
+		},
+	}
+	return cmd
+}
+
+func newNodeSVGCmd() *cobra.Command {
+	var (
+		viewbox string
+		fill    string
+		stroke  string
+		size    int
+	)
+	cmd := &cobra.Command{
+		Use:   "svg <path-data>",
+		Short: "Create a vector node from SVG path data",
+		Example: `  figma-kit node svg "M10 10 L90 10 L90 90 L10 90 Z" --size 100
+  figma-kit node svg "M50 0 L100 100 L0 100 Z" --fill "#3B82F6" --size 80`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			page := resolvePage()
+			b := codegen.New()
+			b.PageSetup(page)
+
+			fillRGB := codegen.RGB{R: 0, G: 0, B: 0}
+			if fill != "" {
+				if parsed, err := codegen.HexToRGB(fill); err == nil {
+					fillRGB = parsed
+				}
+			}
+
+			b.Line("const vec = figma.createVector();")
+			b.Linef("vec.name = 'SVG Path';")
+			b.Linef("vec.resize(%d, %d);", size, size)
+			b.Linef("vec.vectorPaths = [{windingRule: 'EVENODD', data: %q}];", args[0])
+			if fill != "" {
+				b.Linef("vec.fills = [{type:'SOLID', color:{r:%.3f,g:%.3f,b:%.3f}}];", fillRGB.R, fillRGB.G, fillRGB.B)
+			}
+			if stroke != "" {
+				strokeRGB, err := codegen.HexToRGB(stroke)
+				if err == nil {
+					b.Linef("vec.strokes = [{type:'SOLID', color:{r:%.3f,g:%.3f,b:%.3f}}]; vec.strokeWeight = 2;", strokeRGB.R, strokeRGB.G, strokeRGB.B)
+				}
+			}
+			b.Line("pg.appendChild(vec);")
+			b.ReturnIDs("vec.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&viewbox, "viewbox", "0 0 100 100", "SVG viewBox")
+	cmd.Flags().StringVar(&fill, "fill", "", "Fill color (hex)")
+	cmd.Flags().StringVar(&stroke, "stroke", "", "Stroke color (hex)")
+	cmd.Flags().IntVar(&size, "size", 100, "Vector size in pixels")
+	return cmd
+}
+
+func newNodeVariantSetCmd() *cobra.Command {
+	var variantsJSON string
+	cmd := &cobra.Command{
+		Use:     "variant-set <componentId>",
+		Short:   "Create a component set with variants from a base component",
+		Example: `  figma-kit node variant-set "1:2" --variants '[{"name":"State=default"},{"name":"State=hover"},{"name":"State=active"}]'`,
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			b := codegen.New()
+			b.Linef("const base = await figma.getNodeByIdAsync(%q);", args[0])
+			b.Line("if (!base || base.type !== 'COMPONENT') throw new Error('Node must be a COMPONENT');")
+
+			if variantsJSON == "" {
+				variantsJSON = `[{"name":"State=default"},{"name":"State=hover"},{"name":"State=active"},{"name":"State=disabled"}]`
+			}
+
+			b.Linef("const variants = JSON.parse(%s);", strconv.Quote(variantsJSON))
+			b.Line("const clones = [base];")
+			b.Line("for (let i = 1; i < variants.length; i++) {")
+			b.Line("  const c = base.clone();")
+			b.Line("  c.name = variants[i].name;")
+			b.Line("  base.parent.appendChild(c);")
+			b.Line("  clones.push(c);")
+			b.Line("}")
+			b.Line("base.name = variants[0].name;")
+			b.Line("const set = figma.combineAsVariants(clones, base.parent);")
+			b.Line("set.name = base.name.split('=')[0].replace(/\\/$/, '').trim() || 'Component';")
+			b.ReturnIDs("set.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&variantsJSON, "variants", "", "Variants as JSON array [{name}]")
+	return cmd
 }
 
 func nodeTypeToMethod(t string) string {

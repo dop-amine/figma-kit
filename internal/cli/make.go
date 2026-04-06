@@ -1555,6 +1555,74 @@ func newMakeMenuCmd() *cobra.Command {
 	return cmd
 }
 
+func newMakeChangelogCmd() *cobra.Command {
+	var (
+		entriesJSON string
+		contentFile string
+	)
+	cmd := &cobra.Command{
+		Use:     "changelog",
+		Short:   "Create a styled changelog / release notes page",
+		Example: `  figma-kit make changelog -t noir --entries '[{"version":"1.0.0","date":"2025-01-15","changes":[{"type":"added","desc":"Direct MCP execution"},{"type":"fixed","desc":"Theme loading bug"}]}]'`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, page, b, err := startDeliverable(cmd)
+			if err != nil {
+				return err
+			}
+			_ = t
+			_ = page
+
+			if contentFile != "" {
+				data, fErr := loadContentFile(contentFile)
+				if fErr == nil {
+					if e, ok := data["entries"]; ok {
+						if j, jErr := json.Marshal(e); jErr == nil {
+							entriesJSON = string(j)
+						}
+					}
+				}
+			}
+			if entriesJSON == "" {
+				entriesJSON = `[{"version":"1.0.0","date":"2025-06-01","changes":[{"type":"added","desc":"Direct MCP execution via exec command"},{"type":"added","desc":"30 new design commands"},{"type":"added","desc":"OAuth authentication flow"},{"type":"fixed","desc":"Theme loading edge cases"}]},{"version":"0.5.0","date":"2025-03-15","changes":[{"type":"added","desc":"Prompt cookbook embedded in binary"},{"type":"added","desc":"Image upload commands"},{"type":"changed","desc":"Improved error messages"}]}]`
+			}
+
+			b.Linef("const entries = JSON.parse(%s);", jsStringLiteral(entriesJSON))
+			b.Line("const root = figma.createFrame(); root.name = 'Changelog';")
+			b.Line("root.layoutMode = 'VERTICAL'; root.itemSpacing = 40; root.paddingLeft = root.paddingRight = 64; root.paddingTop = root.paddingBottom = 64;")
+			b.Line("root.resize(800, entries.length * 300 + 200); root.fills = [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
+			b.Line("pg.appendChild(root);")
+
+			b.Line("const title = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Bold'}); title.fontName = {family:'Inter',style:'Bold'}; title.fontSize = 32; title.characters = 'Changelog'; title.fills = [{type:'SOLID', color:{r:0.95,g:0.95,b:0.97}}]; root.appendChild(title);")
+
+			b.Line("const badgeColors = { added: {r:0.1,g:0.7,b:0.4}, fixed: {r:0.23,g:0.51,b:0.96}, changed: {r:0.85,g:0.6,b:0.1}, removed: {r:0.8,g:0.2,b:0.2} };")
+			b.Line("for (const entry of entries) {")
+			b.Line("  const section = figma.createFrame(); section.name = 'v' + entry.version; section.layoutMode = 'VERTICAL'; section.itemSpacing = 16; section.fills = []; section.counterAxisSizingMode = 'AUTO'; section.primaryAxisSizingMode = 'AUTO';")
+			b.Line("  const header = figma.createFrame(); header.layoutMode = 'HORIZONTAL'; header.itemSpacing = 12; header.counterAxisAlignItems = 'CENTER'; header.fills = []; header.counterAxisSizingMode = 'AUTO'; header.primaryAxisSizingMode = 'AUTO';")
+			b.Line("  const ver = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Bold'}); ver.fontName = {family:'Inter',style:'Bold'}; ver.fontSize = 22; ver.characters = 'v' + entry.version; ver.fills = [{type:'SOLID', color:{r:0.95,g:0.95,b:0.97}}]; header.appendChild(ver);")
+			b.Line("  if (entry.date) { const dt = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); dt.fontName = {family:'Inter',style:'Regular'}; dt.fontSize = 14; dt.characters = entry.date; dt.fills = [{type:'SOLID', color:{r:0.5,g:0.5,b:0.55}}]; header.appendChild(dt); }")
+			b.Line("  section.appendChild(header);")
+			b.Line("  if (entry.changes) for (const change of entry.changes) {")
+			b.Line("    const row = figma.createFrame(); row.layoutMode = 'HORIZONTAL'; row.itemSpacing = 10; row.counterAxisAlignItems = 'CENTER'; row.fills = []; row.counterAxisSizingMode = 'AUTO'; row.primaryAxisSizingMode = 'AUTO';")
+			b.Line("    const badge = figma.createFrame(); badge.layoutMode = 'HORIZONTAL'; badge.paddingLeft = badge.paddingRight = 8; badge.paddingTop = badge.paddingBottom = 3; badge.cornerRadius = 4; badge.counterAxisSizingMode = 'AUTO'; badge.primaryAxisSizingMode = 'AUTO';")
+			b.Line("    const bColor = badgeColors[change.type] || {r:0.5,g:0.5,b:0.55};")
+			b.Line("    badge.fills = [{type:'SOLID', color:bColor, opacity:0.15}];")
+			b.Line("    const bt = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Medium'}); bt.fontName = {family:'Inter',style:'Medium'}; bt.fontSize = 11; bt.characters = change.type.toUpperCase(); bt.fills = [{type:'SOLID', color:bColor}]; badge.appendChild(bt); row.appendChild(badge);")
+			b.Line("    const desc = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); desc.fontName = {family:'Inter',style:'Regular'}; desc.fontSize = 14; desc.characters = change.desc; desc.fills = [{type:'SOLID', color:{r:0.75,g:0.75,b:0.8}}]; row.appendChild(desc);")
+			b.Line("    section.appendChild(row);")
+			b.Line("  }")
+			b.Line("  root.appendChild(section);")
+			b.Line("}")
+
+			b.ReturnIDs("root.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&entriesJSON, "entries", "", "Changelog entries as JSON array")
+	cmd.Flags().StringVar(&contentFile, "content", "", "YAML content file path")
+	return cmd
+}
+
 // newMakeCmd is the parent for all deliverable generators.
 func newMakeCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -1616,5 +1684,6 @@ func newMakeCmd() *cobra.Command {
 	cmd.AddCommand(newMakePackagingCmd())
 	cmd.AddCommand(newMakeSignageCmd())
 	cmd.AddCommand(newMakeMenuCmd())
+	cmd.AddCommand(newMakeChangelogCmd())
 	return cmd
 }

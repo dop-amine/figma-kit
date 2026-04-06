@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/dop-amine/figma-kit/internal/codegen"
+	"github.com/dop-amine/figma-kit/internal/mcpclient"
 	"github.com/dop-amine/figma-kit/internal/theme"
 )
 
@@ -41,6 +42,7 @@ func newDSCmd() *cobra.Command {
 	cmd.AddCommand(newDSSyncTokensCmd())
 	cmd.AddCommand(newDSAuditCmd())
 	cmd.AddCommand(newDSTokensCmd())
+	cmd.AddCommand(newDSComponentSheetCmd())
 	return cmd
 }
 
@@ -459,19 +461,29 @@ func newDSVariablesCreateCmd() *cobra.Command {
 
 func newDSSearchCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "search",
-		Short: "How to search the design system via MCP",
+		Use:   "search <query>",
+		Short: "Search the design system via MCP (falls back to instructions)",
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			msg := strings.TrimSpace(`
-Design system search is performed through the Figma MCP tool **search_design_system**.
-
-1. In your MCP-enabled client, invoke the tool with a natural-language query (components, styles, variables).
-2. Scope queries to your team library or file as supported by your MCP server configuration.
-3. Use the returned node or style IDs with figma-kit commands (e.g. node clone, style fill) to apply results.
-
-This CLI does not call MCP directly; run the tool from the assistant or IDE integration that exposes Figma MCP.
-`)
-			_, _ = fmt.Fprint(os.Stdout, msg, "\n")
+			fk := resolveFileKey()
+			query := strings.Join(args, " ")
+			if fk == "" {
+				fmt.Println("No file key configured. Set via 'figma-kit config set fileKey <key>'.")
+				fmt.Println("Then: figma-kit ds search <query>")
+				return nil
+			}
+			ctx := cmd.Context()
+			session, err := mcpclient.Connect(ctx)
+			if err != nil {
+				fmt.Println("Not authenticated. Run 'figma-kit auth login' first.")
+				return nil
+			}
+			defer session.Close()
+			result, sErr := session.CallSearchDS(ctx, fk, query)
+			if sErr != nil {
+				return sErr
+			}
+			fmt.Println(result.Raw)
 			return nil
 		},
 	}
@@ -597,6 +609,73 @@ func newDSTokensCmd() *cobra.Command {
 			enc := json.NewEncoder(os.Stdout)
 			enc.SetIndent("", "  ")
 			return enc.Encode(t)
+		},
+	}
+}
+
+func newDSComponentSheetCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "component-sheet",
+		Short:   "Generate a reference sheet showing button and input component states",
+		Example: `  figma-kit ds component-sheet -t noir`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			b := codegen.New()
+			codegen.PreambleWithPage(b, t, resolvePage())
+
+			b.Line("const sheet = figma.createFrame(); sheet.name = 'Component Sheet';")
+			b.Line("sheet.layoutMode = 'VERTICAL'; sheet.itemSpacing = 48; sheet.paddingLeft = sheet.paddingRight = 64; sheet.paddingTop = sheet.paddingBottom = 64;")
+			b.Line("sheet.resize(1200, 1400); sheet.fills = [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
+			b.Line("figma.currentPage.appendChild(sheet);")
+
+			b.Line("const btnTitle = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Bold'}); btnTitle.fontName = {family:'Inter',style:'Bold'}; btnTitle.fontSize = 24; btnTitle.characters = 'Buttons'; btnTitle.fills = [{type:'SOLID', color:{r:0.95,g:0.95,b:0.97}}]; sheet.appendChild(btnTitle);")
+			b.Line("const btnVariants = ['primary', 'secondary', 'ghost'];")
+			b.Line("const btnStates = ['default', 'hover', 'active', 'disabled'];")
+			b.Line("const btnColors = { primary: {r:0.23,g:0.51,b:0.96}, secondary: {r:0.15,g:0.15,b:0.2}, ghost: {r:0,g:0,b:0} };")
+			b.Line("for (const variant of btnVariants) {")
+			b.Line("  const row = figma.createFrame(); row.name = 'Button / ' + variant; row.layoutMode = 'HORIZONTAL'; row.itemSpacing = 16; row.fills = []; row.counterAxisSizingMode = 'AUTO'; row.primaryAxisSizingMode = 'AUTO';")
+			b.Line("  const label = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Medium'}); label.fontName = {family:'Inter',style:'Medium'}; label.fontSize = 12; label.characters = variant.toUpperCase(); label.fills = [{type:'SOLID', color:{r:0.5,g:0.5,b:0.55}}]; label.resize(100, 20); row.appendChild(label);")
+			b.Line("  for (const state of btnStates) {")
+			b.Line("    const btn = figma.createFrame(); btn.name = variant + ' / ' + state; btn.layoutMode = 'HORIZONTAL'; btn.paddingLeft = btn.paddingRight = 20; btn.paddingTop = btn.paddingBottom = 10; btn.cornerRadius = 8; btn.counterAxisSizingMode = 'AUTO'; btn.primaryAxisSizingMode = 'AUTO';")
+			b.Line("    let fillColor = btnColors[variant] || {r:0.23,g:0.51,b:0.96};")
+			b.Line("    let opacity = 1;")
+			b.Line("    if (state === 'hover') opacity = 0.9;")
+			b.Line("    if (state === 'active') opacity = 0.8;")
+			b.Line("    if (state === 'disabled') opacity = 0.4;")
+			b.Line("    if (variant === 'ghost') { btn.fills = []; btn.strokes = [{type:'SOLID', color:{r:0.2,g:0.2,b:0.25}, opacity:opacity}]; btn.strokeWeight = 1; }")
+			b.Line("    else btn.fills = [{type:'SOLID', color:fillColor, opacity:opacity}];")
+			b.Line("    const tx = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); tx.fontName = {family:'Inter',style:'Semi Bold'}; tx.fontSize = 14; tx.characters = state; tx.fills = [{type:'SOLID', color:{r:1,g:1,b:1}, opacity: state === 'disabled' ? 0.5 : 1}]; btn.appendChild(tx);")
+			b.Line("    row.appendChild(btn);")
+			b.Line("  }")
+			b.Line("  sheet.appendChild(row);")
+			b.Line("}")
+
+			b.Blank()
+			b.Line("const inputTitle = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Bold'}); inputTitle.fontName = {family:'Inter',style:'Bold'}; inputTitle.fontSize = 24; inputTitle.characters = 'Inputs'; inputTitle.fills = [{type:'SOLID', color:{r:0.95,g:0.95,b:0.97}}]; sheet.appendChild(inputTitle);")
+			b.Line("const inputStates = ['empty', 'filled', 'focused', 'error', 'disabled'];")
+			b.Line("const inputRow = figma.createFrame(); inputRow.name = 'Input States'; inputRow.layoutMode = 'HORIZONTAL'; inputRow.itemSpacing = 16; inputRow.fills = []; inputRow.counterAxisSizingMode = 'AUTO'; inputRow.primaryAxisSizingMode = 'AUTO';")
+			b.Line("for (const state of inputStates) {")
+			b.Line("  const input = figma.createFrame(); input.name = 'Input / ' + state; input.layoutMode = 'HORIZONTAL'; input.paddingLeft = input.paddingRight = 12; input.paddingTop = input.paddingBottom = 10; input.resize(180, 40); input.cornerRadius = 8;")
+			b.Line("  input.fills = [{type:'SOLID', color:{r:0.06,g:0.06,b:0.09}}];")
+			b.Line("  let borderColor = {r:0.18,g:0.18,b:0.22};")
+			b.Line("  if (state === 'focused') borderColor = {r:0.23,g:0.51,b:0.96};")
+			b.Line("  if (state === 'error') borderColor = {r:0.9,g:0.2,b:0.2};")
+			b.Line("  input.strokes = [{type:'SOLID', color:borderColor}]; input.strokeWeight = state === 'focused' ? 2 : 1;")
+			b.Line("  const tx = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); tx.fontName = {family:'Inter',style:'Regular'}; tx.fontSize = 14;")
+			b.Line("  if (state === 'empty') { tx.characters = 'Placeholder'; tx.fills = [{type:'SOLID', color:{r:0.4,g:0.4,b:0.45}}]; }")
+			b.Line("  else if (state === 'filled' || state === 'focused') { tx.characters = 'Input text'; tx.fills = [{type:'SOLID', color:{r:0.9,g:0.9,b:0.95}}]; }")
+			b.Line("  else if (state === 'error') { tx.characters = 'Invalid input'; tx.fills = [{type:'SOLID', color:{r:0.9,g:0.3,b:0.3}}]; }")
+			b.Line("  else { tx.characters = 'Disabled'; tx.fills = [{type:'SOLID', color:{r:0.3,g:0.3,b:0.35}}]; input.fills = [{type:'SOLID', color:{r:0.04,g:0.04,b:0.06}}]; }")
+			b.Line("  input.appendChild(tx); inputRow.appendChild(input);")
+			b.Line("}")
+			b.Line("sheet.appendChild(inputRow);")
+
+			b.ReturnIDs("sheet.id")
+			output(b.String())
+			return nil
 		},
 	}
 }

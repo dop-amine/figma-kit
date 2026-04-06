@@ -9,6 +9,7 @@ import (
 
 	"github.com/dop-amine/figma-kit/internal/codegen"
 	"github.com/dop-amine/figma-kit/internal/config"
+	"github.com/dop-amine/figma-kit/internal/mcpclient"
 )
 
 func newInitCmd() *cobra.Command {
@@ -92,10 +93,22 @@ func newConfigCmd() *cobra.Command {
 func newWhoamiCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "whoami",
-		Short: "Show Figma authentication status (wraps MCP whoami tool)",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("To check your Figma identity, ask the AI to call the 'whoami' MCP tool.")
-			fmt.Println("This returns your email, plans, and seat type.")
+		Short: "Show Figma authentication status via MCP (falls back to instructions)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			session, err := mcpclient.Connect(ctx)
+			if err != nil {
+				fmt.Println("Not authenticated. Run 'figma-kit auth login' first,")
+				fmt.Println("or ask the AI to call the 'whoami' MCP tool.")
+				return nil
+			}
+			defer session.Close()
+			result, sErr := session.CallWhoami(ctx)
+			if sErr != nil {
+				return sErr
+			}
+			fmt.Println(result.Raw)
+			return nil
 		},
 	}
 }
