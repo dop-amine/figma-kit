@@ -18,10 +18,10 @@ type RGB struct {
 
 // TypeSpec defines a typography preset.
 type TypeSpec struct {
-	FontSize   int     `json:"fontSize"`
-	Style      string  `json:"style"`
-	LineHeight *int    `json:"lineHeight"`
-	Family     string  `json:"family,omitempty"`
+	FontSize   int    `json:"fontSize"`
+	Style      string `json:"style"`
+	LineHeight *int   `json:"lineHeight"`
+	Family     string `json:"family,omitempty"`
 }
 
 // FontSpec defines the font families and weights used by a theme.
@@ -43,13 +43,13 @@ type GlassPreset struct {
 
 // ShadowPreset defines a drop shadow effect.
 type ShadowPreset struct {
-	Type      string  `json:"type"`
-	Color     RGBA    `json:"color"`
-	Offset    XY      `json:"offset"`
-	Radius    int     `json:"radius"`
-	Spread    int     `json:"spread"`
-	Visible   bool    `json:"visible"`
-	BlendMode string  `json:"blendMode"`
+	Type      string `json:"type"`
+	Color     RGBA   `json:"color"`
+	Offset    XY     `json:"offset"`
+	Radius    int    `json:"radius"`
+	Spread    int    `json:"spread"`
+	Visible   bool   `json:"visible"`
+	BlendMode string `json:"blendMode"`
 }
 
 // RGBA is an RGB color with alpha.
@@ -98,8 +98,8 @@ type GradientStop struct {
 
 // GradientSpec defines a gradient paint.
 type GradientSpec struct {
-	Type              string       `json:"type"`
-	GradientTransform [2][3]float64 `json:"gradientTransform"`
+	Type              string         `json:"type"`
+	GradientTransform [2][3]float64  `json:"gradientTransform"`
 	GradientStops     []GradientStop `json:"gradientStops"`
 }
 
@@ -117,16 +117,16 @@ type BrandSpec struct {
 
 // Theme is the complete theme configuration.
 type Theme struct {
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Website     string                 `json:"website,omitempty"`
-	Colors      map[string]RGB         `json:"colors"`
-	Type        map[string]TypeSpec    `json:"type"`
-	Fonts       FontSpec               `json:"fonts"`
-	Effects     EffectsSpec            `json:"effects"`
-	Spacing     SpacingSpec            `json:"spacing"`
+	Name        string                  `json:"name"`
+	Description string                  `json:"description"`
+	Website     string                  `json:"website,omitempty"`
+	Colors      map[string]RGB          `json:"colors"`
+	Type        map[string]TypeSpec     `json:"type"`
+	Fonts       FontSpec                `json:"fonts"`
+	Effects     EffectsSpec             `json:"effects"`
+	Spacing     SpacingSpec             `json:"spacing"`
 	Gradients   map[string]GradientSpec `json:"gradients"`
-	Brand       *BrandSpec             `json:"brand,omitempty"`
+	Brand       *BrandSpec              `json:"brand,omitempty"`
 }
 
 // Load reads a theme by name, searching embedded themes first, then user directories.

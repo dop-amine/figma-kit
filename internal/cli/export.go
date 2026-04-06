@@ -162,21 +162,21 @@ func newExportTokensCmd() *cobra.Command {
 				enc.SetIndent("", "  ")
 				return enc.Encode(t)
 			case "css":
-				fmt.Fprintf(os.Stdout, "/* export tokens — %s */\n:root {\n", t.Name)
+				_, _ = fmt.Fprintf(os.Stdout, "/* export tokens — %s */\n:root {\n", t.Name)
 				names := t.ColorNames()
 				sort.Strings(names)
 				for _, name := range names {
 					c := t.Colors[name]
 					h := codegen.RGBToHex(codegen.RGB{R: c.R, G: c.G, B: c.B})
 					key := name
-					fmt.Fprintf(os.Stdout, "  --fk-%s: %s;\n", key, h)
+					_, _ = fmt.Fprintf(os.Stdout, "  --fk-%s: %s;\n", key, h)
 				}
-			fmt.Fprintln(os.Stdout, "}")
-			return nil
-		default:
-			return fmt.Errorf("unknown format %q (json or css)", format)
-		}
-	},
+				_, _ = fmt.Fprintln(os.Stdout, "}")
+				return nil
+			default:
+				return fmt.Errorf("unknown format %q (json or css)", format)
+			}
+		},
 	}
 	cmd.Flags().StringVar(&format, "format", "json", "json or css")
 	return cmd

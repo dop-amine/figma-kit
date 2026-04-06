@@ -251,17 +251,17 @@ func newNodeVisibleCmd() *cobra.Command {
 
 func nodeTypeToMethod(t string) string {
 	m := map[string]string{
-		"frame":          "createFrame",
-		"rect":           "createRectangle",
-		"rectangle":      "createRectangle",
-		"text":           "createText",
-		"ellipse":        "createEllipse",
-		"line":           "createLine",
-		"polygon":        "createPolygon",
-		"star":           "createStar",
-		"vector":         "createVector",
-		"component":      "createComponent",
-		"component-set":  "createComponentSet",
+		"frame":         "createFrame",
+		"rect":          "createRectangle",
+		"rectangle":     "createRectangle",
+		"text":          "createText",
+		"ellipse":       "createEllipse",
+		"line":          "createLine",
+		"polygon":       "createPolygon",
+		"star":          "createStar",
+		"vector":        "createVector",
+		"component":     "createComponent",
+		"component-set": "createComponentSet",
 	}
 	return m[strings.ToLower(t)]
 }

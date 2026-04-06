@@ -1261,11 +1261,14 @@ func newMakeErrorPageCmd() *cobra.Command {
 				return err
 			}
 			code := typ
-			msg := "Something went wrong."
-			if typ == "404" {
+			var msg string
+			switch typ {
+			case "404":
 				msg = "Page not found."
-			} else if typ == "offline" {
+			case "offline":
 				msg = "You appear to be offline."
+			default:
+				msg = "Something went wrong."
 			}
 			qm, _ := marshalJSONForJS(msg)
 			b.Comment("--- Deliverable: error-page ---")

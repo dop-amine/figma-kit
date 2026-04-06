@@ -432,7 +432,7 @@ Design system search is performed through the Figma MCP tool **search_design_sys
 
 This CLI does not call MCP directly; run the tool from the assistant or IDE integration that exposes Figma MCP.
 `)
-			fmt.Fprint(os.Stdout, msg, "\n")
+			_, _ = fmt.Fprint(os.Stdout, msg, "\n")
 			return nil
 		},
 	}
@@ -476,23 +476,23 @@ func newDSSyncTokensCmd() *cobra.Command {
 			}
 			switch strings.ToLower(format) {
 			case "css":
-				fmt.Fprintf(os.Stdout, "/* theme: %s */\n:root {\n", t.Name)
+				_, _ = fmt.Fprintf(os.Stdout, "/* theme: %s */\n:root {\n", t.Name)
 				for _, name := range t.ColorNames() {
 					c := t.Colors[name]
 					h := codegen.RGBToHex(codegen.RGB{R: c.R, G: c.G, B: c.B})
 					key := strings.ReplaceAll(strings.ToLower(name), "_", "-")
-					fmt.Fprintf(os.Stdout, "  --color-%s: %s;\n", key, h)
+					_, _ = fmt.Fprintf(os.Stdout, "  --color-%s: %s;\n", key, h)
 				}
-				fmt.Fprintln(os.Stdout, "}")
+				_, _ = fmt.Fprintln(os.Stdout, "}")
 			case "tailwind":
-				fmt.Fprintf(os.Stdout, "// tailwind.config theme.extend — %s\n", t.Name)
-				fmt.Fprintln(os.Stdout, "colors: {")
+				_, _ = fmt.Fprintf(os.Stdout, "// tailwind.config theme.extend — %s\n", t.Name)
+				_, _ = fmt.Fprintln(os.Stdout, "colors: {")
 				for _, name := range t.ColorNames() {
 					c := t.Colors[name]
 					h := codegen.RGBToHex(codegen.RGB{R: c.R, G: c.G, B: c.B})
-					fmt.Fprintf(os.Stdout, "  '%s': '%s',\n", name, h)
+					_, _ = fmt.Fprintf(os.Stdout, "  '%s': '%s',\n", name, h)
 				}
-				fmt.Fprintln(os.Stdout, "},")
+				_, _ = fmt.Fprintln(os.Stdout, "},")
 			case "json":
 				enc := json.NewEncoder(os.Stdout)
 				enc.SetIndent("", "  ")

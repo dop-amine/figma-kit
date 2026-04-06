@@ -88,9 +88,9 @@ func newStyleStrokeCmd() *cobra.Command {
 
 func newStyleEffectCmd() *cobra.Command {
 	var (
-		shadow    string
-		blur      int
-		blurType  string
+		shadow   string
+		blur     int
+		blurType string
 	)
 	cmd := &cobra.Command{
 		Use:   "effect <nodeId>",
@@ -125,7 +125,7 @@ func newStyleEffectCmd() *cobra.Command {
 
 func newStyleCornerCmd() *cobra.Command {
 	var (
-		radius     int
+		radius         int
 		tl, tr, br, bl int
 	)
 	cmd := &cobra.Command{

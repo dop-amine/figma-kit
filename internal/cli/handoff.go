@@ -126,7 +126,7 @@ Use the Figma MCP tool **get_design_context** with node ID **%s**.
 
 figma-kit does not call MCP directly; invoke get_design_context from the MCP client.
 `, args[0]))
-			fmt.Fprint(os.Stdout, msg, "\n")
+			_, _ = fmt.Fprint(os.Stdout, msg, "\n")
 			return nil
 		},
 	}

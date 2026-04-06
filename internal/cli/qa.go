@@ -58,7 +58,7 @@ Use the Figma MCP tool **get_screenshot** to rasterize a node or frame.
 
 figma-kit only generates plugin JS; it does not perform screenshots itself.
 `)
-			fmt.Fprint(os.Stdout, msg, "\n")
+			_, _ = fmt.Fprint(os.Stdout, msg, "\n")
 			return nil
 		},
 	}

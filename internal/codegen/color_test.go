@@ -79,7 +79,7 @@ func TestRGBToHex_roundTrip(t *testing.T) {
 				t.Fatal(err)
 			}
 			back := RGBToHex(rgb)
-			if strings.ToUpper(back) != strings.ToUpper(h) {
+			if !strings.EqualFold(back, h) {
 				t.Errorf("round-trip: %s -> %+v -> %s, want %s", h, rgb, back, h)
 			}
 		})
