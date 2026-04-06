@@ -27,3 +27,9 @@ var TemplateStoryboard string
 
 //go:embed themes/community
 var CommunityThemesFS embed.FS
+
+//go:embed examples
+var ExamplesFS embed.FS
+
+//go:embed cookbook.md
+var CookbookMD string

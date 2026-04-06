@@ -13,6 +13,14 @@ func newNodeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "node",
 		Short: "Low-level Figma node operations (create, clone, delete, move, ...)",
+		Example: `  # "Create a hero frame for my landing page"
+  figma-kit node create frame --name "Hero" -w 1440 --height 800
+
+  # "Clone that card and offset it to the right"
+  figma-kit node clone <nodeId> --dx 340 --dy 0
+
+  # "Move the CTA below the features section"
+  figma-kit node move <nodeId> --x 0 --y 1200`,
 	}
 
 	cmd.AddCommand(newNodeCreateCmd())

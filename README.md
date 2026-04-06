@@ -32,13 +32,23 @@ curl -fsSL https://raw.githubusercontent.com/dop-amine/figma-kit/main/install.sh
 ### With AI (recommended)
 
 1. **Install figma-kit** and add the [Figma MCP server](https://mcp.figma.com) to your AI tool (Cursor, Claude Code, etc.)
-2. **Prompt in natural language:**
+2. **Prompt in natural language** — here are three real examples:
 
-```
-"Create a landing page with a hero section, 3 feature cards, and a dark theme"
-```
+**From a reference website:**
 
-Your AI agent selects the right figma-kit commands, generates Figma Plugin API code, and the MCP server executes it — your design appears in Figma.
+> "Create a figma-kit theme that matches stripe.com, then build a landing page with a hero, 3 feature cards, and pricing."
+
+The AI extracts Stripe's colors, runs `figma-kit theme init --bg "#0A2540" --primary "#635BFF" --accent "#00D4AA"`, creates a theme, then sequences `make screen`, `card glass`, `ui button` commands. Your Figma file fills with a complete, branded landing page.
+
+**From a description:**
+
+> "Build a 7-slide pitch deck for a climate-tech startup. Dark green theme, clean typography. Problem, solution, market, traction, team, ask."
+
+**From a brand guide:**
+
+> "Here's our brand guide [screenshot]. Extract the colors and fonts, create a theme, then generate a full design system page."
+
+Run `figma-kit cookbook` to see 15 complete prompt sessions — from reference to finished design. See the full [Prompt Cookbook](docs/COOKBOOK.md).
 
 ### Standalone CLI
 
@@ -49,14 +59,17 @@ figma-kit init my-project
 # 2. Link your Figma file
 figma-kit config set fileKey YOUR_FILE_KEY
 
-# 3. Generate a carousel with the Noir theme
-figma-kit make carousel --content slides.yml -t noir
+# 3. Browse prompt examples (embedded in binary)
+figma-kit cookbook --list
+
+# 4. Dump starter content YAML files
+figma-kit examples --dump
+
+# 5. Generate a carousel with the Noir theme
+figma-kit make carousel --content examples/saas-landing.yml -t noir
 # → outputs use_figma JS — feed it to the MCP tool
 
-# 4. Create a hero frame
-figma-kit node create frame --name "Hero" -w 1440 --height 800
-
-# 5. Run a QA audit
+# 6. Run a QA audit
 figma-kit qa checklist --page 0
 ```
 
@@ -133,7 +146,7 @@ figma-kit themes
 figma-kit export tokens -t default --format css
 ```
 
-Custom themes: place a JSON file in `~/.config/figma-kit/themes/` or `./themes/`. See [Theme Docs](docs/THEMES.md) for full details.
+Custom themes: place a JSON file in `~/.config/figma-kit/themes/` or `./themes/`. See [Theme Docs](docs/THEMES.md) for full details, or run `figma-kit cookbook theme-from-a-mood` for a step-by-step example.
 
 ## Content Specs
 
@@ -190,8 +203,7 @@ internal/cli/                   # Cobra command definitions
 internal/codegen/               # Fluent JS code builder
 internal/theme/                 # Theme loading & validation
 internal/config/                # .figmarc.json management
-internal/batch/                 # YAML recipe parser
-assets/                         # Embedded JS helpers, themes, templates
+assets/                         # Embedded JS helpers, themes, templates, examples, cookbook
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.

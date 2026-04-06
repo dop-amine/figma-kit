@@ -1,0 +1,29 @@
+# figma-kit content spec — Portfolio project showcase
+#
+# Usage:
+#   figma-kit make carousel --content portfolio.yml -t <your-theme>
+#
+# 4-slide project showcase for a creative portfolio.
+# Pair with a light or editorial theme:
+#   figma-kit theme init --name "Portfolio" --bg "#FAFAFA" \
+#     --primary "#1A1A1A" --accent "#C9A87C" \
+#     --font-heading "Playfair Display" --font-body "Lato"
+
+theme: light
+total: 4
+slides:
+  - name: Project 1
+    headline: "Patagonia"
+    subtitle: "Landscape photography across southern Chile. 14-day expedition documenting glaciers, forests, and the people who call them home."
+
+  - name: Project 2
+    headline: "Berlin Nights"
+    subtitle: "Street photography after dark. Neon, rain, and the quiet moments between the city's pulse."
+
+  - name: Project 3
+    headline: "Faces of Tokyo"
+    subtitle: "Portraits from Shinjuku to Shibuya. The expressions that make a city alive."
+
+  - name: Project 4
+    headline: "Desert Light"
+    subtitle: "Morning in the Sahara. The way light moves across sand dunes at dawn."

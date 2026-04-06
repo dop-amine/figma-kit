@@ -1,0 +1,43 @@
+# figma-kit content spec — Startup pitch deck
+#
+# Usage:
+#   figma-kit make carousel --content pitch-deck.yml -t <your-theme>
+#
+# Standard 7-slide structure: cover, problem, solution, market,
+# traction, team, ask. Customize with your startup's story.
+
+theme: noir
+total: 7
+slides:
+  - name: Cover
+    glow: topRight
+    headline: "Canopy"
+    subtitle: "Carbon intelligence for the built environment"
+
+  - name: Problem
+    glow: subtle
+    headline: "Buildings account for\n40% of global emissions"
+    chips: ["Energy waste", "No visibility", "Compliance risk"]
+
+  - name: Solution
+    headline: "AI-powered carbon\nmonitoring"
+    subtitle: "Real-time emissions tracking across your entire building portfolio."
+
+  - name: Market
+    headline: "$340B\nCarbon management"
+    chips: ["Growing 24% YoY", "Regulatory tailwind", "ESG mandates"]
+
+  - name: Traction
+    headline: "12 enterprise\ncustomers"
+    chips: ["$2.4M ARR", "3x YoY growth", "NPS 72"]
+
+  - name: Team
+    headline: "Built by climate\nand ML experts"
+    subtitle: "Ex-Google, ex-McKinsey, 2 PhD climate scientists"
+
+  - name: CTA
+    glow: cta
+    headline: "Let's build a\nsustainable future."
+    cta:
+      text: "Book a demo"
+      centered: true

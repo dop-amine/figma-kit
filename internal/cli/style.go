@@ -12,6 +12,14 @@ func newStyleCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "style",
 		Short: "Node styling operations (fill, stroke, effect, corner, blend, gradient, clip)",
+		Example: `  # "Make that frame dark blue"
+  figma-kit style fill <nodeId> --solid "#0A2540"
+
+  # "Round the corners to 16px"
+  figma-kit style corner <nodeId> --radius 16
+
+  # "Add a subtle drop shadow"
+  figma-kit style effect <nodeId> --shadow`,
 	}
 
 	cmd.AddCommand(newStyleFillCmd())

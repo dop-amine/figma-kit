@@ -2,6 +2,8 @@
 
 You don't need to be a developer to contribute a theme to figma-kit. If you can pick colors, you can contribute.
 
+> **See it in action:** Run `figma-kit cookbook match-a-website` to see how AI creates themes from references, or browse the [Prompt Cookbook](docs/COOKBOOK.md).
+
 ## Quick Start
 
 1. **Create your theme** using one of these methods:

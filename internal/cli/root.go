@@ -24,7 +24,13 @@ func newRootCmd() *cobra.Command {
 		Short: "CLI for programmatic Figma design via the MCP server",
 		Long: `figma-kit generates use_figma-compatible JavaScript for the Figma MCP server.
 It covers everything from low-level node primitives to high-level design
-deliverable templates, all powered by a built-in theme system.`,
+deliverable templates, all powered by a built-in theme system.
+
+Describe what you want in Cursor, Claude Code, or any MCP-compatible AI agent.
+The AI picks the right figma-kit commands and Figma executes them.
+
+Run 'figma-kit cookbook' to browse real-world prompt examples.
+Run 'figma-kit examples' to get starter content YAML files.`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Version:       Version,
@@ -88,6 +94,11 @@ deliverable templates, all powered by a built-in theme system.`,
 
 	// Phase 11: Theme management
 	cmd.AddCommand(newThemeCmd())
+
+	// Phase 12: Documentation & onboarding
+	cmd.AddCommand(newCookbookCmd())
+	cmd.AddCommand(newExamplesCmd())
+	cmd.AddCommand(newDocsCmd())
 
 	return cmd
 }

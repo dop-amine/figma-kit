@@ -200,6 +200,113 @@ figma-kit ds create -t noir
 # → creates full DS page with swatches, type specimens, spacing scale
 ```
 
+## Reference-Driven Workflow
+
+When a user shares a URL, screenshot, brand guide, or mood description, follow this sequence:
+
+### 1. Extract colors from the reference
+
+Analyze the image or website. Identify three key colors:
+- **Background** — the dominant dark/light surface color
+- **Primary** — the main brand/accent color
+- **Accent** — a secondary highlight color
+
+### 2. Create a theme
+
+```bash
+figma-kit theme init \
+  --name "Brand" \
+  --bg "#0A2540" \
+  --primary "#635BFF" \
+  --accent "#00D4AA" \
+  --font-heading "Inter" \
+  --font-body "Inter" \
+  -o themes/brand.json
+```
+
+Optional flags: `--font-mono`, `--warn`, `--error`, `--success`, `--spacing compact|spacious`, `--from` (extend existing theme).
+
+### 3. Preview the theme
+
+```bash
+figma-kit theme preview -t brand
+# → execute via use_figma, then get_screenshot to verify
+```
+
+### 4. Build the preamble
+
+```bash
+figma-kit preamble -t brand
+# → execute via use_figma (sets up colors + fonts on the page)
+```
+
+### 5. Compose the design
+
+Sequence commands based on what the user wants:
+
+```bash
+# Landing page
+figma-kit make screen --type landing --sections "hero,features,pricing,cta" -t brand
+figma-kit card glass -t brand --title "Feature 1" --desc "Description"
+figma-kit ui button --variant primary -t brand
+figma-kit fx mesh <heroId> -t brand
+
+# Pitch deck
+figma-kit make pitch-deck --slides 7 --template saas -t brand
+
+# Design system
+figma-kit ds create -t brand
+
+# Social assets
+figma-kit make og-image --title "Product" --description "Tagline" -t brand
+figma-kit make carousel --content slides.yml -t brand
+```
+
+### 6. QA and export
+
+```bash
+figma-kit qa checklist --page 0
+figma-kit export tokens -t brand --format css
+```
+
+## Project Templates
+
+Common prompt patterns with recommended command sequences:
+
+### Landing Page
+```
+preamble → node create frame "Hero" → fx mesh → text create (headline) →
+text create (subtitle) → ui button → card glass ×3 → make screen --type pricing →
+ui footer → qa checklist
+```
+
+### Pitch Deck
+```
+preamble → make pitch-deck --slides 7 --content deck.yml
+```
+Or with carousel format: `make carousel --content deck.yml`
+
+### Design System
+```
+preamble → ds create → ds variables-create → export tokens --format css
+```
+
+### Social Campaign
+```
+preamble → make carousel --content slides.yml → make og-image → make twitter-card →
+make instagram-post
+```
+
+### Full Project (multiple pages)
+```
+page create "Landing" → page create "Dashboard" → page create "Design System" →
+(switch to each page and build with above patterns)
+```
+
+## Prompt Cookbook
+
+Run `figma-kit cookbook` to browse 15 complete prompt-to-design sessions, or see [docs/COOKBOOK.md](../../docs/COOKBOOK.md).
+
 ## MCP Tool Routing
 
 | figma-kit output | MCP tool to use |

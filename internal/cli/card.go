@@ -22,6 +22,14 @@ func newCardCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "card",
 		Short: "Card primitives (glass, solid, gradient, image, bento grid)",
+		Example: `  # "Create a glassmorphism feature card about AI integration"
+  figma-kit card glass -t noir --title "AI-Native" --desc "Prompt in natural language"
+
+  # "Add a solid card with pricing info"
+  figma-kit card solid -t noir --title "Pro Plan" --desc "$29/mo"
+
+  # "Create a gradient card for a case study"
+  figma-kit card gradient -t noir --title "Nike React" --desc "E-commerce redesign"`,
 	}
 	cmd.AddCommand(newCardGlassCmd())
 	cmd.AddCommand(newCardSolidCmd())
@@ -42,6 +50,10 @@ func newCardGlassCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "glass",
 		Short: "Glassmorphism card via G() helper (presets: subtle, default, strong, pill)",
+		Example: `  # "Create three glass feature cards for my landing page"
+  figma-kit card glass -t noir --title "Speed" --desc "Sub-millisecond reads"
+  figma-kit card glass -t noir --title "Scale" --desc "From prototype to planet-scale"
+  figma-kit card glass -t noir --title "Sync" --desc "Real-time everywhere" --preset strong`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			p := strings.ToLower(strings.TrimSpace(preset))
 			optsJS, err := glassPresetOptsJS(p, w, h)

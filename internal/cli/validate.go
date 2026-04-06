@@ -16,6 +16,11 @@ func newValidateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate",
 		Short: "Validate theme JSON or recipe YAML without executing",
+		Example: `  # "Check my theme file is valid"
+  figma-kit validate theme themes/brand.json
+
+  # "Dry-run my batch recipe"
+  figma-kit validate recipe campaign.yml`,
 	}
 	cmd.AddCommand(newValidateThemeCmd())
 	cmd.AddCommand(newValidateRecipeCmd())

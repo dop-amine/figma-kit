@@ -17,6 +17,14 @@ func newDSCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ds",
 		Short: "Design system management",
+		Example: `  # "Generate a full design system page"
+  figma-kit ds create -t noir
+
+  # "Push color tokens to Figma variables"
+  figma-kit ds variables-create -t noir
+
+  # "Audit my design for off-palette colors"
+  figma-kit ds audit -t noir`,
 	}
 	cmd.AddCommand(newDSCreateCmd())
 	cmd.AddCommand(newDSColorsCmd())

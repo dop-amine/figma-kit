@@ -1,0 +1,35 @@
+# figma-kit content spec — SaaS landing page carousel
+#
+# Usage:
+#   figma-kit make carousel --content saas-landing.yml -t <your-theme>
+#
+# Customize the slides below with your own product copy.
+# Each slide becomes a 1080×1350 frame in Figma.
+
+theme: default
+total: 5
+slides:
+  - name: Cover
+    glow: topRight
+    headline: "Ship faster.\nBreak nothing."
+    subtitle: "The deployment platform for teams that move fast."
+
+  - name: Problem
+    glow: subtle
+    headline: "Deployments shouldn't\ntake hours"
+    chips: ["Slow CI/CD", "Broken rollbacks", "No visibility"]
+
+  - name: Solution
+    headline: "One command.\nEvery environment."
+    subtitle: "Push to production in seconds with automatic rollbacks, preview environments, and real-time logs."
+
+  - name: Social Proof
+    headline: "Trusted by\n2,000+ teams"
+    chips: ["99.99% uptime", "50ms deploys", "SOC 2 certified"]
+
+  - name: CTA
+    glow: cta
+    headline: "Ready to ship?"
+    cta:
+      text: "Start for free"
+      centered: true

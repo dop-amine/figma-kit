@@ -16,6 +16,14 @@ func newThemeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "theme",
 		Short: "Theme management (init, preview)",
+		Example: `  # "Create a theme matching Stripe's colors"
+  figma-kit theme init --name "Stripe" --bg "#0A2540" --primary "#635BFF" --accent "#00D4AA" -o themes/stripe.json
+
+  # "Preview my custom theme in Figma"
+  figma-kit theme preview -t stripe
+
+  # "Create a light variant from an existing theme"
+  figma-kit theme init --from themes/stripe.json --name "Stripe Light" --bg "#FAFAFA" -o themes/stripe-light.json`,
 	}
 	cmd.AddCommand(newThemeInitCmd())
 	cmd.AddCommand(newThemePreviewCmd())

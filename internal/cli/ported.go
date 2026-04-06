@@ -184,6 +184,11 @@ func newInfoCmd() *cobra.Command {
 			fmt.Printf("  Binary:      %s\n", filepath.Base(exe))
 			fmt.Printf("  Version:     %s\n", Version)
 			fmt.Println()
+			fmt.Println("  Getting started:")
+			fmt.Println("    figma-kit cookbook      Browse prompt examples")
+			fmt.Println("    figma-kit examples     Get starter content YAML files")
+			fmt.Println("    figma-kit docs         Open web documentation")
+			fmt.Println()
 		},
 	}
 }

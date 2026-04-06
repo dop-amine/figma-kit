@@ -14,6 +14,14 @@ func newHandoffCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "handoff",
 		Short: "Specs, redlines, and code-oriented handoff helpers",
+		Example: `  # "Generate CSS for this component"
+  figma-kit handoff css <nodeId>
+
+  # "Create a React spec for the card"
+  figma-kit handoff react <nodeId>
+
+  # "Add measurement redlines"
+  figma-kit handoff redline <nodeId>`,
 	}
 	cmd.AddCommand(newHandoffSpecCmd())
 	cmd.AddCommand(newHandoffRedlineCmd())

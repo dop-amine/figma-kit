@@ -15,6 +15,14 @@ func newExportCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "export",
 		Short: "Export assets and token payloads from Figma",
+		Example: `  # "Export my theme as CSS variables"
+  figma-kit export tokens -t noir --format css
+
+  # "Export a frame as PNG"
+  figma-kit export png <nodeId>
+
+  # "Export the whole page as sliced PNGs"
+  figma-kit export page --page 0`,
 	}
 	cmd.AddCommand(newExportPNGCmd())
 	cmd.AddCommand(newExportSVGCmd())

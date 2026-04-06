@@ -2,6 +2,8 @@
 
 figma-kit themes are JSON files that drive colors, typography, spacing, effects, and gradients for generated Figma plugin JavaScript. The CLI loads a theme for almost every command so the output stays visually consistent.
 
+> **New to themes?** Run `figma-kit cookbook theme-from-a-mood` to see a step-by-step example, or browse the full [Prompt Cookbook](COOKBOOK.md) for 15 real-world sessions.
+
 ## Theme JSON schema
 
 Top-level object:

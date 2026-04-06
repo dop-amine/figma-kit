@@ -13,6 +13,14 @@ func newTextCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "text",
 		Short: "Text node operations (create, edit, style, range, fonts)",
+		Example: `  # "Add a headline that says 'Ship Faster'"
+  figma-kit text create --content "Ship Faster" --font "Inter" --weight Bold --size 72 --color "#FFFFFF"
+
+  # "Change the subtitle text"
+  figma-kit text edit <nodeId> --content "Deploy in seconds, not hours."
+
+  # "Make the CTA text larger and bold"
+  figma-kit text style <nodeId> --size 20 --lh 28`,
 	}
 	cmd.AddCommand(newTextCreateCmd())
 	cmd.AddCommand(newTextEditCmd())

@@ -205,6 +205,23 @@
     }
     @media (min-width: 901px) { .workflow-arrow { display: block; } }
 
+    /* ── PROMPT GALLERY ── */
+    .prompt-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    @media (max-width: 900px) { .prompt-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .prompt-grid { grid-template-columns: 1fr; } }
+    .prompt-card {
+      background: rgba(13, 15, 23, 0.6);
+      border: 1px solid var(--stk); border-radius: 16px;
+      padding: 24px; position: relative;
+      transition: border-color .3s, transform .3s;
+    }
+    .prompt-card:hover { border-color: rgba(51, 102, 255, 0.3); transform: translateY(-2px); }
+    .prompt-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 12px; }
+    .prompt-card p { font-size: 14px; color: var(--mt); line-height: 1.65; margin-bottom: 20px; }
+    .prompt-card .accent-line { width: 40px; height: 3px; border-radius: 2px; }
+    .cookbook-hint { font-family: var(--mono); font-size: 13px; color: var(--mt); margin-top: 32px; }
+    .cookbook-hint code { color: var(--tl); background: rgba(20, 184, 166, 0.1); padding: 2px 8px; border-radius: 4px; }
+
     /* ── FEATURES ── */
     .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
     @media (max-width: 768px) { .features-grid { grid-template-columns: 1fr; } }
@@ -355,6 +372,7 @@
     <a href="#" class="logo">&#9670; figma-kit</a>
     <div class="links">
       <a href="#how">How It Works</a>
+      <a href="#prompts">Prompts</a>
       <a href="#features">Features</a>
       <a href="#demo">Demo</a>
       <a href="#story">Story</a>
@@ -387,14 +405,14 @@
           <span class="terminal-title">AI + figma-kit + Figma MCP</span>
         </div>
         <div class="terminal-body">
-          <div class="line"><span class="prompt">&gt; &quot;Create an OG image with the Noir theme&quot;</span></div>
-          <div class="line"><span class="cmd">&rarr; figma-kit make og-image -t noir</span></div>
+          <div class="line"><span class="prompt">&gt; &quot;Match stripe.com and build a landing page&quot;</span></div>
+          <div class="line"><span class="cmd">&rarr; figma-kit theme init --bg &quot;#0A2540&quot; --primary &quot;#635BFF&quot;</span></div>
           <div class="line">&nbsp;</div>
-          <div class="line"><span class="prompt">&gt; &quot;Add a primary button&quot;</span></div>
-          <div class="line"><span class="cmd">&rarr; figma-kit ui button --variant primary</span></div>
+          <div class="line"><span class="prompt">&gt; &quot;Add 3 glass feature cards with pricing&quot;</span></div>
+          <div class="line"><span class="cmd">&rarr; figma-kit card glass -t stripe --title &quot;Payments&quot;</span></div>
           <div class="line">&nbsp;</div>
           <div class="line"><span class="prompt">&gt; &quot;Generate the full design system&quot;</span></div>
-          <div class="line"><span class="cmd">&rarr; figma-kit ds create -t noir</span>  <span class="ok">&#10003; Done</span></div>
+          <div class="line"><span class="cmd">&rarr; figma-kit ds create -t stripe</span>  <span class="ok">&#10003; Done</span></div>
         </div>
       </div>
     </div>
@@ -417,7 +435,7 @@
         <span class="step-num" style="color: var(--bl);">01</span>
         <div class="step-icon">&#128172;</div>
         <h3>You Prompt</h3>
-        <p>&quot;Create a landing page with a hero, 3 feature cards, and a dark theme&quot;</p>
+        <p>&quot;Match stripe.com &mdash; dark navy, purple accents. Build a landing page.&quot;</p>
         <span class="workflow-arrow">&rarr;</span>
       </div>
       <div class="workflow-card fade-in">
@@ -441,6 +459,40 @@
         <p>MCP server executes the code. Frames, text, styles, components appear in your file.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- PROMPT GALLERY — matches Figma frame Prompt Gallery -->
+<section id="prompts">
+  <div class="container">
+    <div class="section-label fade-in" style="color: var(--tl);">PROMPT EXAMPLES</div>
+    <div class="section-title fade-in">What will you build?</div>
+    <div class="section-desc fade-in">Copy any of these prompts into Cursor, Claude Code, or your AI tool. figma-kit handles the rest.</div>
+
+    <div class="prompt-grid">
+      <div class="prompt-card fade-in">
+        <h3>From a Website</h3>
+        <p>&quot;Match stripe.com and build a landing page with hero, features, and pricing.&quot;</p>
+        <div class="accent-line" style="background: var(--bl);"></div>
+      </div>
+      <div class="prompt-card fade-in">
+        <h3>From a Screenshot</h3>
+        <p>&quot;Extract the colors from this screenshot and create a figma-kit theme, then build a dashboard.&quot;</p>
+        <div class="accent-line" style="background: var(--pp);"></div>
+      </div>
+      <div class="prompt-card fade-in">
+        <h3>From a Description</h3>
+        <p>&quot;Build a 7-slide pitch deck for a climate-tech startup. Dark green, clean typography.&quot;</p>
+        <div class="accent-line" style="background: var(--tl);"></div>
+      </div>
+      <div class="prompt-card fade-in">
+        <h3>From a Brand Guide</h3>
+        <p>&quot;Use our brand colors and fonts to generate a full design system page in Figma.&quot;</p>
+        <div class="accent-line" style="background: var(--bl);"></div>
+      </div>
+    </div>
+
+    <div class="cookbook-hint fade-in">Run <code>figma-kit cookbook</code> to see 15 complete prompt sessions &mdash; or browse the <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COOKBOOK.md">Prompt Cookbook</a>.</div>
   </div>
 </section>
 
@@ -664,11 +716,11 @@
     <div class="footer-grid">
       <div class="footer-col">
         <h4>Product</h4>
+        <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COOKBOOK.md">Prompt Cookbook</a>
         <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COMMANDS.md">Commands</a>
         <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/THEMES.md">Themes</a>
         <a href="theme-builder.html">Theme Builder</a>
         <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/RECIPES.md">Recipes</a>
-        <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/ARCHITECTURE.md">Architecture</a>
       </div>
       <div class="footer-col">
         <h4>Resources</h4>

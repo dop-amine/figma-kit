@@ -1,0 +1,33 @@
+# figma-kit content spec — Dashboard widget layout
+#
+# This file documents the dashboard configuration options.
+# Unlike carousel content, dashboards are configured via CLI flags:
+#
+#   figma-kit make dashboard --widgets "stat,stat,stat,chart,table,list" --cols 3 -t <theme>
+#
+# Widget types: stat, chart, table, list
+# Use --cols to control the grid layout (default: 2)
+#
+# For a full analytics dashboard:
+#   figma-kit theme init --name "Analytics" --bg "#0F1117" \
+#     --primary "#3B82F6" --accent "#10B981" --spacing compact
+#   figma-kit make dashboard --widgets "stat,stat,stat,stat,chart,chart,table" --cols 4
+#
+# For a simple overview:
+#   figma-kit make dashboard --widgets "stat,chart,table" --cols 3
+#
+# After generating, customize individual widgets:
+#   figma-kit ui stat -t <theme> --parent <widget-id>
+#   figma-kit text edit <text-id> --content "Revenue: $48.2K"
+
+# Example batch recipe that builds a complete dashboard page:
+name: "Analytics Dashboard"
+steps:
+  - title: Theme Setup
+    cmd: figma-kit preamble -t analytics
+  - title: Dashboard Grid
+    cmd: figma-kit make dashboard --widgets "stat,stat,stat,chart,table" --cols 3 -t analytics
+  - title: Navigation
+    cmd: figma-kit ui nav -t analytics
+  - title: Footer
+    cmd: figma-kit ui footer -t analytics

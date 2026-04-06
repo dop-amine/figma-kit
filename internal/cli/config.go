@@ -24,8 +24,14 @@ func newInitCmd() *cobra.Command {
 			if err := config.Init(name); err != nil {
 				return err
 			}
-			fmt.Printf("Created .figmarc.json for %q\n", name)
-			fmt.Println("Tip: use 'figma-kit config set fileKey <key>' to link a Figma file.")
+			fmt.Printf("Created .figmarc.json for %q\n\n", name)
+			fmt.Println("Next steps:")
+			fmt.Println("  1. Link your Figma file:   figma-kit config set fileKey YOUR_KEY")
+			fmt.Println("  2. Browse prompt examples:  figma-kit cookbook")
+			fmt.Println("  3. Get starter content:     figma-kit examples --dump")
+			fmt.Println("  4. Try a quick command:      figma-kit make og-image -t noir")
+			fmt.Println()
+			fmt.Println("Full docs: figma-kit docs")
 			return nil
 		},
 	}

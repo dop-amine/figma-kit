@@ -18,6 +18,15 @@ func newUICmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ui",
 		Short: "UI primitive components (button, input, badge, ...)",
+		Example: `  # "Add a primary CTA button"
+  figma-kit ui button --variant primary -t noir
+
+  # "Create an email input field"
+  figma-kit ui input -t noir
+
+  # "Add a navigation bar and footer"
+  figma-kit ui nav -t noir
+  figma-kit ui footer -t noir`,
 	}
 	cmd.AddCommand(newUIButtonCmd())
 	cmd.AddCommand(newUIInputCmd())

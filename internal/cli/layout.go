@@ -12,6 +12,11 @@ func newLayoutCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "layout",
 		Short: "Layout operations (auto-layout, grid, constraints, sizing, align, distribute)",
+		Example: `  # "Stack those cards vertically with 24px gap"
+  figma-kit layout auto <frameId> --dir VERTICAL --gap 24 --pad 32
+
+  # "Add a 12-column grid"
+  figma-kit layout grid <frameId> --columns 12 --gutter 24`,
 	}
 	cmd.AddCommand(newLayoutAutoCmd())
 	cmd.AddCommand(newLayoutGridCmd())

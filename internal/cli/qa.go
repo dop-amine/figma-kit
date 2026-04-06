@@ -186,6 +186,14 @@ func newQACmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "qa",
 		Short: "Design quality checks (contrast, targets, typography, ...)",
+		Example: `  # "Run a full QA check on my design"
+  figma-kit qa checklist --page 0
+
+  # "Check text contrast for accessibility"
+  figma-kit qa contrast --page 0
+
+  # "Find buttons that are too small for touch"
+  figma-kit qa touch-targets --page 0`,
 	}
 	cmd.AddCommand(newQAContrastCmd())
 	cmd.AddCommand(newQATouchTargetsCmd())

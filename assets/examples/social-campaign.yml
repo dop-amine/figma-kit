@@ -1,0 +1,38 @@
+# figma-kit content spec — Social media campaign
+#
+# Usage:
+#   figma-kit make carousel --content social-campaign.yml -t <your-theme>
+#
+# 5-slide Instagram carousel for a product launch.
+# Pair with:
+#   figma-kit make og-image --title "Nimbus" --description "..." -t <theme>
+#   figma-kit make twitter-card -t <theme>
+#   figma-kit make instagram-post --type quote --content "..." -t <theme>
+
+theme: default
+total: 5
+slides:
+  - name: Hook
+    glow: topRight
+    headline: "Introducing\nNimbus"
+    subtitle: "Cloud development, reimagined."
+
+  - name: Feature 1
+    glow: subtle
+    headline: "Deploy in\nseconds"
+    chips: ["One command", "Any cloud", "Auto-scaling"]
+
+  - name: Feature 2
+    headline: "Preview\neverything"
+    subtitle: "Every PR gets a live preview URL. Share with your team instantly."
+
+  - name: Feature 3
+    headline: "Built-in\nmonitoring"
+    chips: ["Real-time logs", "Error tracking", "Performance alerts"]
+
+  - name: CTA
+    glow: cta
+    headline: "Try Nimbus\nfree today."
+    cta:
+      text: "Get started"
+      centered: true

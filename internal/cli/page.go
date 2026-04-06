@@ -10,6 +10,13 @@ func newPageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "page",
 		Short: "Page management (list, create, rename, delete, duplicate)",
+		Example: `  # "Create separate pages for landing, components, and design system"
+  figma-kit page create "Landing Page"
+  figma-kit page create "Components"
+  figma-kit page create "Design System"
+
+  # "List all pages"
+  figma-kit page list`,
 	}
 	cmd.AddCommand(newPageListCmd())
 	cmd.AddCommand(newPageCreateCmd())

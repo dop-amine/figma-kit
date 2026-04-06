@@ -14,6 +14,14 @@ func newFXCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "fx",
 		Short: "Visual effects (glow, mesh, noise, vignette, grain, blur, shadow, ...)",
+		Example: `  # "Add a colorful mesh gradient to the hero background"
+  figma-kit fx mesh <frameId> -t noir
+
+  # "Add a subtle glow effect behind the card"
+  figma-kit fx glow <frameId> -t noir
+
+  # "Apply film grain for texture"
+  figma-kit fx grain <frameId>`,
 	}
 	cmd.AddCommand(newFXGlowCmd())
 	cmd.AddCommand(newFXMeshCmd())

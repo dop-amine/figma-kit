@@ -1560,6 +1560,20 @@ func newMakeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "make",
 		Short: "Generate complete design deliverables",
+		Example: `  # "Create a carousel from my slides YAML"
+  figma-kit make carousel --content slides.yml -t noir
+
+  # "Generate an OG image for my product"
+  figma-kit make og-image --title "Nimbus" --description "Cloud dev, reimagined" -t noir
+
+  # "Build a pitch deck for my startup"
+  figma-kit make pitch-deck --slides 7 --template saas -t noir
+
+  # "Create a landing page with hero, features, and pricing"
+  figma-kit make screen --type landing --sections "hero,features,pricing,cta" -t noir
+
+  # "Build a dashboard layout"
+  figma-kit make dashboard --widgets "stat,stat,chart,table" --cols 2 -t noir`,
 	}
 	// Marketing & Social (10)
 	cmd.AddCommand(newMakeCarouselCmd())
