@@ -32,6 +32,12 @@ func newUICmd() *cobra.Command {
 	cmd.AddCommand(newUITableCmd())
 	cmd.AddCommand(newUINavCmd())
 	cmd.AddCommand(newUIFooterCmd())
+	cmd.AddCommand(newUICheckboxCmd())
+	cmd.AddCommand(newUIRadioCmd())
+	cmd.AddCommand(newUITabsCmd())
+	cmd.AddCommand(newUIDropdownCmd())
+	cmd.AddCommand(newUIBreadcrumbCmd())
+	cmd.AddCommand(newUISkeletonCmd())
 	return cmd
 }
 
@@ -1069,4 +1075,436 @@ func newUIFooterCmd() *cobra.Command {
 	cmd.Flags().IntVar(&cols, "cols", 3, "Number of columns (1–6)")
 	cmd.Flags().StringVar(&copyright, "copyright", "", "Optional copyright line")
 	return cmd
+}
+
+func newUICheckboxCmd() *cobra.Command {
+	var label string
+	var checked bool
+	cmd := &cobra.Command{
+		Use:   "checkbox",
+		Short: "Checkbox control with label (auto-layout)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			b := codegen.New()
+			uiPreamble(b, t, resolvePage())
+			b.Comment("UI / Checkbox")
+			b.Line("const root = figma.createFrame();")
+			b.Line("root.name = 'UI/Checkbox';")
+			b.Line("root.layoutMode = 'HORIZONTAL';")
+			b.Line("root.itemSpacing = 8;")
+			b.Line("root.counterAxisAlignItems = 'CENTER';")
+			b.Line("root.primaryAxisSizingMode = 'AUTO';")
+			b.Line("root.counterAxisSizingMode = 'AUTO';")
+			b.Line("root.fills = [];")
+			b.Line("const box = figma.createFrame();")
+			b.Line("box.name = 'Box';")
+			b.Line("box.resize(16, 16);")
+			b.Line("box.cornerRadius = 4;")
+			if checked {
+				b.Line("box.fills = [{ type: 'SOLID', color: BL }];")
+				b.Line("box.strokes = [];")
+				b.Line("const ck = figma.createText();")
+				b.Line("ck.fontName = { family: 'Inter', style: 'Bold' };")
+				b.Line("ck.characters = '✓';")
+				b.Line("ck.fontSize = 11;")
+				b.Line("ck.fills = [{ type: 'SOLID', color: WT }];")
+				b.Line("ck.textAutoResize = 'WIDTH_AND_HEIGHT';")
+				b.Line("ck.x = 2; ck.y = 1;")
+				b.Line("box.appendChild(ck);")
+			} else {
+				b.Line("box.fills = [];")
+				b.Line("box.strokes = [{ type: 'SOLID', color: STK }]; box.strokeWeight = 1.5;")
+			}
+			b.Line("root.appendChild(box);")
+			b.Line("const lbl = figma.createText();")
+			b.Line("lbl.fontName = { family: 'Inter', style: ST_BODY };")
+			b.Linef("lbl.characters = %q;", label)
+			b.Line("lbl.fontSize = TY_BODY;")
+			b.Line("lbl.fills = [{ type: 'SOLID', color: WT }];")
+			b.Line("lbl.textAutoResize = 'WIDTH_AND_HEIGHT';")
+			b.Line("root.appendChild(lbl);")
+			b.Line("figma.currentPage.appendChild(root);")
+			b.ReturnIDs("root.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVarP(&label, "label", "l", "Remember me", "Checkbox label")
+	cmd.Flags().BoolVar(&checked, "checked", false, "Render in checked state")
+	return cmd
+}
+
+func newUIRadioCmd() *cobra.Command {
+	var label string
+	var selected bool
+	cmd := &cobra.Command{
+		Use:   "radio",
+		Short: "Radio button with label (auto-layout)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			b := codegen.New()
+			uiPreamble(b, t, resolvePage())
+			b.Comment("UI / Radio")
+			b.Line("const root = figma.createFrame();")
+			b.Line("root.name = 'UI/Radio';")
+			b.Line("root.layoutMode = 'HORIZONTAL';")
+			b.Line("root.itemSpacing = 8;")
+			b.Line("root.counterAxisAlignItems = 'CENTER';")
+			b.Line("root.primaryAxisSizingMode = 'AUTO';")
+			b.Line("root.counterAxisSizingMode = 'AUTO';")
+			b.Line("root.fills = [];")
+			b.Line("const circle = figma.createEllipse();")
+			b.Line("circle.name = 'Dot';")
+			b.Line("circle.resize(16, 16);")
+			if selected {
+				b.Line("circle.fills = [{ type: 'SOLID', color: BL }];")
+				b.Line("circle.strokes = [];")
+				b.Line("const inner = figma.createEllipse();")
+				b.Line("inner.resize(6, 6);")
+				b.Line("inner.fills = [{ type: 'SOLID', color: WT }];")
+				b.Line("inner.x = 5; inner.y = 5;")
+				b.Line("figma.currentPage.appendChild(inner);")
+			} else {
+				b.Line("circle.fills = [];")
+				b.Line("circle.strokes = [{ type: 'SOLID', color: STK }]; circle.strokeWeight = 1.5;")
+			}
+			b.Line("root.appendChild(circle);")
+			b.Line("const lbl = figma.createText();")
+			b.Line("lbl.fontName = { family: 'Inter', style: ST_BODY };")
+			b.Linef("lbl.characters = %q;", label)
+			b.Line("lbl.fontSize = TY_BODY;")
+			b.Line("lbl.fills = [{ type: 'SOLID', color: WT }];")
+			b.Line("lbl.textAutoResize = 'WIDTH_AND_HEIGHT';")
+			b.Line("root.appendChild(lbl);")
+			b.Line("figma.currentPage.appendChild(root);")
+			b.ReturnIDs("root.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVarP(&label, "label", "l", "Option A", "Radio label")
+	cmd.Flags().BoolVar(&selected, "selected", false, "Render in selected state")
+	return cmd
+}
+
+func newUITabsCmd() *cobra.Command {
+	var tabsRaw string
+	var active int
+	cmd := &cobra.Command{
+		Use:   "tabs",
+		Short: "Horizontal tab bar (auto-layout)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			tabs := splitTrimmed(tabsRaw)
+			if len(tabs) < 2 {
+				return fmt.Errorf("provide at least 2 tab labels via --tabs")
+			}
+			if active < 0 || active >= len(tabs) {
+				return fmt.Errorf("--active must be between 0 and %d", len(tabs)-1)
+			}
+			b := codegen.New()
+			uiPreamble(b, t, resolvePage())
+			b.Comment("UI / Tabs")
+			b.Line("const root = figma.createFrame();")
+			b.Line("root.name = 'UI/Tabs';")
+			b.Line("root.layoutMode = 'HORIZONTAL';")
+			b.Line("root.itemSpacing = 0;")
+			b.Line("root.counterAxisAlignItems = 'MIN';")
+			b.Line("root.primaryAxisSizingMode = 'AUTO';")
+			b.Line("root.counterAxisSizingMode = 'AUTO';")
+			b.Line("root.fills = [];")
+			b.Line("root.strokes = [{ type: 'SOLID', color: STK }];")
+			b.Line("root.strokeWeight = 1;")
+			b.Line("root.strokeAlign = 'INSIDE';")
+			for i, tab := range tabs {
+				isActive := i == active
+				b.Linef("{ // Tab %d", i)
+				b.Line("const tab = figma.createFrame();")
+				b.Line("tab.layoutMode = 'VERTICAL';")
+				b.Line("tab.primaryAxisSizingMode = 'AUTO';")
+				b.Line("tab.counterAxisSizingMode = 'AUTO';")
+				b.Line("tab.paddingLeft = 16; tab.paddingRight = 16; tab.paddingTop = 12; tab.paddingBottom = 12;")
+				b.Line("tab.fills = [];")
+				if isActive {
+					b.Line("tab.strokes = [{ type: 'SOLID', color: BL }];")
+					b.Line("tab.strokeWeight = 2;")
+					b.Line("tab.strokeAlign = 'OUTSIDE';")
+				} else {
+					b.Line("tab.strokes = [];")
+				}
+				b.Line("const txt = figma.createText();")
+				b.Line("txt.fontName = { family: 'Inter', style: ST_LABEL };")
+				b.Linef("txt.characters = %q;", tab)
+				b.Line("txt.fontSize = TY_LABEL;")
+				if isActive {
+					b.Line("txt.fills = [{ type: 'SOLID', color: BL }];")
+				} else {
+					b.Line("txt.fills = [{ type: 'SOLID', color: MT }];")
+				}
+				b.Line("txt.textAutoResize = 'WIDTH_AND_HEIGHT';")
+				b.Line("tab.appendChild(txt);")
+				b.Line("root.appendChild(tab);")
+				b.Line("}")
+			}
+			b.Line("figma.currentPage.appendChild(root);")
+			b.ReturnIDs("root.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&tabsRaw, "tabs", "Overview,Analytics,Settings", "Comma-separated tab labels")
+	cmd.Flags().IntVar(&active, "active", 0, "Index of the active tab (0-based)")
+	return cmd
+}
+
+func newUIDropdownCmd() *cobra.Command {
+	var label, placeholder string
+	var open bool
+	var optionsRaw string
+	cmd := &cobra.Command{
+		Use:   "dropdown",
+		Short: "Select dropdown control (auto-layout)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			b := codegen.New()
+			uiPreamble(b, t, resolvePage())
+			b.Comment("UI / Dropdown")
+			b.Line("const root = figma.createFrame();")
+			b.Line("root.name = 'UI/Dropdown';")
+			b.Line("root.layoutMode = 'VERTICAL';")
+			b.Line("root.itemSpacing = 6;")
+			b.Line("root.primaryAxisSizingMode = 'AUTO';")
+			b.Line("root.counterAxisSizingMode = 'AUTO';")
+			b.Line("root.fills = [];")
+			if label != "" {
+				b.Line("const lab = figma.createText();")
+				b.Line("lab.fontName = { family: 'Inter', style: ST_LABEL };")
+				b.Linef("lab.characters = %q;", label)
+				b.Line("lab.fontSize = TY_LABEL;")
+				b.Line("lab.fills = [{ type: 'SOLID', color: MT }];")
+				b.Line("lab.textAutoResize = 'WIDTH_AND_HEIGHT';")
+				b.Line("root.appendChild(lab);")
+			}
+			b.Line("const trigger = figma.createFrame();")
+			b.Line("trigger.name = 'Trigger';")
+			b.Line("trigger.layoutMode = 'HORIZONTAL';")
+			b.Line("trigger.primaryAxisAlignItems = 'SPACE_BETWEEN';")
+			b.Line("trigger.counterAxisAlignItems = 'CENTER';")
+			b.Line("trigger.paddingLeft = 12; trigger.paddingRight = 12; trigger.paddingTop = 10; trigger.paddingBottom = 10;")
+			b.Line("trigger.cornerRadius = 8;")
+			b.Line("trigger.primaryAxisSizingMode = 'FIXED'; trigger.counterAxisSizingMode = 'AUTO';")
+			b.Line("trigger.resize(280, 44);")
+			b.Line("trigger.fills = [{ type: 'SOLID', color: CARD }];")
+			b.Line("trigger.strokes = [{ type: 'SOLID', color: STK }]; trigger.strokeWeight = 1;")
+			b.Line("const ph = figma.createText();")
+			b.Line("ph.fontName = { family: 'Inter', style: ST_SMALL };")
+			b.Linef("ph.characters = %q;", placeholder)
+			b.Line("ph.fontSize = TY_SMALL;")
+			b.Line("ph.fills = [{ type: 'SOLID', color: MT }];")
+			b.Line("ph.textAutoResize = 'WIDTH_AND_HEIGHT';")
+			b.Line("trigger.appendChild(ph);")
+			b.Line("const chevron = figma.createText();")
+			b.Line("chevron.fontName = { family: 'Inter', style: 'Regular' };")
+			b.Line("chevron.characters = '▾';")
+			b.Line("chevron.fontSize = 12;")
+			b.Line("chevron.fills = [{ type: 'SOLID', color: MT }];")
+			b.Line("chevron.textAutoResize = 'WIDTH_AND_HEIGHT';")
+			b.Line("trigger.appendChild(chevron);")
+			b.Line("root.appendChild(trigger);")
+			if open {
+				opts := splitTrimmed(optionsRaw)
+				b.Line("const menu = figma.createFrame();")
+				b.Line("menu.name = 'Menu';")
+				b.Line("menu.layoutMode = 'VERTICAL';")
+				b.Line("menu.itemSpacing = 0;")
+				b.Line("menu.cornerRadius = 8;")
+				b.Line("menu.primaryAxisSizingMode = 'AUTO'; menu.counterAxisSizingMode = 'AUTO';")
+				b.Line("menu.fills = [{ type: 'SOLID', color: CARD }];")
+				b.Line("menu.strokes = [{ type: 'SOLID', color: STK }]; menu.strokeWeight = 1;")
+				for _, opt := range opts {
+					b.Line("{ const item = figma.createFrame();")
+					b.Line("item.layoutMode = 'HORIZONTAL';")
+					b.Line("item.paddingLeft = 12; item.paddingRight = 12; item.paddingTop = 10; item.paddingBottom = 10;")
+					b.Line("item.primaryAxisSizingMode = 'AUTO'; item.counterAxisSizingMode = 'AUTO';")
+					b.Line("item.fills = [];")
+					b.Line("const ot = figma.createText();")
+					b.Line("ot.fontName = { family: 'Inter', style: ST_SMALL };")
+					b.Linef("ot.characters = %q;", opt)
+					b.Line("ot.fontSize = TY_SMALL;")
+					b.Line("ot.fills = [{ type: 'SOLID', color: WT }];")
+					b.Line("ot.textAutoResize = 'WIDTH_AND_HEIGHT';")
+					b.Line("item.appendChild(ot);")
+					b.Line("menu.appendChild(item); }")
+				}
+				b.Line("root.appendChild(menu);")
+			}
+			b.Line("figma.currentPage.appendChild(root);")
+			b.ReturnIDs("root.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVarP(&label, "label", "l", "Sort by", "Optional field label above the trigger")
+	cmd.Flags().StringVar(&placeholder, "placeholder", "Select an option…", "Placeholder text in the trigger")
+	cmd.Flags().BoolVar(&open, "open", false, "Render the dropdown in open/expanded state")
+	cmd.Flags().StringVar(&optionsRaw, "options", "Option A,Option B,Option C", "Comma-separated options shown when --open")
+	return cmd
+}
+
+func newUIBreadcrumbCmd() *cobra.Command {
+	var itemsRaw string
+	cmd := &cobra.Command{
+		Use:   "breadcrumb",
+		Short: "Breadcrumb navigation trail (auto-layout)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			items := splitTrimmed(itemsRaw)
+			if len(items) < 1 {
+				return fmt.Errorf("provide at least one item via --items")
+			}
+			b := codegen.New()
+			uiPreamble(b, t, resolvePage())
+			b.Comment("UI / Breadcrumb")
+			b.Line("const root = figma.createFrame();")
+			b.Line("root.name = 'UI/Breadcrumb';")
+			b.Line("root.layoutMode = 'HORIZONTAL';")
+			b.Line("root.itemSpacing = 6;")
+			b.Line("root.counterAxisAlignItems = 'CENTER';")
+			b.Line("root.primaryAxisSizingMode = 'AUTO';")
+			b.Line("root.counterAxisSizingMode = 'AUTO';")
+			b.Line("root.fills = [];")
+			for i, item := range items {
+				isLast := i == len(items)-1
+				b.Linef("{ // crumb %d", i)
+				b.Line("const crumb = figma.createText();")
+				b.Line("crumb.fontName = { family: 'Inter', style: ST_SMALL };")
+				b.Linef("crumb.characters = %q;", item)
+				b.Line("crumb.fontSize = TY_SMALL;")
+				if isLast {
+					b.Line("crumb.fills = [{ type: 'SOLID', color: WT }];")
+				} else {
+					b.Line("crumb.fills = [{ type: 'SOLID', color: MT }];")
+				}
+				b.Line("crumb.textAutoResize = 'WIDTH_AND_HEIGHT';")
+				b.Line("root.appendChild(crumb);")
+				if !isLast {
+					b.Line("const sep = figma.createText();")
+					b.Line("sep.fontName = { family: 'Inter', style: 'Regular' };")
+					b.Line("sep.characters = '/';")
+					b.Line("sep.fontSize = TY_SMALL;")
+					b.Line("sep.fills = [{ type: 'SOLID', color: STK }];")
+					b.Line("sep.textAutoResize = 'WIDTH_AND_HEIGHT';")
+					b.Line("root.appendChild(sep);")
+				}
+				b.Line("}")
+			}
+			b.Line("figma.currentPage.appendChild(root);")
+			b.ReturnIDs("root.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&itemsRaw, "items", "Home,Products,Checkout", "Comma-separated breadcrumb labels (last = current)")
+	return cmd
+}
+
+func newUISkeletonCmd() *cobra.Command {
+	var variant string
+	var rows int
+	cmd := &cobra.Command{
+		Use:   "skeleton",
+		Short: "Loading skeleton placeholder (text, card, or list variant)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			v := strings.ToLower(variant)
+			if v != "text" && v != "card" && v != "list" {
+				return fmt.Errorf("variant must be text|card|list")
+			}
+			b := codegen.New()
+			uiPreamble(b, t, resolvePage())
+			b.Comment("UI / Skeleton — " + v)
+			b.Line("const shimmer = { type: 'SOLID', color: STK };")
+			b.Line("const root = figma.createFrame();")
+			b.Line("root.name = 'UI/Skeleton';")
+			b.Line("root.layoutMode = 'VERTICAL';")
+			b.Line("root.itemSpacing = 12;")
+			b.Line("root.primaryAxisSizingMode = 'AUTO';")
+			b.Line("root.counterAxisSizingMode = 'AUTO';")
+			b.Line("root.fills = [];")
+			b.Line("figma.currentPage.appendChild(root);")
+			switch v {
+			case "text":
+				widths := []int{280, 240, 200}
+				for i, w := range widths {
+					b.Linef("{ const r%d = figma.createRectangle();", i)
+					b.Linef("r%d.resize(%d, 14); r%d.cornerRadius = 6;", i, w, i)
+					b.Linef("r%d.fills = [shimmer]; root.appendChild(r%d); }", i, i)
+				}
+			case "card":
+				b.Line("const img = figma.createRectangle();")
+				b.Line("img.resize(280, 160); img.cornerRadius = 8;")
+				b.Line("img.fills = [shimmer]; root.appendChild(img);")
+				for i, w := range []int{220, 180} {
+					b.Linef("{ const r%d = figma.createRectangle();", i)
+					b.Linef("r%d.resize(%d, 14); r%d.cornerRadius = 6;", i, w, i)
+					b.Linef("r%d.fills = [shimmer]; root.appendChild(r%d); }", i, i)
+				}
+			case "list":
+				if rows < 1 {
+					rows = 3
+				}
+				for i := 0; i < rows; i++ {
+					b.Linef("{ // row %d", i)
+					b.Line("const row = figma.createFrame();")
+					b.Line("row.layoutMode = 'HORIZONTAL'; row.itemSpacing = 12;")
+					b.Line("row.primaryAxisSizingMode = 'AUTO'; row.counterAxisSizingMode = 'AUTO';")
+					b.Line("row.fills = [];")
+					b.Line("const av = figma.createEllipse(); av.resize(36, 36); av.fills = [shimmer]; row.appendChild(av);")
+					b.Line("const col = figma.createFrame(); col.layoutMode = 'VERTICAL'; col.itemSpacing = 8;")
+					b.Line("col.primaryAxisSizingMode = 'AUTO'; col.counterAxisSizingMode = 'AUTO'; col.fills = [];")
+					b.Line("const t1 = figma.createRectangle(); t1.resize(160, 12); t1.cornerRadius = 5; t1.fills = [shimmer]; col.appendChild(t1);")
+					b.Line("const t2 = figma.createRectangle(); t2.resize(100, 10); t2.cornerRadius = 5; t2.fills = [shimmer]; col.appendChild(t2);")
+					b.Line("row.appendChild(col);")
+					b.Line("root.appendChild(row); }")
+				}
+			}
+			b.ReturnIDs("root.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&variant, "variant", "text", "text|card|list")
+	cmd.Flags().IntVar(&rows, "rows", 3, "Number of rows for the list variant")
+	return cmd
+}
+
+// splitTrimmed splits a comma-separated string and trims whitespace from each part.
+func splitTrimmed(s string) []string {
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }

@@ -24,6 +24,9 @@ func newNodeCmd() *cobra.Command {
 	cmd.AddCommand(newNodeReparentCmd())
 	cmd.AddCommand(newNodeLockCmd())
 	cmd.AddCommand(newNodeVisibleCmd())
+	cmd.AddCommand(newNodeOrderCmd())
+	cmd.AddCommand(newNodeGroupCmd())
+	cmd.AddCommand(newNodeUngroupCmd())
 	return cmd
 }
 
@@ -248,6 +251,87 @@ func newNodeVisibleCmd() *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&hide, "hide", false, "Hide instead of show")
 	return cmd
+}
+
+func newNodeOrderCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "order <direction> <nodeId>",
+		Short: "Change layer order: front, back, forward, backward",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dir := strings.ToLower(args[0])
+			id := args[1]
+			b := codegen.New()
+			b.PageSetup(resolvePage())
+			b.Linef("const node = await figma.getNodeByIdAsync(%q);", id)
+			b.Line("if (!node) throw new Error('Node not found');")
+			b.Line("const parent = node.parent;")
+			b.Line("if (!parent || !('children' in parent)) throw new Error('Node has no parent with children');")
+			b.Line("const idx = parent.children.indexOf(node);")
+			switch dir {
+			case "front":
+				b.Line("parent.insertChild(parent.children.length - 1, node);")
+			case "back":
+				b.Line("parent.insertChild(0, node);")
+			case "forward":
+				b.Line("if (idx < parent.children.length - 1) parent.insertChild(idx + 1, node);")
+			case "backward":
+				b.Line("if (idx > 0) parent.insertChild(idx - 1, node);")
+			default:
+				return fmt.Errorf("direction must be front|back|forward|backward")
+			}
+			b.ReturnIDs("node.id")
+			output(b.String())
+			return nil
+		},
+	}
+}
+
+func newNodeGroupCmd() *cobra.Command {
+	var name string
+	cmd := &cobra.Command{
+		Use:   "group <nodeId> [nodeId...]",
+		Short: "Group two or more nodes together",
+		Args:  cobra.MinimumNArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			b := codegen.New()
+			b.PageSetup(resolvePage())
+			nodeVars := make([]string, len(args))
+			for i, id := range args {
+				v := fmt.Sprintf("n%d", i)
+				nodeVars[i] = v
+				b.Linef("const %s = await figma.getNodeByIdAsync(%q);", v, id)
+				b.Linef("if (!%s) throw new Error('Node not found: %s');", v, id)
+			}
+			b.Linef("const grp = figma.group([%s], n0.parent);", strings.Join(nodeVars, ", "))
+			b.Linef("grp.name = %q;", name)
+			b.ReturnIDs("grp.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVarP(&name, "name", "n", "Group", "Group name")
+	return cmd
+}
+
+func newNodeUngroupCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "ungroup <nodeId>",
+		Short: "Ungroup a group node, returning children to the parent",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			b := codegen.New()
+			b.PageSetup(resolvePage())
+			b.Linef("const grp = await figma.getNodeByIdAsync(%q);", args[0])
+			b.Line("if (!grp) throw new Error('Node not found');")
+			b.Line("if (grp.type !== 'GROUP') throw new Error('Node is not a group');")
+			b.Line("const ids = grp.children.map(c => c.id);")
+			b.Line("figma.ungroup(grp);")
+			b.Line("return { done: true, ungroupedIds: ids };")
+			output(b.String())
+			return nil
+		},
+	}
 }
 
 func nodeTypeToMethod(t string) string {

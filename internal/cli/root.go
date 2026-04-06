@@ -81,6 +81,11 @@ deliverable templates, all powered by a built-in theme system.`,
 	// Phase 9: Layer 7
 	cmd.AddCommand(newBatchCmd())
 
+	// Phase 10: v0.2 additions
+	cmd.AddCommand(newPageCmd())
+	cmd.AddCommand(newValidateCmd())
+	cmd.AddCommand(newWatchCmd())
+
 	return cmd
 }
 
