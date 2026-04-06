@@ -101,6 +101,11 @@ User: "Create a hero section"
 **Visual Effects** — `figma-kit fx <effect>`
 - `glow`, `mesh`, `noise`, `vignette`, `grain`, `blur-bg`, `accent-bar`, `shadow`, `parallax-layer`
 
+**Images** — `figma-kit image <action>`
+- `place <path-or-url>` — local files (base64 embedded, < 33 KB) or URLs
+- `fill <path-or-url> --node <id>` — fill existing node with image
+- `serve [dir]` — start local HTTP server for larger files
+
 ### Layer 3 — Deliverables
 
 `figma-kit make <deliverable>` — generates complete production designs.

@@ -687,6 +687,29 @@ The `make` templates give you a head start, but the real power is composing prim
 
 This pipeline lets you build anything — the templates are just pre-composed versions of this.
 
+### Use local images
+
+You can place images from your local machine directly into Figma — no public URL needed:
+
+```bash
+# Small files (< 33 KB) — base64 embedded, zero setup
+figma-kit image place ./assets/logo.png --name "Logo" --width 200 --height 60
+
+# Fill an existing frame with an image
+figma-kit image fill ./hero.jpg --node "2:5"
+
+# Larger files — start a local server, then fetch
+figma-kit image serve ./assets
+# → Serving on http://127.0.0.1:8741
+figma-kit image place http://127.0.0.1:8741/hero.jpg --width 1440 --height 900
+```
+
+**Prompt example:**
+
+> "Add our logo from ./brand/logo.png to the hero section, 200x60. Then use the hero-bg.jpg from that same folder as a full-width background image."
+
+The AI runs `figma-kit image place ./brand/logo.png --width 200 --height 60`, and if the background is too large for inline, it starts `figma-kit image serve ./brand` and fetches from the local URL.
+
 ### Export for developers
 
 Once your design is done:

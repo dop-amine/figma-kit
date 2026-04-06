@@ -64,6 +64,7 @@ Run 'figma-kit examples' to get starter content YAML files.`,
 	cmd.AddCommand(newCardCmd())
 	cmd.AddCommand(newUICmd())
 	cmd.AddCommand(newFXCmd())
+	cmd.AddCommand(newImageCmd())
 
 	// Phase 5: Layer 3
 	cmd.AddCommand(newMakeCmd())

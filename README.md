@@ -108,7 +108,7 @@ The entire [marketing site](https://dop-amine.github.io/figma-kit/) and its [Fig
 |-------|-------|----------|-------------|
 | 0 | Session | `init`, `config`, `whoami`, `open`, `status` | File & project management |
 | 1 | Primitives | `node`, `style`, `text`, `layout` | Low-level Figma node operations |
-| 2 | Patterns | `card`, `ui`, `fx` | Mid-level design components & effects |
+| 2 | Patterns | `card`, `ui`, `fx`, `image` | Components, effects & local image upload |
 | 3 | Deliverables | `make` | Full production designs (36 templates) |
 | 4 | Design System | `ds` | Token management, specimens, audit |
 | 5 | Inspect & QA | `inspect`, `tree`, `find`, `qa` | Quality checks & inspection |
