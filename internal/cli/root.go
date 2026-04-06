@@ -116,5 +116,5 @@ func resolvePage() int {
 
 // output writes the generated JS to stdout.
 func output(js string) {
-	fmt.Fprint(os.Stdout, js)
+	_, _ = fmt.Fprint(os.Stdout, js)
 }
