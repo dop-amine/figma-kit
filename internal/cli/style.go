@@ -21,6 +21,7 @@ func newStyleCmd() *cobra.Command {
 	cmd.AddCommand(newStyleBlendCmd())
 	cmd.AddCommand(newStyleGradientCmd())
 	cmd.AddCommand(newStyleClipCmd())
+	cmd.AddCommand(newStyleApplyCmd())
 	return cmd
 }
 
@@ -248,6 +249,50 @@ func newStyleClipCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().BoolVar(&off, "off", false, "Disable clipping")
+	return cmd
+}
+
+func newStyleApplyCmd() *cobra.Command {
+	var styleName string
+	var styleType string
+	cmd := &cobra.Command{
+		Use:   "apply <nodeId>",
+		Short: "Apply a named local style (paint, text, or effect) to a node",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			b := codegen.New()
+			b.PageSetup(resolvePage())
+			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
+			b.Line("if (!node) throw new Error('Node not found');")
+
+			switch styleType {
+			case "fill", "paint":
+				b.Line("const styles = await figma.getLocalPaintStylesAsync();")
+				b.Linef("const style = styles.find(s => s.name === %q);", styleName)
+				b.Line("if (!style) throw new Error('Paint style not found: ' + " + fmt.Sprintf("%q", styleName) + ");")
+				b.Line("node.fillStyleId = style.id;")
+			case "text":
+				b.Line("const styles = await figma.getLocalTextStylesAsync();")
+				b.Linef("const style = styles.find(s => s.name === %q);", styleName)
+				b.Line("if (!style) throw new Error('Text style not found: ' + " + fmt.Sprintf("%q", styleName) + ");")
+				b.Line("node.textStyleId = style.id;")
+			case "effect":
+				b.Line("const styles = await figma.getLocalEffectStylesAsync();")
+				b.Linef("const style = styles.find(s => s.name === %q);", styleName)
+				b.Line("if (!style) throw new Error('Effect style not found: ' + " + fmt.Sprintf("%q", styleName) + ");")
+				b.Line("node.effectStyleId = style.id;")
+			default:
+				return fmt.Errorf("--type must be fill, text, or effect")
+			}
+
+			b.ReturnIDs("node.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&styleName, "name", "", "Style name to apply")
+	_ = cmd.MarkFlagRequired("name")
+	cmd.Flags().StringVar(&styleType, "type", "fill", "Style type: fill, text, or effect")
 	return cmd
 }
 

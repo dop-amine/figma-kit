@@ -36,6 +36,8 @@ func newCardGlassCmd() *cobra.Command {
 		preset string
 		w, h   int
 		parent string
+		title  string
+		desc   string
 	)
 	cmd := &cobra.Command{
 		Use:   "glass",
@@ -46,9 +48,18 @@ func newCardGlassCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			needFonts := title != "" || desc != ""
 			page := resolvePage()
 			b := codegen.New()
-			b.PageSetup(page)
+			if needFonts {
+				t, err := resolveTheme(cmd)
+				if err != nil {
+					return err
+				}
+				codegen.PreambleWithPage(b, t, page)
+			} else {
+				b.PageSetup(page)
+			}
 			b.Raw(codegen.AllHelpers())
 			b.Line("let par = pg;")
 			if parent != "" {
@@ -58,6 +69,16 @@ func newCardGlassCmd() *cobra.Command {
 			}
 			b.Linef("const card = G(par, 0, 0, %d, %d, %s);", w, h, optsJS)
 			b.Line(`card.name = 'Glass card';`)
+			if title != "" {
+				b.Linef("T(card, %q, 24, 24, %d, 20, 'Semi Bold', WT);", title, w-48)
+			}
+			if desc != "" {
+				y := 56
+				if title == "" {
+					y = 24
+				}
+				b.Linef("T(card, %q, 24, %d, %d, 14, 'Regular', MT, 22);", desc, y, w-48)
+			}
 			b.ReturnIDs("card.id")
 			output(b.String())
 			return nil
@@ -67,6 +88,8 @@ func newCardGlassCmd() *cobra.Command {
 	cmd.Flags().IntVarP(&w, "width", "w", 320, "Width")
 	cmd.Flags().IntVar(&h, "height", 200, "Height")
 	cmd.Flags().StringVar(&parent, "parent", "", "Optional parent node ID (defaults to page)")
+	cmd.Flags().StringVar(&title, "title", "", "Optional title text inside the card")
+	cmd.Flags().StringVar(&desc, "desc", "", "Optional description text inside the card")
 	return cmd
 }
 
@@ -91,6 +114,9 @@ func newCardSolidCmd() *cobra.Command {
 		border string
 		shadow string
 		radius int
+		w, h   int
+		title  string
+		desc   string
 	)
 	cmd := &cobra.Command{
 		Use:   "solid",
@@ -100,14 +126,19 @@ func newCardSolidCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			needFonts := title != "" || desc != ""
 			page := resolvePage()
 			b := codegen.New()
 			b.PageSetup(page)
+			if needFonts {
+				b.FontLoading()
+			}
 			b.Line("const card = figma.createFrame();")
 			b.Line(`card.name = 'Solid card';`)
-			b.Linef("card.resize(%d, %d);", defaultCardW, defaultCardH)
+			b.Linef("card.resize(%d, %d);", w, h)
 			b.Linef("card.cornerRadius = %d;", radius)
 			b.Linef("card.fills = [{type:'SOLID', color:%s}];", codegen.FormatRGB(c))
+			b.Line("card.clipsContent = true;")
 
 			if border != "" {
 				bc, err := codegen.HexToRGB(border)
@@ -126,6 +157,35 @@ func newCardSolidCmd() *cobra.Command {
 				b.Linef("card.effects = [%s];", fx)
 			}
 
+			if title != "" {
+				b.Linef("await figma.loadFontAsync({family:'Inter',style:'Semi Bold'});")
+				b.Line("const t = figma.createText();")
+				b.Line("t.fontName = {family:'Inter',style:'Semi Bold'};")
+				b.Linef("t.characters = %q;", title)
+				b.Line("t.fontSize = 20;")
+				b.Line("t.fills = [{type:'SOLID', color:{r:0.96,g:0.97,b:0.98}}];")
+				b.Line("t.x = 24; t.y = 24;")
+				b.Line("t.textAutoResize = 'WIDTH_AND_HEIGHT';")
+				b.Line("card.appendChild(t);")
+			}
+
+			if desc != "" {
+				b.Linef("await figma.loadFontAsync({family:'Inter',style:'Regular'});")
+				b.Line("const d = figma.createText();")
+				b.Line("d.fontName = {family:'Inter',style:'Regular'};")
+				b.Linef("d.characters = %q;", desc)
+				b.Line("d.fontSize = 14;")
+				b.Line("d.lineHeight = {value:22,unit:'PIXELS'};")
+				b.Line("d.fills = [{type:'SOLID', color:{r:0.45,g:0.48,b:0.55}}];")
+				y := 56
+				if title == "" {
+					y = 24
+				}
+				b.Linef("d.x = 24; d.y = %d;", y)
+				b.Linef("d.resize(%d, d.height); d.textAutoResize = 'HEIGHT';", w-48)
+				b.Line("card.appendChild(d);")
+			}
+
 			b.Line("pg.appendChild(card);")
 			b.ReturnIDs("card.id")
 			output(b.String())
@@ -136,6 +196,10 @@ func newCardSolidCmd() *cobra.Command {
 	cmd.Flags().StringVar(&border, "border", "", "Optional border color (hex)")
 	cmd.Flags().StringVar(&shadow, "shadow", "", "Drop shadow size (sm, md, lg)")
 	cmd.Flags().IntVar(&radius, "radius", 16, "Corner radius")
+	cmd.Flags().IntVarP(&w, "width", "w", defaultCardW, "Card width")
+	cmd.Flags().IntVar(&h, "height", defaultCardH, "Card height")
+	cmd.Flags().StringVar(&title, "title", "", "Optional title text inside the card")
+	cmd.Flags().StringVar(&desc, "desc", "", "Optional description text inside the card")
 	return cmd
 }
 

@@ -289,6 +289,70 @@ figma-kit node visible "123:456" --hide
 
 ---
 
+### `node order`
+
+**Usage:** `figma-kit node order <direction> <nodeId>`
+
+**Description:** Change layer order. Direction: `front`, `back`, `forward`, `backward`.
+
+```bash
+figma-kit node order front "123:456"
+```
+
+---
+
+### `node group`
+
+**Usage:** `figma-kit node group <nodeId> [nodeId...]`
+
+**Description:** Group two or more nodes together.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--name` / `-n` | string | `Group` | Group name. |
+
+```bash
+figma-kit node group "1:2" "1:3" "1:4" -n "Header"
+```
+
+---
+
+### `node ungroup`
+
+**Usage:** `figma-kit node ungroup <nodeId>`
+
+**Description:** Ungroup a group node, reparenting children to the group's parent.
+
+```bash
+figma-kit node ungroup "5:6"
+```
+
+---
+
+### `node component`
+
+**Usage:** `figma-kit node component <nodeId>`
+
+**Description:** Convert an existing frame/node into a Figma component using `createComponentFromNode`.
+
+```bash
+figma-kit node component "2:3"
+```
+
+---
+
+### `node flatten`
+
+**Usage:** `figma-kit node flatten <nodeId>`
+
+**Description:** Flatten a node subtree into a single vector. Useful for export prep.
+
+```bash
+figma-kit node flatten "4:5"
+```
+
+---
+
 ### `style fill`
 
 **Usage:** `figma-kit style fill <nodeId>`
@@ -409,6 +473,23 @@ figma-kit style gradient "123:456" --type radial --stops "0:#3B82F6,1:#14B8A6"
 
 ```bash
 figma-kit style clip "123:456"
+```
+
+---
+
+### `style apply`
+
+**Usage:** `figma-kit style apply <nodeId>`
+
+**Description:** Apply a named local style (paint, text, or effect) to a node by looking up the style name.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--name` | string | *(required)* | Style name to apply. |
+| `--type` | string | `fill` | Style type: `fill`, `text`, or `effect`. |
+
+```bash
+figma-kit style apply "123:456" --name "Primary Blue" --type fill
 ```
 
 ---
@@ -1851,6 +1932,23 @@ figma-kit ds component
 
 ```bash
 figma-kit ds variables
+```
+
+---
+
+### `ds variables-create`
+
+**Usage:** `figma-kit ds variables-create`
+
+**Description:** Create a Figma variable collection with COLOR variables from all theme tokens.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--name` | string | `Theme Tokens` | Variable collection name. |
+| *(global)* | — | — | `--theme` / `-t` required. |
+
+```bash
+figma-kit ds variables-create -t noir --name "Noir Tokens"
 ```
 
 ---

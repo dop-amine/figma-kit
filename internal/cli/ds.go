@@ -27,6 +27,7 @@ func newDSCmd() *cobra.Command {
 	cmd.AddCommand(newDSIconsCmd())
 	cmd.AddCommand(newDSComponentCmd())
 	cmd.AddCommand(newDSVariablesCmd())
+	cmd.AddCommand(newDSVariablesCreateCmd())
 	cmd.AddCommand(newDSSearchCmd())
 	cmd.AddCommand(newDSImportCmd())
 	cmd.AddCommand(newDSSyncTokensCmd())
@@ -417,6 +418,35 @@ func newDSVariablesCmd() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func newDSVariablesCreateCmd() *cobra.Command {
+	var collectionName string
+	cmd := &cobra.Command{
+		Use:   "variables-create",
+		Short: "Create Figma variable collection and color variables from theme tokens",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			b := codegen.New()
+			codegen.PreambleWithPage(b, t, resolvePage())
+			b.Linef("const col = figma.variables.createVariableCollection(%q);", collectionName)
+			b.Line("const modeId = col.modes[0].modeId;")
+			for _, name := range t.ColorNames() {
+				c := t.Colors[name]
+				b.Linef("{ const v = figma.variables.createVariable(%q, col, 'COLOR');", name)
+				b.Linef("  v.setValueForMode(modeId, {r:%s,g:%s,b:%s,a:1}); }",
+					codegen.FmtFloat(c.R), codegen.FmtFloat(c.G), codegen.FmtFloat(c.B))
+			}
+			b.Line("return { collection: col.name, variables: col.variableIds.length };")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&collectionName, "name", "Theme Tokens", "Variable collection name")
+	return cmd
 }
 
 func newDSSearchCmd() *cobra.Command {

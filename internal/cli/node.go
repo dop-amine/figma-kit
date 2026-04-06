@@ -27,6 +27,8 @@ func newNodeCmd() *cobra.Command {
 	cmd.AddCommand(newNodeOrderCmd())
 	cmd.AddCommand(newNodeGroupCmd())
 	cmd.AddCommand(newNodeUngroupCmd())
+	cmd.AddCommand(newNodeComponentCmd())
+	cmd.AddCommand(newNodeFlattenCmd())
 	return cmd
 }
 
@@ -328,6 +330,42 @@ func newNodeUngroupCmd() *cobra.Command {
 			b.Line("const ids = grp.children.map(c => c.id);")
 			b.Line("figma.ungroup(grp);")
 			b.Line("return { done: true, ungroupedIds: ids };")
+			output(b.String())
+			return nil
+		},
+	}
+}
+
+func newNodeComponentCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "component <nodeId>",
+		Short: "Convert an existing node into a Figma component",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			b := codegen.New()
+			b.PageSetup(resolvePage())
+			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
+			b.Line("if (!node) throw new Error('Node not found');")
+			b.Line("const comp = figma.createComponentFromNode(node);")
+			b.ReturnIDs("comp.id")
+			output(b.String())
+			return nil
+		},
+	}
+}
+
+func newNodeFlattenCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "flatten <nodeId>",
+		Short: "Flatten a node subtree into a single vector",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			b := codegen.New()
+			b.PageSetup(resolvePage())
+			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
+			b.Line("if (!node) throw new Error('Node not found');")
+			b.Line("const flat = figma.flatten([node]);")
+			b.ReturnIDs("flat.id")
 			output(b.String())
 			return nil
 		},
