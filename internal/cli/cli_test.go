@@ -46,7 +46,7 @@ func TestCLICommandsValidJSOutput(t *testing.T) {
 		{
 			name:     "themes",
 			args:     []string{"themes"},
-			expected: []string{"default", "light", "arkham"},
+			expected: []string{"default", "light", "noir"},
 		},
 		{
 			name:     "info",
@@ -114,9 +114,9 @@ func TestCLICommandsValidJSOutput(t *testing.T) {
 			expected: []string{":root", "--fk-"},
 		},
 		{
-			name:     "scaffold_arkham",
-			args:     []string{"scaffold", "-t", "arkham"},
-			expected: []string{"Arkham", "function T("},
+			name:     "scaffold_noir",
+			args:     []string{"scaffold", "-t", "noir"},
+			expected: []string{"Noir", "function T("},
 		},
 	}
 

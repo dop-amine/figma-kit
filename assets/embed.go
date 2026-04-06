@@ -13,8 +13,8 @@ var ThemeDefault []byte
 //go:embed themes/light.json
 var ThemeLight []byte
 
-//go:embed themes/arkham.json
-var ThemeArkham []byte
+//go:embed themes/noir.json
+var ThemeNoir []byte
 
 //go:embed templates/slide.js
 var TemplateSlide string

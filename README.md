@@ -32,8 +32,8 @@ figma-kit init my-project
 # 2. Link your Figma file
 figma-kit config set fileKey YOUR_FILE_KEY
 
-# 3. Generate a carousel with the Arkham theme
-figma-kit make carousel --content slides.yml -t arkham
+# 3. Generate a carousel with the Noir theme
+figma-kit make carousel --content slides.yml -t noir
 # → outputs use_figma JS — feed it to the MCP tool
 
 # 4. Create a hero frame
@@ -78,7 +78,7 @@ Three built-in themes, switchable with `-t`:
 |-------|-------------|
 | `default` | Dark theme for tech/SaaS. Blue-teal accents on `rgb(13,15,23)`. |
 | `light` | Light mode for print-friendly deliverables. |
-| `arkham` | Brand theme. Primary blue `#3366FF`, dark premium aesthetic. |
+| `noir` | Brand theme. Primary blue `#3366FF`, dark premium aesthetic. |
 
 Custom themes: place a JSON file in `~/.config/figma-kit/themes/` or `./themes/`.
 
@@ -87,7 +87,7 @@ Custom themes: place a JSON file in `~/.config/figma-kit/themes/` or `./themes/`
 figma-kit themes
 
 # Use a specific theme
-figma-kit make og-image --title "Hello" -t arkham
+figma-kit make og-image --title "Hello" -t noir
 
 # Export theme as CSS variables
 figma-kit export tokens -t default --format css
@@ -99,7 +99,7 @@ Data-driven templates accept YAML content files via `--content`:
 
 ```yaml
 # slides.yml
-theme: arkham
+theme: noir
 total: 7
 slides:
   - name: Cover

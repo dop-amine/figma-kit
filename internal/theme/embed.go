@@ -8,5 +8,5 @@ import (
 var embeddedThemes = map[string][]byte{
 	"default": assets.ThemeDefault,
 	"light":   assets.ThemeLight,
-	"arkham":  assets.ThemeArkham,
+	"noir":    assets.ThemeNoir,
 }

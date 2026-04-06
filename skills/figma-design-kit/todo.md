@@ -126,7 +126,7 @@ Complete, production-ready deliverable generators.
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `figma-kit make carousel` | LinkedIn carousel (1080x1350, 4-10 slides) from YAML/JSON content spec | `figma-kit make carousel --content ./carousel.yml --theme arkham --slides 7` |
+| `figma-kit make carousel` | LinkedIn carousel (1080x1350, 4-10 slides) from YAML/JSON content spec | `figma-kit make carousel --content ./carousel.yml --theme noir --slides 7` |
 | `figma-kit make instagram-post` | Instagram post (1080x1080) | `figma-kit make instagram-post --type quote --content "..."` |
 | `figma-kit make instagram-story` | Instagram story (1080x1920) | `figma-kit make instagram-story --content ./story.yml` |
 | `figma-kit make twitter-card` | Twitter/X card (1200x675) | `figma-kit make twitter-card --headline "..." --image hero` |
@@ -164,7 +164,7 @@ Complete, production-ready deliverable generators.
 | Command | Description | Example |
 |---------|-------------|---------|
 | `figma-kit make wireframe` | Low-fidelity wireframe for a screen type (landing, dashboard, form, list, detail, auth) | `figma-kit make wireframe --type dashboard --breakpoint desktop` |
-| `figma-kit make screen` | High-fidelity screen from wireframe + theme | `figma-kit make screen --type landing --theme arkham --sections "hero,features,pricing,cta"` |
+| `figma-kit make screen` | High-fidelity screen from wireframe + theme | `figma-kit make screen --type landing --theme noir --sections "hero,features,pricing,cta"` |
 | `figma-kit make dashboard` | Data dashboard layout (charts, stats, tables, sidebar nav) | `figma-kit make dashboard --widgets "stat,chart,table,list" --cols 3` |
 | `figma-kit make form` | Form layout with field types from schema | `figma-kit make form --fields ./form-schema.json` |
 | `figma-kit make modal` | Modal/dialog in various sizes | `figma-kit make modal --size md --type confirmation` |
@@ -189,7 +189,7 @@ Complete, production-ready deliverable generators.
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `figma-kit ds create` | Initialize a design system page with color, type, spacing, and effect tokens | `figma-kit ds create --theme arkham` |
+| `figma-kit ds create` | Initialize a design system page with color, type, spacing, and effect tokens | `figma-kit ds create --theme noir` |
 | `figma-kit ds colors` | Generate color palette page -- primary, secondary, neutrals, semantic, with tints/shades | `figma-kit ds colors --primary "#3366FF" --secondary "#0EB8A5" --tints 9` |
 | `figma-kit ds type-scale` | Generate type scale specimen (all heading/body/caption sizes) | `figma-kit ds type-scale --base 16 --ratio 1.25 --font Inter` |
 | `figma-kit ds spacing` | Generate spacing scale visualization (4, 8, 12, 16, 24, 32, 48, 64, 96) | `figma-kit ds spacing --base 4 --steps 10` |

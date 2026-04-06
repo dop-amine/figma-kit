@@ -1,7 +1,7 @@
 {
-  "name": "Arkham Technologies",
-  "description": "Arkham brand theme. Primary blue #3366FF, Inter + Geist Mono, dark premium aesthetic.",
-  "website": "https://www.arkham.tech/",
+  "name": "Noir",
+  "description": "Dark premium brand theme. Primary blue #3366FF, Inter + Geist Mono, high-contrast minimal aesthetic.",
+  "website": "https://github.com/dop-amine/figma-kit",
 
   "colors": {
     "BG":      { "r": 0.05,  "g": 0.06,  "b": 0.09  },
@@ -19,13 +19,13 @@
 
   "brand": {
     "primary":   "#3366FF",
-    "logo":      "[\u039B]",
-    "logoFull":  "[\u039B] ARKHAM",
-    "tagline":   "Tu operaci\u00f3n. En tu mano.",
-    "url":       "arkham.tech",
-    "clients":   ["Circle K", "Kimberly-Clark", "Grupo Jumex", "Televisa", "MIP", "Polar Salud"],
-    "product":   "Arkham Mobile",
-    "features":  ["TARS", "Alertas", "Workbooks", "Prompts"]
+    "logo":      "[◆]",
+    "logoFull":  "[◆] NOIR",
+    "tagline":   "Design at the speed of thought.",
+    "url":       "noir.design",
+    "clients":   ["Stripe", "Linear", "Vercel", "Figma", "Arc", "Loom"],
+    "product":   "Noir Studio",
+    "features":  ["Components", "Tokens", "Motion", "Icons"]
   },
 
   "type": {

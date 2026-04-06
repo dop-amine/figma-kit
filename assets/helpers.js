@@ -193,7 +193,7 @@ function brand(slide, slideNum, opts) {
   slide.appendChild(accent);
 
   // Bottom logo
-  GM(slide, '[\u039B] ARKHAM', pad, sh - 56, 11, { r: 0.35, g: 0.38, b: 0.45 });
+  GM(slide, '[◆] NOIR', pad, sh - 56, 11, { r: 0.35, g: 0.38, b: 0.45 });
 
   // Slide counter
   const num = String(slideNum).padStart(2, '0');

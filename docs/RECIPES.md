@@ -30,7 +30,7 @@ The parser lives in `internal/cli/batch.go` (`batchRecipe` struct). Root-level `
 Each step’s `js` should be the **exact stdout** of a figma-kit command that emits plugin JS:
 
 ```bash
-figma-kit make carousel --content slides.yml -t arkham > /tmp/step1.js
+figma-kit make carousel --content slides.yml -t noir > /tmp/step1.js
 # Paste contents into the YAML under js: |
 ```
 
@@ -65,19 +65,19 @@ title: Q2 launch — Figma pass
 steps:
   - title: Carousel slides
     js: |
-      PASTE_STDOUT_OF: figma-kit make carousel -t arkham --content slides.yml
+      PASTE_STDOUT_OF: figma-kit make carousel -t noir --content slides.yml
 
   - title: B2B one-pager
     js: |
-      PASTE_STDOUT_OF: figma-kit make one-pager -t arkham --content one-pager.yml
+      PASTE_STDOUT_OF: figma-kit make one-pager -t noir --content one-pager.yml
 
   - title: OG image
     js: |
-      PASTE_STDOUT_OF: figma-kit make og-image -t arkham --title "Q2 Launch"
+      PASTE_STDOUT_OF: figma-kit make og-image -t noir --title "Q2 Launch"
 
   - title: QA checklist
     js: |
-      PASTE_STDOUT_OF: figma-kit qa checklist -t arkham
+      PASTE_STDOUT_OF: figma-kit qa checklist -t noir
 ```
 
 After filling in real JS:

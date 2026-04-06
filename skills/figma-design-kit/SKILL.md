@@ -164,7 +164,7 @@ Three built-in themes, selectable via `-t` flag or `.figmarc.json`:
 |-------|-------------|
 | `default` | Dark theme for tech/SaaS. Blue-teal accents. |
 | `light` | Light mode for print-friendly deliverables. |
-| `arkham` | Arkham brand theme. Primary blue #3366FF. |
+| `noir` | Noir dark premium theme. Primary blue #3366FF. |
 
 Custom themes: place JSON in `~/.config/figma-kit/themes/` or `./themes/`.
 
@@ -174,7 +174,7 @@ Export tokens: `figma-kit export tokens --format css`
 
 ### Creating a Carousel
 ```bash
-figma-kit make carousel --content slides.yml -t arkham
+figma-kit make carousel --content slides.yml -t noir
 # → produces JS that creates all slides in one use_figma call
 ```
 
@@ -196,7 +196,7 @@ figma-kit qa checklist --page 0
 
 ### Design System Setup
 ```bash
-figma-kit ds create -t arkham
+figma-kit ds create -t noir
 # → creates full DS page with swatches, type specimens, spacing scale
 ```
 

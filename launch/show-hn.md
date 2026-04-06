@@ -10,7 +10,7 @@
 
 Hey HN! I built figma-kit because I wanted a faster way to create Figma designs without clicking through menus.
 
-**What it does:** figma-kit is a single Go binary with 120+ commands that generate JavaScript for Figma's official MCP (Model Context Protocol) server. You run a command like `figma-kit make carousel --content slides.yml -t arkham`, it outputs Figma Plugin API JavaScript, and the MCP server executes it in your Figma file.
+**What it does:** figma-kit is a single Go binary with 120+ commands that generate JavaScript for Figma's official MCP (Model Context Protocol) server. You run a command like `figma-kit make carousel --content slides.yml -t noir`, it outputs Figma Plugin API JavaScript, and the MCP server executes it in your Figma file.
 
 **How it's different from existing tools:**
 - Uses the official Figma MCP server (no CDP/browser hacking)

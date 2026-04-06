@@ -30,7 +30,7 @@ deliverable templates, all powered by a built-in theme system.`,
 		Version:       Version,
 	}
 
-	cmd.PersistentFlags().StringVarP(&flagTheme, "theme", "t", "", "Theme name (default, light, arkham, or path)")
+	cmd.PersistentFlags().StringVarP(&flagTheme, "theme", "t", "", "Theme name (default, light, noir, or path)")
 	cmd.PersistentFlags().IntVarP(&flagPage, "page", "p", -1, "Page index (0-based)")
 
 	// Phase 1: ported commands

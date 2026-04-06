@@ -91,14 +91,14 @@ func TestGetSet_theme(t *testing.T) {
 	restore := chdirTemp(t)
 	defer restore()
 
-	if err := Set("theme", "arkham"); err != nil {
+	if err := Set("theme", "noir"); err != nil {
 		t.Fatal(err)
 	}
 	v, err := Get("theme")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if v != "arkham" {
+	if v != "noir" {
 		t.Errorf("Get theme = %q", v)
 	}
 }

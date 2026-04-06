@@ -12,7 +12,7 @@ Available on the root command and inherited by subcommands (where applicable).
 
 | Flag | Shorthand | Type | Default | Description |
 |------|-----------|------|---------|-------------|
-| `--theme` | `-t` | string | *(empty)* | Theme name: built-in (`default`, `light`, `arkham`) or path to a theme file. Empty uses `.figmarc.json` `theme`, then `default`. |
+| `--theme` | `-t` | string | *(empty)* | Theme name: built-in (`default`, `light`, `noir`) or path to a theme file. Empty uses `.figmarc.json` `theme`, then `default`. |
 | `--page` | `-p` | int | `-1` | Zero-based page index for generated JS. `-1` uses `.figmarc.json` `page`, then `0`. |
 | `--version` | `-v` | bool | — | Print CLI version and exit. |
 | `--help` | `-h` | bool | — | Help for the current command (Cobra). |
@@ -49,7 +49,7 @@ figma-kit init "My file"
 
 ```bash
 figma-kit config set fileKey abcdefghijklmnop
-figma-kit config set theme arkham
+figma-kit config set theme noir
 figma-kit config set page 1
 ```
 
@@ -736,7 +736,7 @@ figma-kit card bento --cols 4 --rows 3 --gap 12
 | `--size` | string | `md` | `sm`, `md`, `lg`. |
 
 ```bash
-figma-kit ui button --variant outline --label "Continue" --size sm -t arkham
+figma-kit ui button --variant outline --label "Continue" --size sm -t noir
 ```
 
 ---
@@ -1770,7 +1770,7 @@ figma-kit ds type-scale -t default
 | *(global)* | — | — | Uses `-t`. |
 
 ```bash
-figma-kit ds spacing -t arkham
+figma-kit ds spacing -t noir
 ```
 
 ---
@@ -2272,7 +2272,7 @@ figma-kit export sprites "123:456"
 | `--format` | string | `json` | `json` or `css`. |
 
 ```bash
-figma-kit export tokens --format css -t arkham
+figma-kit export tokens --format css -t noir
 ```
 
 ---

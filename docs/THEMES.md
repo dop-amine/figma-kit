@@ -56,7 +56,7 @@ Embedded in the binary (`assets/themes/*.json`):
 | --- | --- |
 | `default` | Dark tech / SaaS baseline. Blue-teal accents on a near-black background (`rgb(13,15,23)`-class). |
 | `light` | Print-friendly light mode: light greys, white cards; includes extra tokens such as `TH` and `RL` not present in all themes. |
-| `arkham` | Brand-forward dark theme with primary blue **#3366FF** (`brand.primary`), optional `website`, and `brand` content for deliverables. |
+| `noir` | Brand-forward dark theme with primary blue **#3366FF** (`brand.primary`), optional `website`, and `brand` content for deliverables. |
 
 `figma-kit themes` lists embedded themes and descriptions.
 
@@ -84,7 +84,7 @@ Themes use short names as **JavaScript identifiers** in generated code (`const B
 ### CLI flag
 
 ```bash
-figma-kit preamble -t arkham
+figma-kit preamble -t noir
 figma-kit make carousel -t light --content slides.yml
 ```
 
@@ -96,7 +96,7 @@ In the project directory (or a parent), set defaults:
 
 ```json
 {
-  "theme": "arkham",
+  "theme": "noir",
   "page": 0
 }
 ```
@@ -113,7 +113,7 @@ When a command needs a theme, `resolveTheme` applies:
 
 `theme.Load` search order for the **name**:
 
-1. Embedded built-ins (`default`, `light`, `arkham`).
+1. Embedded built-ins (`default`, `light`, `noir`).
 2. `~/.config/figma-kit/themes/<name>.json` (OS user config dir).
 3. `./themes/<name>.json` relative to the current working directory.
 

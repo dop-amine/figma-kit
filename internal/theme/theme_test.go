@@ -33,13 +33,13 @@ func TestLoad_embeddedLight(t *testing.T) {
 	}
 }
 
-func TestLoad_embeddedArkhamHasBrand(t *testing.T) {
-	th, err := Load("arkham")
+func TestLoad_embeddedNoirHasBrand(t *testing.T) {
+	th, err := Load("noir")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if th.Brand == nil {
-		t.Fatal("expected Brand on arkham theme")
+		t.Fatal("expected Brand on noir theme")
 	}
 	if th.Brand.Primary == "" {
 		t.Error("expected non-empty Brand.Primary")
@@ -62,7 +62,7 @@ func TestList_threeEmbeddedThemes(t *testing.T) {
 	for i, info := range infos {
 		keys[i] = info.Key
 	}
-	want := []string{"arkham", "default", "light"}
+	want := []string{"default", "light", "noir"}
 	if !slices.Equal(keys, want) {
 		t.Errorf("keys = %v, want %v", keys, want)
 	}

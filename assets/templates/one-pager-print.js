@@ -55,8 +55,8 @@ function createOnePager(page, content, theme, opts) {
   accentBar(f, 0, 0, W, 4);
 
   // --- HEADER ---
-  GM(f, 'ARKHAM', MG, 24, 11, TH);
-  T(f, 'arkham.tech', W - MG - 80, 24, null, 11, 'Medium', BL);
+  GM(f, 'NOIR', MG, 24, 11, TH);
+  T(f, 'noir.design', W - MG - 80, 24, null, 11, 'Medium', BL);
   R(f, MG, 48, CW, 1, STK);
 
   // --- HERO ---
@@ -152,8 +152,8 @@ function createOnePager(page, content, theme, opts) {
   }
 
   // --- FOOTER ---
-  GM(f, 'ARKHAM \u2014 THE DATA & AI PLATFORM', MG, 1448, 9, MT);
-  T(f, '\u00A9 2026 Arkham Technologies Inc.', W - MG - 190, 1448, null, 10, 'Regular', MT);
+  GM(f, 'NOIR \u2014 DESIGN SYSTEM', MG, 1448, 9, MT);
+  T(f, '\u00A9 2026 Noir Studio', W - MG - 130, 1448, null, 10, 'Regular', MT);
 
   return f;
 }

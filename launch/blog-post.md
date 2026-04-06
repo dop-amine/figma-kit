@@ -11,7 +11,7 @@ What if you could just describe what you want and have it appear in your Figma f
 **figma-kit** is a Go CLI with 120+ commands that generates production-ready Figma designs from your terminal. Instead of clicking through the Figma UI, you run commands like:
 
 ```bash
-figma-kit make carousel --content slides.yml -t arkham
+figma-kit make carousel --content slides.yml -t noir
 ```
 
 This outputs JavaScript that the official Figma MCP server executes directly in your file. No plugins to install, no browser automation, no CDP hacking — just the official API.
@@ -28,7 +28,7 @@ The Go binary is a sophisticated code generator. It takes your command, loads a 
 
 When you run `figma-kit make carousel`, here's what happens:
 
-1. The binary loads the `arkham` theme (colors, fonts, spacing)
+1. The binary loads the `noir` theme (colors, fonts, spacing)
 2. It generates font loading code for Inter and Geist Mono
 3. It emits theme color constants (`const BL = {r:0.2, g:0.4, b:1}`)
 4. It injects helper functions (glass cards, gradient glows, text factories)
@@ -57,7 +57,7 @@ Every command is theme-aware. Themes are JSON files that define design tokens:
 
 ```json
 {
-  "name": "Arkham Technologies",
+  "name": "Noir Studio",
   "colors": {
     "BG":   { "r": 0.05, "g": 0.06, "b": 0.09 },
     "BL":   { "r": 0.2,  "g": 0.4,  "b": 1.0  },
@@ -71,7 +71,7 @@ Every command is theme-aware. Themes are JSON files that define design tokens:
 }
 ```
 
-Three themes ship built-in: a dark tech aesthetic, a print-friendly light theme, and the Arkham brand theme. Custom themes go in `~/.config/figma-kit/themes/`.
+Three themes ship built-in: a dark tech aesthetic, a print-friendly light theme, and the Noir dark premium theme. Custom themes go in `~/.config/figma-kit/themes/`.
 
 ## Data-Driven Templates
 
@@ -79,7 +79,7 @@ The most powerful commands accept YAML content specs:
 
 ```yaml
 # slides.yml
-theme: arkham
+theme: noir
 slides:
   - name: Cover
     glow: topRight
