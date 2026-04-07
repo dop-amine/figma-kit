@@ -364,6 +364,28 @@
       .footer-cols { gap: 40px; padding: 40px 20px; }
       .footer-bottom { padding: 0 20px; flex-direction: column; gap: 8px; }
     }
+
+    /* ── FIGMA EMBED ── */
+    .figma-section { text-align: center; }
+    .figma-embed {
+      max-width: 1150px; margin: 0 auto;
+      border-radius: 16px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+      box-shadow: 0 12px 48px rgba(0,0,0,0.4);
+    }
+    .figma-embed iframe { width: 100%; height: 500px; border: none; display: block; }
+    @media (max-width: 768px) { .figma-embed iframe { height: 350px; } }
+    .figma-links {
+      display: flex; gap: 12px; justify-content: center;
+      margin-top: 16px; flex-wrap: wrap;
+    }
+    .figma-link {
+      font-family: var(--mono); font-size: 12px;
+      color: var(--mt); border: 1px solid rgba(255,255,255,0.06);
+      padding: 6px 14px; border-radius: 8px;
+      transition: border-color .2s, color .2s;
+    }
+    .figma-link:hover { border-color: var(--bl); color: var(--bl); text-decoration: none; }
   </style>
 </head>
 <body>
@@ -681,6 +703,27 @@
         <span class="num">3</span>
         <span class="label">Themes</span>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE FIGMA EMBED -->
+<section id="figma" class="figma-section">
+  <div class="section-wrap">
+    <span class="section-label fade-in" style="color: var(--pp);">LIVE FIGMA FILE</span>
+    <h2 class="section-heading fade-in">Explore the actual design</h2>
+    <p class="section-sub fade-in">This is a live embed of the Figma file created by figma-kit. Pan, zoom, inspect. It&rsquo;s always in sync.</p>
+
+    <div class="figma-embed fade-in">
+      <iframe
+        src="https://embed.figma.com/design/olwJu5ffDAxhUyMYS3Nb4f/figma-kit-v2?node-id=0-1&embed-host=figma-kit-site&theme=dark&footer=false"
+        allowfullscreen
+      ></iframe>
+    </div>
+
+    <div class="figma-links fade-in">
+      <a href="https://www.figma.com/design/olwJu5ffDAxhUyMYS3Nb4f/figma-kit-v2?node-id=0-1" target="_blank" class="figma-link">&#9670; Landing Page</a>
+      <a href="https://www.figma.com/design/olwJu5ffDAxhUyMYS3Nb4f/figma-kit-v2" target="_blank" class="figma-link">Open in Figma &rarr;</a>
     </div>
   </div>
 </section>
