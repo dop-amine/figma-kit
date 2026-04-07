@@ -180,7 +180,7 @@ figma-kit is designed to be an **AI agent tool**. Each command is a self-contain
 | **Any MCP client** | Any MCP-compatible agent can invoke figma-kit -> `use_figma` |
 | **Terminal** | Run commands directly — pipe output to the MCP tool manually |
 
-The entire [marketing site](https://dop-amine.github.io/figma-kit/) and its [Figma design](https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo) were built using figma-kit with AI.
+The entire [marketing site](https://dop-amine.github.io/figma-kit/) and its [Figma design](https://www.figma.com/design/olwJu5ffDAxhUyMYS3Nb4f/figma-kit-v2) were built using figma-kit with AI.
 
 ## Command Layers
 

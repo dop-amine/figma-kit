@@ -31,8 +31,13 @@
       --err: #FF5959;
       --success: #33CC80;
       --warn: #FF9933;
+      --or: #FF9933;
+      --rd: #FF6666;
       --sans: 'Inter', system-ui, -apple-system, sans-serif;
       --mono: 'Geist Mono', 'SF Mono', 'Fira Code', monospace;
+      --glass-bg: rgba(255,255,255,0.03);
+      --glass-border: rgba(255,255,255,0.05);
+      --glass-border-2: rgba(255,255,255,0.06);
     }
     html { scroll-behavior: smooth; }
     body {
@@ -55,11 +60,18 @@
     }
     .fade-in.visible { opacity: 1; transform: translateY(0); }
 
+    /* ── ACCENT BAR ── */
+    .accent-bar {
+      height: 3px; width: 100%;
+      background: linear-gradient(90deg, var(--bl), var(--tl), #8C5CF5);
+      position: fixed; top: 0; left: 0; z-index: 101;
+    }
+
     /* ── NAV ── */
     nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(13, 15, 23, 0.88);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      position: fixed; top: 3px; left: 0; right: 0; z-index: 100;
+      background: rgba(13, 15, 23, 0.95);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--stk);
     }
     nav .inner {
@@ -67,699 +79,648 @@
       display: flex; align-items: center; justify-content: space-between;
       height: 56px;
     }
-    nav .logo { font-family: var(--mono); font-weight: 500; font-size: 14px; color: var(--wt); white-space: nowrap; margin-right: auto; }
-    nav .links { display: flex; gap: 28px; }
-    nav .links a { font-size: 14px; color: var(--mt); transition: color .2s; }
+    nav .logo {
+      font-family: var(--mono); font-weight: 500; font-size: 15px;
+      color: var(--wt); white-space: nowrap;
+    }
+    nav .logo:hover { text-decoration: none; }
+    nav .links { display: flex; gap: 32px; }
+    nav .links a {
+      font-size: 14px; font-weight: 500; color: var(--mt); transition: color .2s;
+    }
     nav .links a:hover { color: var(--wt); text-decoration: none; }
-    @media (max-width: 640px) { nav .links { gap: 16px; } nav .inner { padding: 0 20px; } }
-
-    .accent-bar {
-      height: 3px; width: 100%;
-      background: linear-gradient(90deg, var(--bl), var(--tl), var(--pp));
-      position: fixed; top: 56px; left: 0; z-index: 99;
+    @media (max-width: 640px) {
+      nav .links { gap: 16px; }
+      nav .inner { padding: 0 20px; }
     }
 
     /* ── HERO ── */
     .hero {
-      min-height: 100vh; padding-top: 80px; padding-bottom: 80px;
+      padding-top: 180px; padding-bottom: 80px;
       position: relative; overflow: hidden;
-      display: flex; align-items: center;
+      display: flex; flex-direction: column; align-items: center;
     }
     .hero::before {
       content: '';
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       background:
-        radial-gradient(ellipse 80% 60% at 70% 20%, rgba(30, 56, 140, 0.14), transparent),
-        radial-gradient(ellipse 50% 40% at 20% 60%, rgba(13, 72, 77, 0.10), transparent),
-        radial-gradient(ellipse 60% 50% at 80% 50%, rgba(38, 25, 102, 0.12), transparent);
+        radial-gradient(ellipse 60% 50% at 25% 30%, rgba(38, 64, 153, 0.18), transparent 70%),
+        radial-gradient(ellipse 60% 50% at 67% 0%, rgba(15, 82, 87, 0.10), transparent 70%),
+        radial-gradient(ellipse 90% 50% at -12% 50%, rgba(77, 46, 140, 0.08), transparent 70%);
       pointer-events: none;
     }
-    .hero .inner {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+    .hero-content {
       position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 32px; text-align: center;
     }
-    @media (max-width: 900px) { .hero .inner { grid-template-columns: 1fr; gap: 40px; } }
     .hero .badge {
-      display: inline-block;
-      font-family: var(--mono); font-size: 12px; font-weight: 500;
-      color: var(--bl); border: 1px solid var(--bl);
-      padding: 4px 12px; border-radius: 999px; margin-bottom: 24px;
-    }
-    .hero h1 {
-      font-size: clamp(48px, 6vw, 80px);
-      font-weight: 800; line-height: 1.05;
-      letter-spacing: -0.03em; margin-bottom: 24px;
-    }
-    .hero .subtitle {
-      font-size: 18px; color: var(--bd);
-      line-height: 1.7; margin-bottom: 36px; max-width: 520px;
-    }
-    .hero .cta-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-    .scroll-hint {
-      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      color: var(--mt); font-size: 11px; font-weight: 500; letter-spacing: .08em;
-      text-transform: uppercase; opacity: .6; z-index: 2;
-    }
-    .scroll-hint svg { animation: bounce 2s ease-in-out infinite; }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(6px); }
-    }
-    .btn-primary {
       display: inline-flex; align-items: center; gap: 8px;
-      background: var(--bl); color: var(--wt);
-      font-family: var(--sans); font-weight: 600; font-size: 16px;
-      padding: 14px 32px; border-radius: 10px; border: none; cursor: pointer;
-      box-shadow: 0 4px 24px rgba(51, 102, 255, 0.25);
+      font-family: var(--mono); font-size: 12px; font-weight: 500;
+      color: #B2BFD9;
+      background: rgba(51, 102, 255, 0.08);
+      border: 1px solid rgba(51, 102, 255, 0.2);
+      padding: 7px 16px; border-radius: 999px;
+    }
+    .hero .badge .dot { color: var(--tl); font-size: 8px; }
+    .hero h1 {
+      font-size: 76px; font-weight: 700; line-height: 1;
+      letter-spacing: -2px;
+    }
+    @media (max-width: 768px) { .hero h1 { font-size: clamp(40px, 10vw, 76px); } }
+    .hero .subtitle-wrap { max-width: 700px; }
+    .hero .subtitle {
+      font-size: 20px; color: var(--mt); line-height: 32px;
+      margin: 0;
+    }
+    .cta-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; justify-content: center; }
+    .btn-primary {
+      display: inline-flex; align-items: center;
+      background: linear-gradient(90deg, #386BFF, #5947F2);
+      color: white; font-family: var(--sans); font-weight: 600; font-size: 15px;
+      padding: 14px 28px; border-radius: 10px; border: none; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(51, 102, 255, 0.25);
       transition: transform .15s, box-shadow .15s;
     }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(51, 102, 255, 0.35); text-decoration: none; }
-    .brew-hint { font-family: var(--mono); font-size: 13px; color: var(--mt); }
-
-    /* ── TERMINAL ── */
-    .terminal {
-      background: #0A0B12;
-      border: 1px solid var(--stk);
-      border-radius: 16px; overflow: hidden;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.35);
-    }
-    .terminal-bar {
-      display: flex; align-items: center; gap: 7px;
-      padding: 14px 20px; border-bottom: 1px solid var(--stk);
-    }
-    .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .dot-r { background: #FF5959; }
-    .dot-y { background: #FFBF33; }
-    .dot-g { background: #33CC80; }
-    .terminal-title {
-      margin-left: auto;
-      font-family: var(--mono); font-size: 11px; color: var(--mt);
-    }
-    .terminal-body { padding: 20px; }
-    .terminal-body .line {
-      font-family: var(--mono); font-size: 12px; line-height: 2; white-space: pre;
-    }
-    .line .prompt { color: var(--success); }
-    .line .cmd { color: var(--tl); }
-    .line .out { color: var(--mt); }
-    .line .ok { color: var(--success); }
-
-    /* ── SECTION COMMON ── */
-    section { padding: 100px 0; }
-    .section-label {
-      font-family: var(--mono); font-weight: 500; font-size: 12px;
-      letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 16px;
-    }
-    .section-title {
-      font-size: clamp(28px, 4vw, 40px);
-      font-weight: 700; margin-bottom: 20px; letter-spacing: -0.02em;
-    }
-    .section-desc {
-      font-size: 17px; color: var(--bd); max-width: 640px;
-      margin-bottom: 48px; line-height: 1.7;
-    }
-
-    /* ── HOW IT WORKS ── */
-    .how-section {
-      background: var(--bg-section);
-      border-top: 1px solid var(--stk); border-bottom: 1px solid var(--stk);
-    }
-    .workflow-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-    @media (max-width: 900px) { .workflow-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 520px) { .workflow-grid { grid-template-columns: 1fr; } }
-    .workflow-card {
-      background: rgba(13, 15, 23, 0.6);
-      border: 1px solid var(--stk); border-radius: 16px;
-      padding: 28px 24px; position: relative;
-      transition: border-color .3s, transform .3s;
-    }
-    .workflow-card:hover { border-color: rgba(51, 102, 255, 0.3); transform: translateY(-2px); }
-    .workflow-card .step-num { font-family: var(--mono); font-size: 11px; margin-bottom: 12px; display: block; }
-    .workflow-card .step-icon { font-size: 28px; margin-bottom: 14px; }
-    .workflow-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 10px; }
-    .workflow-card p { font-size: 13px; color: var(--mt); line-height: 1.65; }
-    .workflow-arrow {
-      display: none; position: absolute; right: -16px; top: 50%;
-      transform: translateY(-50%); font-size: 18px; color: var(--mt);
-    }
-    @media (min-width: 901px) { .workflow-arrow { display: block; } }
-
-    /* ── PROMPT GALLERY ── */
-    .prompt-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-    @media (max-width: 900px) { .prompt-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 520px) { .prompt-grid { grid-template-columns: 1fr; } }
-    .prompt-card {
-      background: rgba(13, 15, 23, 0.6);
-      border: 1px solid var(--stk); border-radius: 16px;
-      padding: 24px; position: relative;
-      transition: border-color .3s, transform .3s;
-    }
-    .prompt-card:hover { border-color: rgba(51, 102, 255, 0.3); transform: translateY(-2px); }
-    .prompt-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 12px; }
-    .prompt-card p { font-size: 14px; color: var(--mt); line-height: 1.65; margin-bottom: 20px; }
-    .prompt-card .accent-line { width: 40px; height: 3px; border-radius: 2px; }
-    .cookbook-hint { font-family: var(--mono); font-size: 13px; color: var(--mt); margin-top: 32px; }
-    .cookbook-hint code { color: var(--tl); background: rgba(20, 184, 166, 0.1); padding: 2px 8px; border-radius: 4px; }
-
-    /* ── FEATURES ── */
-    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-    @media (max-width: 768px) { .features-grid { grid-template-columns: 1fr; } }
-    .feature-card {
-      background: rgba(22, 26, 37, 0.6);
-      border: 1px solid var(--stk); border-radius: 16px;
-      padding: 32px; position: relative; overflow: hidden;
-      backdrop-filter: blur(12px);
-      transition: border-color .3s, transform .3s;
-    }
-    .feature-card:hover { border-color: rgba(51, 102, 255, 0.3); transform: translateY(-2px); }
-    .feature-card .icon { font-size: 36px; margin-bottom: 20px; }
-    .feature-card h3 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
-    .feature-card p { font-size: 14px; color: var(--mt); line-height: 1.7; }
-    .feature-card::after {
-      content: ''; position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
-      width: 200px; height: 200px; border-radius: 50%;
-      pointer-events: none; opacity: 0; transition: opacity .3s;
-    }
-    .feature-card:nth-child(1)::after { background: radial-gradient(circle, rgba(51,102,255,0.1), transparent 70%); }
-    .feature-card:nth-child(2)::after { background: radial-gradient(circle, rgba(139,92,246,0.1), transparent 70%); }
-    .feature-card:nth-child(3)::after { background: radial-gradient(circle, rgba(20,184,166,0.1), transparent 70%); }
-    .feature-card:hover::after { opacity: 1; }
-
-    /* ── DEMO ── */
-    .demo-terminal { max-width: 1000px; margin: 0 auto; }
-    .ai-badge {
-      display: inline-block; font-family: var(--mono); font-size: 11px;
-      color: var(--tl); background: rgba(20, 184, 166, 0.1);
-      border: 1px solid rgba(20, 184, 166, 0.25);
-      padding: 3px 10px; border-radius: 999px; float: right; margin-top: 8px;
-    }
-
-    /* ── GIF ── */
-    .demo-gif {
-      border-radius: 16px; overflow: hidden;
-      border: 1px solid var(--stk);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    }
-    .demo-gif img { width: 100%; display: block; }
-
-    /* ── STORY ── */
-    .story-section {
-      background: var(--bg-section);
-      border-top: 1px solid var(--stk); border-bottom: 1px solid var(--stk);
-    }
-    .story-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
-    @media (max-width: 900px) { .story-grid { grid-template-columns: 1fr; } }
-    .story-step { display: flex; gap: 16px; margin-bottom: 32px; }
-    .step-circle {
-      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
-      background: var(--bl); color: var(--wt);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 600;
-    }
-    .step-content h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-    .step-content p { font-size: 13px; color: var(--mt); line-height: 1.6; }
-    .step-content code {
-      font-family: var(--mono); font-size: 12px;
-      background: rgba(51, 102, 255, 0.1);
-      color: var(--tl); padding: 2px 6px; border-radius: 4px;
-    }
-    .meta-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-family: var(--mono); font-size: 11px;
-      color: var(--tl); background: rgba(20, 184, 166, 0.08);
-      border: 1px solid rgba(20, 184, 166, 0.2);
-      padding: 4px 12px; border-radius: 999px; margin-bottom: 24px;
-    }
-    .meta-badge svg { width: 14px; height: 14px; }
-
-    /* ── THEME BUILDER ── */
-    .themes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-    @media (max-width: 768px) { .themes-grid { grid-template-columns: 1fr; } }
-    .theme-card {
-      background: var(--bg-raised);
-      border: 1px solid var(--stk); border-radius: 16px;
-      padding: 32px; transition: border-color .3s, transform .3s;
-    }
-    .theme-card:hover { border-color: rgba(51, 102, 255, 0.3); transform: translateY(-2px); }
-    .theme-card .icon { font-size: 28px; margin-bottom: 16px; }
-    .theme-card h3 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
-    .theme-card p { font-size: 14px; color: var(--mt); line-height: 1.7; margin-bottom: 16px; }
-    .theme-card .card-link {
-      font-family: var(--mono); font-size: 12px; color: var(--bl);
-      transition: color .2s;
-    }
-    .theme-card .card-link:hover { color: var(--tl); }
-    .theme-card .card-code {
-      font-family: var(--mono); font-size: 11px; color: var(--tl);
-    }
-
-    /* ── FIGMA EMBED ── */
-    .figma-embed {
-      border-radius: 16px; overflow: hidden;
-      border: 1px solid var(--stk);
-      box-shadow: 0 12px 48px rgba(0,0,0,0.4);
-    }
-    .figma-embed iframe { width: 100%; height: 500px; border: none; display: block; }
-    @media (max-width: 768px) { .figma-embed iframe { height: 350px; } }
-    .figma-link-row { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
-    .figma-link {
-      font-family: var(--mono); font-size: 12px;
-      color: var(--mt); border: 1px solid var(--stk);
-      padding: 6px 14px; border-radius: 8px;
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(51, 102, 255, 0.35); text-decoration: none; color: white; }
+    .btn-outline {
+      display: inline-flex; align-items: center;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #CCD1E0; font-family: var(--sans); font-weight: 500; font-size: 15px;
+      padding: 14px 28px; border-radius: 10px; cursor: pointer;
       transition: border-color .2s, color .2s;
     }
-    .figma-link:hover { border-color: var(--bl); color: var(--bl); text-decoration: none; }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.25); color: var(--wt); text-decoration: none; }
+    .install-cmd {
+      display: inline-flex; gap: 10px; align-items: center;
+      font-family: var(--mono); font-size: 14px;
+      background: var(--glass-bg); border: 1px solid var(--glass-border-2);
+      padding: 10px 20px; border-radius: 8px;
+    }
+    .install-cmd .dollar { color: #596173; }
+    .install-cmd .cmd { color: var(--tl); }
 
-    /* ── INSTALL CTA ── */
-    .install-section { text-align: center; }
-    .install-section .section-desc { margin-left: auto; margin-right: auto; text-align: center; }
-    .install-btn {
-      display: inline-block;
-      font-family: var(--mono); font-weight: 500; font-size: 16px;
-      color: var(--bl); border: 1.5px solid var(--bl);
-      padding: 14px 28px; border-radius: 10px;
-      transition: background .2s, color .2s;
+    /* ── SECTION COMMON ── */
+    .section-divider {
+      width: 1000px; max-width: 100%; height: 1px;
+      background: rgba(36, 41, 56, 0.5);
+      margin: 0 auto 48px;
     }
-    .install-btn:hover { background: var(--bl); color: var(--wt); text-decoration: none; }
-    .install-alt {
-      display: block; margin-top: 16px;
-      font-family: var(--mono); font-size: 12px; color: var(--mt);
+    section { padding: 80px 0; }
+    .section-header { text-align: center; margin-bottom: 48px; }
+    .section-label {
+      font-family: var(--mono); font-weight: 500; font-size: 12px;
+      letter-spacing: 1.8px; text-transform: uppercase; margin-bottom: 16px;
     }
+    .section-title {
+      font-size: 40px; font-weight: 700; letter-spacing: -1px;
+      margin-bottom: 16px; color: var(--wt);
+    }
+    @media (max-width: 768px) { .section-title { font-size: clamp(26px, 5vw, 40px); } }
+    .section-desc {
+      font-size: 18px; color: var(--mt); max-width: 700px;
+      margin: 0 auto; line-height: 1.6;
+    }
+
+    /* ── GLASS CARDS ── */
+    .glass-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      transition: border-color .3s, transform .3s;
+    }
+    .glass-card:hover { transform: translateY(-2px); }
+
+    /* ── HOW IT WORKS ── */
+    .how-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    @media (max-width: 900px) { .how-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .how-grid { grid-template-columns: 1fr; } }
+    .how-card { padding: 28px 24px; height: 220px; display: flex; flex-direction: column; gap: 14px; }
+    .how-card .num-badge {
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; border-radius: 12px;
+      font-family: var(--mono); font-weight: 500; font-size: 15px;
+    }
+    .how-card h3 { font-size: 18px; font-weight: 600; }
+    .how-card p { font-size: 14px; color: var(--mt); line-height: 22px; }
+
+    /* ── FEATURES ── */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .features-grid { grid-template-columns: 1fr; } }
+    .feature-card { padding: 28px; height: 200px; display: flex; flex-direction: column; gap: 12px; }
+    .feature-card .icon-badge {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .feature-card h3 { font-size: 17px; font-weight: 600; }
+    .feature-card p { font-size: 14px; color: var(--mt); line-height: 22px; }
+
+    /* ── PROMPT GALLERY ── */
+    .prompt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    @media (max-width: 768px) { .prompt-grid { grid-template-columns: 1fr; } }
+    .prompt-card {
+      height: 240px; display: flex; flex-direction: column; gap: 16px;
+      padding: 0 28px 24px; overflow: hidden;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      transition: border-color .3s, transform .3s;
+    }
+    .prompt-card:hover { transform: translateY(-2px); }
+    .prompt-card .gradient-bar { width: 100%; height: 3px; border-radius: 0; flex-shrink: 0; }
+    .prompt-card .spacer { height: 8px; flex-shrink: 0; }
+    .prompt-card h3 { font-size: 18px; font-weight: 600; flex-shrink: 0; }
+    .prompt-box {
+      display: flex; gap: 10px; padding: 14px 16px;
+      background: var(--bg); border: 1px solid var(--stk);
+      border-radius: 10px; font-family: var(--mono); font-size: 13px;
+      flex-shrink: 0;
+    }
+    .prompt-box .chevron { font-weight: 500; flex-shrink: 0; }
+    .prompt-box .text { color: #99A1B2; line-height: 21px; }
+    .prompt-tags { display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
+    .prompt-tag {
+      font-family: var(--mono); font-size: 11px;
+      padding: 4px 10px; border-radius: 6px;
+    }
+
+    /* ── THEMES ── */
+    .themes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    @media (max-width: 768px) { .themes-grid { grid-template-columns: 1fr; } }
+    .theme-card {
+      height: 340px; display: flex; flex-direction: column; gap: 16px;
+      padding: 0 24px 24px; overflow: hidden;
+    }
+    .theme-card.active { border: 1.5px solid rgba(51, 102, 255, 0.35); }
+    .theme-preview {
+      width: 100%; height: 120px; border-radius: 10px; overflow: hidden;
+      position: relative; flex-shrink: 0;
+    }
+    .theme-preview .bar-1 {
+      position: absolute; top: 10px; left: 16px;
+      width: 290px; height: 18px; border-radius: 3px;
+    }
+    .theme-preview .bar-2 {
+      position: absolute; top: 34px; left: 16px;
+      width: 290px; height: 36px; border-radius: 3px;
+    }
+    .theme-preview .block-1,
+    .theme-preview .block-2,
+    .theme-preview .block-3 {
+      position: absolute; top: 78px; height: 32px; width: 88px; border-radius: 3px;
+    }
+    .theme-preview .block-1 { left: 16px; }
+    .theme-preview .block-2 { left: 112px; }
+    .theme-preview .block-3 { left: 208px; }
+    .theme-card .title-row { display: flex; align-items: center; gap: 10px; }
+    .theme-card .title-row h3 { font-size: 20px; font-weight: 600; }
+    .theme-card .active-badge {
+      font-family: var(--mono); font-size: 10px; color: var(--bl);
+      background: rgba(51, 102, 255, 0.12);
+      padding: 3px 8px; border-radius: 6px;
+    }
+    .theme-card p { font-size: 14px; color: var(--mt); line-height: 22px; }
+    .theme-card .swatch-row {
+      display: flex; align-items: center; gap: 8px; margin-top: auto;
+    }
+    .swatch {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .swatch-row .spacer { flex: 1; }
+    .swatch-row .theme-flag {
+      font-family: var(--mono); font-size: 12px; color: var(--tl);
+    }
+    .theme-cta-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border);
+      border-radius: 12px; padding: 18px 28px;
+      max-width: 1150px; margin: 0 auto;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .theme-cta-bar .text {
+      font-size: 14px; font-weight: 500; color: #B2B8C7;
+      font-family: var(--sans);
+    }
+    .theme-cta-bar .text code {
+      font-family: var(--mono); color: #B2B8C7;
+    }
+    .theme-cta-bar .docs-btn {
+      display: inline-flex; padding: 7px 16px; border-radius: 8px;
+      background: rgba(20, 184, 166, 0.1);
+      color: var(--tl); font-size: 13px; font-weight: 500;
+      transition: background .2s;
+    }
+    .theme-cta-bar .docs-btn:hover { background: rgba(20, 184, 166, 0.18); text-decoration: none; }
+
+    /* ── CTA ── */
+    .cta-section { text-align: center; }
+    .cta-install {
+      display: inline-flex; gap: 10px; align-items: center;
+      font-family: var(--mono); font-size: 16px;
+      background: var(--glass-bg); border: 1px solid var(--glass-border-2);
+      padding: 14px 24px; border-radius: 10px;
+    }
+    .cta-install .dollar { color: #596173; }
+    .cta-install .cmd { color: var(--tl); font-weight: 500; }
+    .stats-row {
+      display: flex; gap: 56px; justify-content: center; flex-wrap: wrap;
+      margin-top: 36px;
+    }
+    .stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .stat .num { font-size: 28px; font-weight: 700; color: var(--wt); }
+    .stat .label { font-size: 13px; color: var(--mt); }
 
     /* ── FOOTER ── */
     footer {
-      border-top: 1px solid var(--stk); padding: 48px 0;
-      background: rgba(9, 10, 15, 0.8);
+      background: #090A0F;
+      padding: 0 0 48px;
     }
-    .footer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; }
-    @media (max-width: 768px) { .footer-grid { grid-template-columns: repeat(2, 1fr); } }
-    .footer-col h4 { font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+    footer .divider { width: 100%; height: 1px; background: var(--stk); }
+    .footer-cols {
+      display: flex; gap: 80px; justify-content: center;
+      padding: 56px 40px 40px;
+      flex-wrap: wrap;
+    }
+    .footer-col { display: flex; flex-direction: column; gap: 12px; }
+    .footer-col h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
     .footer-col a {
-      display: block; font-size: 13px; color: var(--mt);
-      margin-bottom: 8px; transition: color .2s;
+      font-size: 14px; color: var(--mt); display: block;
+      transition: color .2s;
     }
     .footer-col a:hover { color: var(--wt); text-decoration: none; }
-    .footer-col .logo-text { font-family: var(--mono); font-weight: 500; font-size: 16px; color: var(--wt); margin-bottom: 8px; }
-    .footer-col .copy { font-size: 12px; color: var(--mt); }
+    .footer-bottom {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1150px; margin: 0 auto; padding: 0 40px;
+      font-size: 13px;
+    }
+    .footer-bottom .copy { color: #4D5461; }
+    .footer-bottom .brand { font-family: var(--mono); font-weight: 500; color: var(--mt); }
+    @media (max-width: 768px) {
+      .footer-cols { gap: 40px; padding: 40px 20px; }
+      .footer-bottom { padding: 0 20px; flex-direction: column; gap: 8px; }
+    }
   </style>
 </head>
 <body>
 
+<!-- ACCENT BAR -->
+<div class="accent-bar"></div>
+
 <!-- NAV -->
 <nav>
   <div class="inner">
-    <a href="#" class="logo">&#9670; figma-kit</a>
+    <a href="#" class="logo">figma-kit</a>
     <div class="links">
-      <a href="#how">How It Works</a>
-      <a href="#prompts">Prompts</a>
       <a href="#features">Features</a>
-      <a href="#demo">Demo</a>
-      <a href="#story">Story</a>
       <a href="#themes">Themes</a>
-      <a href="#figma">Figma</a>
+      <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COOKBOOK.md">Cookbook</a>
       <a href="https://github.com/dop-amine/figma-kit">GitHub</a>
     </div>
   </div>
 </nav>
-<div class="accent-bar"></div>
 
-<!-- HERO — matches Figma frame 2:2 -->
+<!-- HERO -->
 <section class="hero">
-  <div class="container">
-    <div class="inner">
-      <div>
-        <span class="badge">Source Available</span>
-        <h1>figma-kit</h1>
-        <p class="subtitle">AI-powered Figma design. Describe what you want in natural language &mdash; your AI agent and figma-kit handle the rest. 150+ commands via the Figma MCP server.</p>
-        <div class="cta-row">
-          <a href="https://github.com/dop-amine/figma-kit" class="btn-primary">Get Started</a>
-          <span class="brew-hint">brew install dop-amine/tap/figma-kit</span>
-        </div>
-      </div>
-      <div class="terminal">
-        <div class="terminal-bar">
-          <span class="dot dot-r"></span>
-          <span class="dot dot-y"></span>
-          <span class="dot dot-g"></span>
-          <span class="terminal-title">AI + figma-kit + Figma MCP</span>
-        </div>
-        <div class="terminal-body">
-          <div class="line"><span class="prompt">&gt; &quot;Match stripe.com and build a landing page&quot;</span></div>
-          <div class="line"><span class="cmd">&rarr; figma-kit theme init --bg &quot;#0A2540&quot; --primary &quot;#635BFF&quot;</span></div>
-          <div class="line">&nbsp;</div>
-          <div class="line"><span class="prompt">&gt; &quot;Add 3 glass feature cards with pricing&quot;</span></div>
-          <div class="line"><span class="cmd">&rarr; figma-kit card glass -t stripe --title &quot;Payments&quot;</span></div>
-          <div class="line">&nbsp;</div>
-          <div class="line"><span class="prompt">&gt; &quot;Generate the full design system&quot;</span></div>
-          <div class="line"><span class="cmd">&rarr; figma-kit ds create -t stripe</span>  <span class="ok">&#10003; Done</span></div>
-        </div>
-      </div>
+  <div class="hero-content">
+    <span class="badge fade-in"><span class="dot">&#9679;</span> v2.0 &mdash; Source Available</span>
+    <h1 class="fade-in">figma-kit</h1>
+    <div class="subtitle-wrap fade-in">
+      <p class="subtitle">AI-powered Figma design from your terminal and AI agent.</p>
+      <p class="subtitle">150+ composable, theme-aware commands via the Figma MCP server.</p>
+    </div>
+    <div class="cta-row fade-in">
+      <a href="https://github.com/dop-amine/figma-kit" class="btn-primary">Get Started</a>
+      <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COOKBOOK.md" class="btn-outline">View Cookbook</a>
+    </div>
+    <div class="install-cmd fade-in">
+      <span class="dollar">$</span>
+      <span class="cmd">brew install dop-amine/tap/figma-kit</span>
     </div>
   </div>
-  <a href="#how" class="scroll-hint">
-    <span>Scroll</span>
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </a>
 </section>
 
-<!-- HOW IT WORKS — matches Figma frame 21:2 -->
-<section id="how" class="how-section">
+<!-- HOW IT WORKS -->
+<section id="how">
   <div class="container">
-    <div class="section-label fade-in" style="color: var(--pp);">HOW IT WORKS</div>
-    <div class="section-title fade-in">From prompt to production design</div>
-    <div class="section-desc fade-in">Describe what you want in natural language. Your AI agent picks the right figma-kit commands. The Figma MCP server executes them. Your design appears.</div>
-
-    <div class="workflow-grid">
-      <div class="workflow-card fade-in">
-        <span class="step-num" style="color: var(--bl);">01</span>
-        <div class="step-icon">&#128172;</div>
+    <div class="section-divider"></div>
+    <div class="section-header">
+      <div class="section-label fade-in" style="color: var(--bl);">HOW IT WORKS</div>
+      <div class="section-title fade-in">From prompt to pixel in seconds</div>
+      <p class="section-desc fade-in">Your AI agent does the thinking. figma-kit does the building.</p>
+    </div>
+    <div class="how-grid">
+      <div class="glass-card how-card fade-in" style="box-shadow: 0 2px 20px rgba(51,102,255,0.1);">
+        <div class="num-badge" style="background: rgba(51,102,255,0.1); color: var(--bl);">01</div>
         <h3>You Prompt</h3>
-        <p>&quot;Match stripe.com &mdash; dark navy, purple accents. Build a landing page.&quot;</p>
-        <span class="workflow-arrow">&rarr;</span>
+        <p>Describe what you want in natural language &mdash; a landing page, a dashboard, a pitch deck.</p>
       </div>
-      <div class="workflow-card fade-in">
-        <span class="step-num" style="color: var(--pp);">02</span>
-        <div class="step-icon">&#129504;</div>
+      <div class="glass-card how-card fade-in" style="box-shadow: 0 2px 20px rgba(140,92,245,0.1);">
+        <div class="num-badge" style="background: rgba(140,92,245,0.1); color: #8C5CF5;">02</div>
         <h3>AI Reasons</h3>
-        <p>Your agent selects the right figma-kit commands, sequences them, picks the Noir theme</p>
-        <span class="workflow-arrow">&rarr;</span>
+        <p>Your agent picks the right figma-kit commands and composes them into a batch.</p>
       </div>
-      <div class="workflow-card fade-in">
-        <span class="step-num" style="color: var(--tl);">03</span>
-        <div class="step-icon">&#9889;</div>
-        <h3>figma-kit Generates</h3>
-        <p>Each command outputs Figma Plugin API JavaScript. No manual code needed.</p>
-        <span class="workflow-arrow">&rarr;</span>
+      <div class="glass-card how-card fade-in" style="box-shadow: 0 2px 20px rgba(20,184,166,0.1);">
+        <div class="num-badge" style="background: rgba(20,184,166,0.1); color: var(--tl);">03</div>
+        <h3>Kit Generates</h3>
+        <p>Each command emits optimized Plugin API JavaScript with theme tokens baked in.</p>
       </div>
-      <div class="workflow-card fade-in">
-        <span class="step-num" style="color: var(--success);">04</span>
-        <div class="step-icon">&#127912;</div>
+      <div class="glass-card how-card fade-in" style="box-shadow: 0 2px 20px rgba(51,204,128,0.1);">
+        <div class="num-badge" style="background: rgba(51,204,128,0.1); color: var(--success);">04</div>
         <h3>Figma Renders</h3>
-        <p>MCP server executes the code. Frames, text, styles, components appear in your file.</p>
+        <p>MCP server executes the JS &mdash; your design appears instantly in the canvas.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- PROMPT GALLERY — matches Figma frame Prompt Gallery -->
-<section id="prompts">
-  <div class="container">
-    <div class="section-label fade-in" style="color: var(--tl);">PROMPT EXAMPLES</div>
-    <div class="section-title fade-in">What will you build?</div>
-    <div class="section-desc fade-in">Copy any of these prompts into Cursor, Claude Code, or your AI tool. figma-kit handles the rest.</div>
-
-    <div class="prompt-grid">
-      <div class="prompt-card fade-in">
-        <h3>From a Website</h3>
-        <p>&quot;Match stripe.com and build a landing page with hero, features, and pricing.&quot;</p>
-        <div class="accent-line" style="background: var(--bl);"></div>
-      </div>
-      <div class="prompt-card fade-in">
-        <h3>From a Screenshot</h3>
-        <p>&quot;Extract the colors from this screenshot and create a figma-kit theme, then build a dashboard.&quot;</p>
-        <div class="accent-line" style="background: var(--pp);"></div>
-      </div>
-      <div class="prompt-card fade-in">
-        <h3>From a Description</h3>
-        <p>&quot;Build a 7-slide pitch deck for a climate-tech startup. Dark green, clean typography.&quot;</p>
-        <div class="accent-line" style="background: var(--tl);"></div>
-      </div>
-      <div class="prompt-card fade-in">
-        <h3>From a Brand Guide</h3>
-        <p>&quot;Use our brand colors and fonts to generate a full design system page in Figma.&quot;</p>
-        <div class="accent-line" style="background: var(--bl);"></div>
-      </div>
-    </div>
-
-    <div class="cookbook-hint fade-in">Run <code>figma-kit cookbook</code> to see 15 complete prompt sessions &mdash; or browse the <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COOKBOOK.md">Prompt Cookbook</a>.</div>
-  </div>
-</section>
-
-<!-- FEATURES — matches Figma frame 3:2 -->
+<!-- FEATURES -->
 <section id="features">
   <div class="container">
-    <div class="section-label fade-in" style="color: var(--bl);">WHY FIGMA-KIT?</div>
-    <div class="section-title fade-in">What you get that <code style="font-family:var(--mono);color:var(--tl)">use_figma</code> alone can&rsquo;t do</div>
-    <div class="section-desc fade-in">Figma&rsquo;s <code style="font-family:var(--mono);color:var(--tl)">use_figma</code> MCP tool runs raw Plugin API JavaScript. figma-kit is the layer on top that makes it practical.</div>
+    <div class="section-divider"></div>
+    <div class="section-header">
+      <div class="section-label fade-in" style="color: var(--tl);">FEATURES</div>
+      <div class="section-title fade-in">Everything you need, nothing you don&rsquo;t</div>
+    </div>
     <div class="features-grid">
-      <div class="feature-card fade-in">
-        <div class="icon">&#129302;</div>
-        <h3>One command, not 40 lines of JS</h3>
-        <p><code style="font-family:var(--mono);color:var(--tl);font-size:12px">figma-kit card glass -t noir</code> compresses 45 lines of Plugin API JavaScript into a single command. A hero section? <code style="font-family:var(--mono);color:var(--tl);font-size:12px">ui hero</code>. Pricing table? <code style="font-family:var(--mono);color:var(--tl);font-size:12px">ui pricing</code>. Without figma-kit, an AI must generate and debug raw JS every time.</p>
+      <div class="glass-card feature-card fade-in" style="box-shadow: 0 2px 20px rgba(51,102,255,0.06);">
+        <div class="icon-badge" style="background: rgba(51,102,255,0.1);">&#9889;</div>
+        <h3>One command, not 40 lines</h3>
+        <p>card glass compresses 45 lines of Plugin API JS into a single CLI command with sensible defaults.</p>
       </div>
-      <div class="feature-card fade-in">
-        <div class="icon">&#127912;</div>
+      <div class="glass-card feature-card fade-in" style="box-shadow: 0 2px 20px rgba(140,92,245,0.06);">
+        <div class="icon-badge" style="background: rgba(140,92,245,0.1);">&#129513;</div>
         <h3>150+ composable commands</h3>
-        <p>8 card styles. 29 UI components. 14 effects. 37 production templates. Theme system. QA audits. Design system generation. Boolean ops. SVG paths. Each is a tested, deterministic building block an AI can reliably select.</p>
+        <p>8 card styles, 29 UI components, 14 effects, 37 templates, DS generation, and QA audits.</p>
       </div>
-      <div class="feature-card fade-in">
-        <div class="icon">&#128279;</div>
+      <div class="glass-card feature-card fade-in" style="box-shadow: 0 2px 20px rgba(20,184,166,0.06);">
+        <div class="icon-badge" style="background: rgba(20,184,166,0.1);">&#127912;</div>
         <h3>Themes, not hex codes</h3>
-        <p>Raw <code style="font-family:var(--mono);color:var(--tl);font-size:12px">use_figma</code> means hardcoding <code style="font-family:var(--mono);font-size:12px">{r:0.23,g:0.51,b:0.96}</code> everywhere. figma-kit themes propagate colors, typography, spacing, and effects to every command with <code style="font-family:var(--mono);color:var(--tl);font-size:12px">-t noir</code>.</p>
+        <p>Propagate colors, typography, spacing, and effects to every command with -t noir.</p>
       </div>
-    </div>
-
-    <div class="features-grid" style="margin-top: 24px;">
-      <div class="feature-card fade-in">
-        <div class="icon">&#9889;</div>
-        <h3>Direct execution with <code style="font-family:var(--mono);color:var(--tl);font-size:16px">exec</code></h3>
-        <p>Run <code style="font-family:var(--mono);color:var(--tl);font-size:12px">figma-kit exec make carousel -t noir</code> &mdash; generates JS and sends it to Figma in one shot. No AI middleman. Built-in OAuth. Self-contained.</p>
+      <div class="glass-card feature-card fade-in" style="box-shadow: 0 2px 20px rgba(255,153,51,0.06);">
+        <div class="icon-badge" style="background: rgba(255,153,51,0.1);">&#128640;</div>
+        <h3>Direct execution</h3>
+        <p>figma-kit exec sends JS to Figma via OAuth. No AI middleman required.</p>
       </div>
-      <div class="feature-card fade-in">
-        <div class="icon">&#128202;</div>
-        <h3>QA &amp; design system in seconds</h3>
-        <p><code style="font-family:var(--mono);color:var(--tl);font-size:12px">qa checklist</code> walks every node checking contrast, touch targets, naming, spacing. <code style="font-family:var(--mono);color:var(--tl);font-size:12px">ds create</code> generates a full design system page from your theme. No manual work.</p>
+      <div class="glass-card feature-card fade-in" style="box-shadow: 0 2px 20px rgba(51,204,128,0.06);">
+        <div class="icon-badge" style="background: rgba(51,204,128,0.1);">&#9989;</div>
+        <h3>QA in seconds</h3>
+        <p>qa checklist walks every node checking contrast, touch targets, naming, and spacing.</p>
       </div>
-      <div class="feature-card fade-in">
-        <div class="icon">&#128230;</div>
-        <h3>Works everywhere: AI + Terminal</h3>
-        <p>AI agent picks the right commands automatically in Cursor or Claude Code. Or run standalone from the terminal. One Go binary. No Node.js, no browser extensions, no plugins.</p>
+      <div class="glass-card feature-card fade-in" style="box-shadow: 0 2px 20px rgba(255,102,102,0.06);">
+        <div class="icon-badge" style="background: rgba(255,102,102,0.1);">&#127758;</div>
+        <h3>Works everywhere</h3>
+        <p>Cursor, Claude Code, or standalone terminal. One Go binary. No Node.js, no plugins.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- DEMO — matches Figma frame 4:2 -->
-<section id="demo">
+<!-- PROMPT GALLERY -->
+<section id="prompts">
   <div class="container">
-    <div class="section-label fade-in" style="color: var(--tl);">SEE IT IN ACTION</div>
-    <div class="section-title fade-in">Prompt it. figma-kit builds it.</div>
-    <div class="section-desc fade-in">Every section of this page was designed in Figma using figma-kit commands, driven by AI. Here&rsquo;s the workflow:</div>
-
-    <div class="demo-terminal fade-in">
-      <div class="terminal">
-        <div class="terminal-bar">
-          <span class="dot dot-r"></span>
-          <span class="dot dot-y"></span>
-          <span class="dot dot-g"></span>
-          <span class="terminal-title">AI + figma-kit + Figma MCP</span>
+    <div class="section-divider"></div>
+    <div class="section-header">
+      <div class="section-label fade-in" style="color: #8C5CF5;">PROMPT-DRIVEN DESIGN</div>
+      <div class="section-title fade-in">Start from anything</div>
+      <p class="section-desc fade-in">A URL, a screenshot, a description, or a brand guide. AI extracts context and builds.</p>
+    </div>
+    <div class="prompt-grid">
+      <!-- From a Website -->
+      <div class="prompt-card fade-in" style="box-shadow: 0 4px 24px rgba(51,102,255,0.06);">
+        <div class="gradient-bar" style="background: linear-gradient(90deg, #3366FF, #8C5CF5);"></div>
+        <div class="spacer"></div>
+        <h3>From a Website</h3>
+        <div class="prompt-box">
+          <span class="chevron" style="color: var(--bl);">&#10095;</span>
+          <span class="text">&ldquo;Match stripe.com and build a SaaS landing page with hero, features, and pricing.&rdquo;</span>
         </div>
-        <div class="terminal-body">
-          <div class="line"><span class="prompt">&gt; &quot;Create a Landing Page for my project&quot;</span></div>
-          <div class="line"><span class="cmd">&rarr; figma-kit page create &quot;Landing Page&quot; -p 0</span>  <span class="ok">&#10003;</span></div>
-          <div class="line">&nbsp;</div>
-          <div class="line"><span class="prompt">&gt; &quot;Add a hero with OG image using the dark theme&quot;</span></div>
-          <div class="line"><span class="cmd">&rarr; figma-kit make og-image --title &quot;figma-kit&quot; -t noir</span>  <span class="ok">&#10003;</span></div>
-          <div class="line">&nbsp;</div>
-          <div class="line"><span class="prompt">&gt; &quot;Build 3 glass feature cards about our key features&quot;</span></div>
-          <div class="line"><span class="cmd">&rarr; figma-kit card glass -t noir --title &quot;AI-Native&quot; --desc ...</span>  <span class="ok">&#10003;</span></div>
-          <div class="line">&nbsp;</div>
-          <div class="line"><span class="prompt">&gt; &quot;Generate a full design system from the Noir theme&quot;</span></div>
-          <div class="line"><span class="cmd">&rarr; figma-kit ds create -t noir</span>  <span class="ok">&#10003; 14 sections</span></div>
-          <div class="line"><span class="ai-badge">&#10003; AI + CLI</span></div>
+        <div class="prompt-tags">
+          <span class="prompt-tag" style="background: rgba(51,102,255,0.08); color: var(--bl);">theme extract</span>
+          <span class="prompt-tag" style="background: rgba(51,102,255,0.08); color: var(--bl);">compose</span>
+          <span class="prompt-tag" style="background: rgba(51,102,255,0.08); color: var(--bl);">full-page</span>
+        </div>
+      </div>
+      <!-- From a Screenshot -->
+      <div class="prompt-card fade-in" style="box-shadow: 0 4px 24px rgba(140,92,245,0.06);">
+        <div class="gradient-bar" style="background: linear-gradient(90deg, #8C5CF5, #FF6699);"></div>
+        <div class="spacer"></div>
+        <h3>From a Screenshot</h3>
+        <div class="prompt-box">
+          <span class="chevron" style="color: #8C5CF5;">&#10095;</span>
+          <span class="text">&ldquo;Extract colors from this screenshot, create a theme, build a dashboard with sidebar and charts.&rdquo;</span>
+        </div>
+        <div class="prompt-tags">
+          <span class="prompt-tag" style="background: rgba(140,92,245,0.08); color: #8C5CF5;">vision</span>
+          <span class="prompt-tag" style="background: rgba(140,92,245,0.08); color: #8C5CF5;">theme init</span>
+          <span class="prompt-tag" style="background: rgba(140,92,245,0.08); color: #8C5CF5;">ui components</span>
+        </div>
+      </div>
+      <!-- From a Description -->
+      <div class="prompt-card fade-in" style="box-shadow: 0 4px 24px rgba(20,184,166,0.06);">
+        <div class="gradient-bar" style="background: linear-gradient(90deg, #14B8A6, #3366FF);"></div>
+        <div class="spacer"></div>
+        <h3>From a Description</h3>
+        <div class="prompt-box">
+          <span class="chevron" style="color: var(--tl);">&#10095;</span>
+          <span class="text">&ldquo;Build a 7-slide pitch deck for a climate-tech startup. Greens and blues. Title, problem, solution, market, traction, team, ask.&rdquo;</span>
+        </div>
+        <div class="prompt-tags">
+          <span class="prompt-tag" style="background: rgba(20,184,166,0.08); color: var(--tl);">make deck</span>
+          <span class="prompt-tag" style="background: rgba(20,184,166,0.08); color: var(--tl);">batch</span>
+          <span class="prompt-tag" style="background: rgba(20,184,166,0.08); color: var(--tl);">brand</span>
+        </div>
+      </div>
+      <!-- From a Brand Guide -->
+      <div class="prompt-card fade-in" style="box-shadow: 0 4px 24px rgba(255,153,51,0.06);">
+        <div class="gradient-bar" style="background: linear-gradient(90deg, #FF9933, #FF5959);"></div>
+        <div class="spacer"></div>
+        <h3>From a Brand Guide</h3>
+        <div class="prompt-box">
+          <span class="chevron" style="color: var(--or);">&#10095;</span>
+          <span class="text">&ldquo;Here are our brand colors (#1A1A2E, #E94560, #0F3460) and font (Poppins). Generate a full design system.&rdquo;</span>
+        </div>
+        <div class="prompt-tags">
+          <span class="prompt-tag" style="background: rgba(255,153,51,0.08); color: var(--or);">theme init</span>
+          <span class="prompt-tag" style="background: rgba(255,153,51,0.08); color: var(--or);">ds generate</span>
+          <span class="prompt-tag" style="background: rgba(255,153,51,0.08); color: var(--or);">tokens</span>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- STORY — matches Figma frame Story -->
-<section id="story" class="story-section">
+<!-- THEMES -->
+<section id="themes">
   <div class="container">
-    <div class="meta-badge fade-in">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-      Meta: this design was built by the tool it advertises
+    <div class="section-divider"></div>
+    <div class="section-header">
+      <div class="section-label fade-in" style="color: var(--tl);">THEMES</div>
+      <div class="section-title fade-in">Design with tokens, not hex codes</div>
+      <p class="section-desc fade-in">Built-in themes or create your own. Every command inherits colors, typography, and spacing.</p>
     </div>
-    <div class="section-title fade-in">How This Site Was Built</div>
-    <div class="section-desc fade-in">This isn&rsquo;t a mockup. We described what we wanted in natural language &mdash; AI used figma-kit commands to build every element in Figma. Then the same design became this marketing page.</div>
-
-    <div class="story-grid">
-      <div>
-        <div class="story-step fade-in">
-          <div class="step-circle">1</div>
-          <div class="step-content">
-            <h4>Asked AI to create a Figma file</h4>
-            <p>Used <code>create_new_file</code> from the Figma MCP server.</p>
-          </div>
-        </div>
-        <div class="story-step fade-in">
-          <div class="step-circle">2</div>
-          <div class="step-content">
-            <h4>Prompted &ldquo;Set up 3 pages&rdquo;</h4>
-            <p>AI ran <code>page create</code> and <code>page rename</code> for Landing, Components, Design System.</p>
-          </div>
-        </div>
-        <div class="story-step fade-in">
-          <div class="step-circle">3</div>
-          <div class="step-content">
-            <h4>Described the hero section</h4>
-            <p>AI composed <code>node create frame</code>, <code>fx mesh</code>, <code>text create</code>, <code>ui button</code>, <code>ui badge</code>.</p>
-          </div>
-        </div>
-        <div class="story-step fade-in">
-          <div class="step-circle">4</div>
-          <div class="step-content">
-            <h4>&ldquo;Add 3 glass feature cards&rdquo;</h4>
-            <p>AI called <code>card glass -t noir</code> three times. Each got <code>fx glow</code> underneath.</p>
-          </div>
-        </div>
-        <div class="story-step fade-in">
-          <div class="step-circle">5</div>
-          <div class="step-content">
-            <h4>&ldquo;Create 19 UI components&rdquo;</h4>
-            <p>Buttons, badges, toggles, checkboxes, radios, tabs, dropdowns, tables.</p>
-          </div>
-        </div>
-      </div>
-      <div>
-        <div class="story-step fade-in">
-          <div class="step-circle">6</div>
-          <div class="step-content">
-            <h4>&ldquo;Generate the design system&rdquo;</h4>
-            <p>One command: <code>ds create -t noir</code>. Color swatches, type scale, spacing bars.</p>
-          </div>
-        </div>
-        <div class="story-step fade-in">
-          <div class="step-circle">7</div>
-          <div class="step-content">
-            <h4>&ldquo;Push tokens to Figma variables&rdquo;</h4>
-            <p><code>ds variables-create</code> pushed 11 color tokens into Figma&rsquo;s variable system.</p>
-          </div>
-        </div>
-        <div class="story-step fade-in">
-          <div class="step-circle">8</div>
-          <div class="step-content">
-            <h4>&ldquo;Export CSS tokens&rdquo;</h4>
-            <p><code>export tokens --format css</code> prints clean <code>:root</code> CSS custom properties.</p>
-          </div>
-        </div>
-        <div class="story-step fade-in">
-          <div class="step-circle">9</div>
-          <div class="step-content">
-            <h4>&ldquo;QA everything&rdquo;</h4>
-            <p><code>qa checklist</code> walks every node. 258 nodes, 0 issues.</p>
-          </div>
-        </div>
-        <div class="story-step fade-in">
-          <div class="step-circle">10</div>
-          <div class="step-content">
-            <h4>Turned the Figma design into this site</h4>
-            <p>Colors, fonts, layout &mdash; 1:1 match of this Figma file.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="demo-gif fade-in" style="margin-top: 48px;">
-      <img src="demo.gif" alt="figma-kit demo — terminal recording of building this site" loading="lazy">
-    </div>
-  </div>
-</section>
-
-<!-- THEME BUILDER — matches Figma frame 34:2 -->
-<section id="themes" style="border-top: 1px solid var(--stk);">
-  <div class="container">
-    <div class="section-label fade-in" style="color: var(--tl);">CREATE YOUR OWN</div>
-    <div class="section-title fade-in">Design Your Own Theme</div>
-    <div class="section-desc fade-in">Pick 3 colors in the visual builder, generate from the CLI, or copy a template. No code required &mdash; designers can create and contribute themes without touching Go.</div>
 
     <div class="themes-grid">
-      <div class="theme-card fade-in">
-        <div class="icon">&#127912;</div>
-        <h3>Visual Theme Builder</h3>
-        <p>Pick background, primary, and accent colors. See a live preview. Download ready-to-use JSON. Zero CLI, zero code.</p>
-        <a href="theme-builder.html" class="card-link">Open Theme Builder &rarr;</a>
+      <!-- Noir -->
+      <div class="glass-card theme-card active fade-in" style="box-shadow: 0 2px 20px rgba(51,102,255,0.08);">
+        <div class="theme-preview" style="background: #0D0F17;">
+          <div class="bar-1" style="background: rgba(51,102,255,0.12);"></div>
+          <div class="bar-2" style="background: rgba(51,102,255,0.06);"></div>
+          <div class="block-1" style="background: rgba(51,102,255,0.1);"></div>
+          <div class="block-2" style="background: rgba(20,184,166,0.1);"></div>
+          <div class="block-3" style="background: rgba(140,92,245,0.1);"></div>
+        </div>
+        <div class="title-row">
+          <h3>Noir</h3>
+          <span class="active-badge">ACTIVE</span>
+        </div>
+        <p>Dark mode with blue-teal accents. Glassmorphism-ready.</p>
+        <div class="swatch-row">
+          <div class="swatch" style="background: #0D0F17;"></div>
+          <div class="swatch" style="background: #3366FF;"></div>
+          <div class="swatch" style="background: #14B8A6;"></div>
+          <div class="swatch" style="background: #8B5CF6;"></div>
+          <div class="swatch" style="background: #F5F7FA;"></div>
+          <div class="spacer"></div>
+          <span class="theme-flag">-t noir</span>
+        </div>
       </div>
-      <div class="theme-card fade-in">
-        <div class="icon">&#9889;</div>
-        <h3>CLI Theme Init</h3>
-        <p>Run figma-kit theme init with 3 hex colors. Full palette, typography, effects, and spacing derived automatically.</p>
-        <span class="card-code">theme init --bg &quot;#0A1628&quot;</span>
+      <!-- Default -->
+      <div class="glass-card theme-card fade-in" style="box-shadow: 0 2px 20px rgba(51,102,255,0.02);">
+        <div class="theme-preview" style="background: #1F2129;">
+          <div class="bar-1" style="background: rgba(59,130,245,0.12);"></div>
+          <div class="bar-2" style="background: rgba(59,130,245,0.06);"></div>
+          <div class="block-1" style="background: rgba(59,130,245,0.1);"></div>
+          <div class="block-2" style="background: rgba(20,184,166,0.1);"></div>
+          <div class="block-3" style="background: rgba(140,92,245,0.1);"></div>
+        </div>
+        <div class="title-row">
+          <h3>Default</h3>
+        </div>
+        <p>Clean professional palette. Works for any project.</p>
+        <div class="swatch-row">
+          <div class="swatch" style="background: #1F2129;"></div>
+          <div class="swatch" style="background: #3B82F5;"></div>
+          <div class="swatch" style="background: #14B8A6;"></div>
+          <div class="swatch" style="background: #8B5CF6;"></div>
+          <div class="swatch" style="background: #C7CFD9;"></div>
+          <div class="spacer"></div>
+          <span class="theme-flag">-t default</span>
+        </div>
       </div>
-      <div class="theme-card fade-in">
-        <div class="icon">&#129309;</div>
-        <h3>Community Themes</h3>
-        <p>Fork the repo, add a JSON file, open a PR. CI validates automatically. No Go, no build step, no code review needed.</p>
-        <a href="https://github.com/dop-amine/figma-kit/blob/main/CONTRIBUTING-THEMES.md" class="card-link">CONTRIBUTING-THEMES.md &rarr;</a>
+      <!-- Light -->
+      <div class="glass-card theme-card fade-in" style="box-shadow: 0 2px 20px rgba(51,102,255,0.02);">
+        <div class="theme-preview" style="background: #FAFAFC;">
+          <div class="bar-1" style="background: rgba(56,107,235,0.12);"></div>
+          <div class="bar-2" style="background: rgba(56,107,235,0.06);"></div>
+          <div class="block-1" style="background: rgba(56,107,235,0.1);"></div>
+          <div class="block-2" style="background: rgba(15,158,140,0.1);"></div>
+          <div class="block-3" style="background: rgba(128,77,224,0.1);"></div>
+        </div>
+        <div class="title-row">
+          <h3>Light</h3>
+        </div>
+        <p>Bright and airy. Perfect for documentation sites.</p>
+        <div class="swatch-row">
+          <div class="swatch" style="background: #FAFAFC;"></div>
+          <div class="swatch" style="background: #386BEB;"></div>
+          <div class="swatch" style="background: #0F9E8C;"></div>
+          <div class="swatch" style="background: #804DE0;"></div>
+          <div class="swatch" style="background: #1A1B26;"></div>
+          <div class="spacer"></div>
+          <span class="theme-flag">-t light</span>
+        </div>
       </div>
+    </div>
+
+    <div class="theme-cta-bar fade-in" style="margin-top: 32px;">
+      <span class="text">Create your own &rarr;&nbsp; <code>figma-kit theme init --primary "#3366FF" --accent "#14B8A6"</code></span>
+      <a href="theme-builder.html" class="docs-btn">Theme Builder &rarr;</a>
     </div>
   </div>
 </section>
 
-<!-- LIVE FIGMA EMBED -->
-<section id="figma">
+<!-- CTA -->
+<section class="cta-section">
   <div class="container">
-    <div class="section-label fade-in" style="color: var(--pp);">LIVE FIGMA FILE</div>
-    <div class="section-title fade-in">Explore the actual design</div>
-    <div class="section-desc fade-in">This is a live embed of the Figma file created by figma-kit. Pan, zoom, switch pages. It&rsquo;s always in sync.</div>
-
-    <div class="figma-embed fade-in">
-      <iframe
-        src="https://embed.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=0-1&embed-host=figma-kit-site&theme=dark&footer=false"
-        allowfullscreen
-      ></iframe>
+    <div class="section-divider"></div>
+    <div class="section-header" style="margin-bottom: 36px;">
+      <div class="section-label fade-in" style="color: var(--bl);">GET STARTED</div>
+      <div class="section-title fade-in" style="font-size: 44px;">Start building in Figma with AI</div>
+      <p class="section-desc fade-in">One command to install. Zero config to start.</p>
     </div>
-
-    <div class="figma-link-row fade-in">
-      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=0-1" target="_blank" class="figma-link">&#9670; Landing Page</a>
-      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=7-2" target="_blank" class="figma-link">&#9670; Components</a>
-      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo?node-id=11-2" target="_blank" class="figma-link">&#9670; Design System</a>
-      <a href="https://www.figma.com/design/3Y0BT8dJ3yQQkoD7tphLKN/figma-kit-demo" target="_blank" class="figma-link">Open in Figma &rarr;</a>
+    <div class="fade-in">
+      <div class="cta-install">
+        <span class="dollar">$</span>
+        <span class="cmd">brew install dop-amine/tap/figma-kit</span>
+      </div>
+    </div>
+    <div class="stats-row fade-in">
+      <div class="stat">
+        <span class="num">150+</span>
+        <span class="label">Commands</span>
+      </div>
+      <div class="stat">
+        <span class="num">8</span>
+        <span class="label">Card Styles</span>
+      </div>
+      <div class="stat">
+        <span class="num">29</span>
+        <span class="label">UI Components</span>
+      </div>
+      <div class="stat">
+        <span class="num">14</span>
+        <span class="label">Effects</span>
+      </div>
+      <div class="stat">
+        <span class="num">3</span>
+        <span class="label">Themes</span>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- INSTALL CTA — matches Figma frame 6:2 -->
-<section class="install-section">
-  <div class="container">
-    <div class="section-title fade-in">Ready to design with AI?</div>
-    <div class="section-desc fade-in">Install figma-kit and connect it to your AI tool. Free for individuals. Source-available under BSL 1.1.</div>
-    <a href="https://github.com/dop-amine/figma-kit" class="install-btn fade-in">brew install dop-amine/tap/figma-kit</a>
-    <span class="install-alt fade-in">or: curl -sSL https://github.com/dop-amine/figma-kit/raw/main/install.sh | sh</span>
-  </div>
-</section>
-
-<!-- FOOTER — matches Figma frame 6:8 -->
+<!-- FOOTER -->
 <footer>
-  <div class="container">
-    <div class="footer-grid">
-      <div class="footer-col">
-        <h4>Product</h4>
-        <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COOKBOOK.md">Prompt Cookbook</a>
-        <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COMMANDS.md">Commands</a>
-        <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/THEMES.md">Themes</a>
-        <a href="theme-builder.html">Theme Builder</a>
-        <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/RECIPES.md">Recipes</a>
-      </div>
-      <div class="footer-col">
-        <h4>Resources</h4>
-        <a href="https://github.com/dop-amine/figma-kit">GitHub</a>
-        <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COMMANDS.md">Documentation</a>
-        <a href="https://github.com/dop-amine/figma-kit/releases">Changelog</a>
-        <a href="https://github.com/dop-amine/figma-kit/blob/main/CONTRIBUTING.md">Contributing</a>
-      </div>
-      <div class="footer-col">
-        <h4>Community</h4>
-        <a href="https://github.com/dop-amine/figma-kit/discussions">Discussions</a>
-        <a href="https://github.com/dop-amine/figma-kit/issues">Issues</a>
-      </div>
-      <div class="footer-col">
-        <div class="logo-text">&#9670; figma-kit</div>
-        <p class="copy">BSL 1.1 &bull; Source Available</p>
-        <p class="copy">&copy; 2026 dop-amine</p>
-      </div>
+  <div class="divider"></div>
+  <div class="footer-cols">
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="#features">Features</a>
+      <a href="#themes">Themes</a>
+      <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COOKBOOK.md">Cookbook</a>
+      <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COMMANDS.md">Commands</a>
     </div>
+    <div class="footer-col">
+      <h4>Developers</h4>
+      <a href="https://github.com/dop-amine/figma-kit">GitHub</a>
+      <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COMMANDS.md">Documentation</a>
+      <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/ARCHITECTURE.md">Architecture</a>
+      <a href="https://github.com/dop-amine/figma-kit/blob/main/CONTRIBUTING.md">Contributing</a>
+    </div>
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/COOKBOOK.md">Prompt Examples</a>
+      <a href="https://github.com/dop-amine/figma-kit/blob/main/docs/RECIPES.md">Recipe Gallery</a>
+      <a href="https://www.figma.com/plugin-docs/">Figma Plugin API</a>
+      <a href="https://github.com/dop-amine/figma-kit#mcp-server">MCP Server</a>
+    </div>
+    <div class="footer-col">
+      <h4>Community</h4>
+      <a href="https://github.com/dop-amine/figma-kit/discussions">Discord</a>
+      <a href="https://twitter.com/dopamine_dev">Twitter</a>
+      <a href="https://github.com/dop-amine/figma-kit/blob/main/CHANGELOG.md">Blog</a>
+      <a href="https://github.com/dop-amine/figma-kit/releases">Changelog</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="copy">&copy; 2026 dop-amine. Source available under BSL 1.1.</span>
+    <span class="brand">figma-kit</span>
   </div>
 </footer>
 
