@@ -57,6 +57,7 @@ func newCardGlassCmd() *cobra.Command {
   figma-kit card glass -t noir --title "Speed" --desc "Sub-millisecond reads"
   figma-kit card glass -t noir --title "Scale" --desc "From prototype to planet-scale"
   figma-kit card glass -t noir --title "Sync" --desc "Real-time everywhere" --preset strong`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			p := strings.ToLower(strings.TrimSpace(preset))
 			optsJS, err := glassPresetOptsJS(p, w, h)
@@ -65,7 +66,7 @@ func newCardGlassCmd() *cobra.Command {
 			}
 			needFonts := title != "" || desc != ""
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			if needFonts {
 				t, err := resolveTheme(cmd)
 				if err != nil {
@@ -75,10 +76,16 @@ func newCardGlassCmd() *cobra.Command {
 			} else {
 				b.PageSetup(page)
 			}
-			b.Raw(codegen.AllHelpers())
+			if !b.IsBodyOnly() {
+				b.Raw(codegen.AllHelpers())
+			}
 			b.Line("let par = pg;")
 			if parent != "" {
-				b.Linef("const _p = await figma.getNodeByIdAsync(%q);", parent)
+				if strings.HasPrefix(parent, "_results[") {
+					b.Linef("const _p = %s;", parent)
+				} else {
+					b.Linef("const _p = await figma.getNodeByIdAsync(%q);", parent)
+				}
 				b.Line("if (!_p || typeof _p.appendChild !== 'function') throw new Error('Invalid parent');")
 				b.Line("par = _p;")
 			}
@@ -102,7 +109,7 @@ func newCardGlassCmd() *cobra.Command {
 	cmd.Flags().StringVar(&preset, "preset", "default", "Glass preset (subtle, default, strong, pill)")
 	cmd.Flags().IntVarP(&w, "width", "w", 320, "Width")
 	cmd.Flags().IntVar(&h, "height", 200, "Height")
-	cmd.Flags().StringVar(&parent, "parent", "", "Optional parent node ID (defaults to page)")
+	cmd.Flags().StringVar(&parent, "parent", "", "Parent node ID or _results[N] in compose (defaults to page)")
 	cmd.Flags().StringVar(&title, "title", "", "Optional title text inside the card")
 	cmd.Flags().StringVar(&desc, "desc", "", "Optional description text inside the card")
 	return cmd
@@ -136,6 +143,7 @@ func newCardSolidCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "solid",
 		Short: "Solid fill card with optional border, shadow, and corner radius",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := codegen.HexToRGB(bg)
 			if err != nil {
@@ -143,7 +151,7 @@ func newCardSolidCmd() *cobra.Command {
 			}
 			needFonts := title != "" || desc != ""
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 			if needFonts {
 				b.FontLoading()
@@ -240,6 +248,7 @@ func newCardGradientCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gradient",
 		Short: "Linear gradient fill card",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c0, err := codegen.HexToRGB(from)
 			if err != nil {
@@ -250,7 +259,7 @@ func newCardGradientCmd() *cobra.Command {
 				return err
 			}
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 			b.Linef("const ang = (%s * Math.PI) / 180;", codegen.FmtFloat(angle))
 			b.Line("const cos = Math.cos(ang), sin = Math.sin(ang);")
@@ -288,6 +297,7 @@ func newCardImageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "image",
 		Short: "Image fill card with optional overlay and title",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ov := strings.ToLower(strings.TrimSpace(overlay))
 			switch ov {
@@ -297,7 +307,7 @@ func newCardImageCmd() *cobra.Command {
 			}
 
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 
 			if title != "" {
@@ -357,12 +367,13 @@ func newCardBentoCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bento",
 		Short: "Grid of card frames (bento layout)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cols < 1 || rows < 1 {
 				return fmt.Errorf("cols and rows must be at least 1")
 			}
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 			b.Line("const ids = [];")
 			b.Linef("const cols = %d, rows = %d, gap = %d;", cols, rows, gap)
@@ -427,13 +438,14 @@ func newCardNeumorphicCmd() *cobra.Command {
 		Short: "Neumorphic (soft UI) card with inset/outset shadow pair",
 		Example: `  # "Create a soft UI card for settings"
   figma-kit card neumorphic -t light --title "Settings" --depth deep`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 
 			var offset, blur, spread int
@@ -505,13 +517,14 @@ func newCardClayCmd() *cobra.Command {
 		Short: "Claymorphism card with puffy 3D appearance",
 		Example: `  # "Create a playful clay card for onboarding"
   figma-kit card clay --title "Welcome" --color "#A78BFA"`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 
 			rgb, cErr := codegen.HexToRGB(color)
@@ -572,13 +585,14 @@ func newCardOutlineCmd() *cobra.Command {
 		Short: "Ghost/outline card with glow border (dark-mode SaaS staple)",
 		Example: `  # "Create an outline feature card for dark mode"
   figma-kit card outline -t noir --title "API Access" --glow-color "#3B82F6"`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 
 			glow, cErr := codegen.HexToRGB(glowColor)

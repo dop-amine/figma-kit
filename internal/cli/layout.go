@@ -4,8 +4,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-
-	"github.com/dop-amine/figma-kit/internal/codegen"
 )
 
 func newLayoutCmd() *cobra.Command {
@@ -39,8 +37,9 @@ func newLayoutAutoCmd() *cobra.Command {
 		Use:   "auto <nodeId>",
 		Short: "Set auto-layout on a frame",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -77,8 +76,9 @@ func newLayoutGridCmd() *cobra.Command {
 		Use:   "grid <nodeId>",
 		Short: "Add layout grid to a frame",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -101,8 +101,9 @@ func newLayoutConstraintsCmd() *cobra.Command {
 		Use:   "constraints <nodeId>",
 		Short: "Set constraints on a node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -123,8 +124,9 @@ func newLayoutSizingCmd() *cobra.Command {
 		Use:   "sizing <nodeId>",
 		Short: "Set sizing behavior (FIXED, HUG, FILL)",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -150,8 +152,9 @@ func newLayoutAlignCmd() *cobra.Command {
 		Use:   "align <nodeId>",
 		Short: "Set alignment for auto-layout children",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -180,9 +183,10 @@ func newLayoutDistributeCmd() *cobra.Command {
 		Use:   "distribute <nodeIds>",
 		Short: "Distribute nodes evenly along an axis",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ids := strings.Split(args[0], ",")
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Line("const nodes = [];")
 			for _, id := range ids {

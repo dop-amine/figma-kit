@@ -24,12 +24,13 @@ func newPreambleCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "preamble",
 		Short: "Generate the use_figma preamble (theme colors + font loading)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.Preamble(b, t)
 			output(b.String())
 			return nil
@@ -41,6 +42,7 @@ func newHelpersCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "helpers",
 		Short: "Output the full helpers.js code for injection into use_figma",
+		Annotations: map[string]string{"composable": "true"},
 		Run: func(cmd *cobra.Command, args []string) {
 			output(codegen.AllHelpers())
 		},
@@ -110,6 +112,7 @@ func newScaffoldCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "scaffold",
 		Short: "Generate a full use_figma code block ready for execution",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -117,10 +120,12 @@ func newScaffoldCmd() *cobra.Command {
 			}
 			page := resolvePage()
 
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, page)
-			b.Comment("--- Helpers ---")
-			b.Raw(codegen.AllHelpers())
+			if !b.IsBodyOnly() {
+				b.Comment("--- Helpers ---")
+				b.Raw(codegen.AllHelpers())
+			}
 
 			if templateName != "" {
 				src, ok := embeddedTemplates[templateName]
@@ -159,7 +164,7 @@ func newInfoCmd() *cobra.Command {
 			fmt.Println("    4  Design System      ds create, component-sheet, variables, audit, ...")
 			fmt.Println("    5  Inspect & QA       inspect, tree, screenshot, qa (9 checks)")
 			fmt.Println("    6  Export & Handoff    export png, handoff css, ...")
-			fmt.Println("    7  Orchestration      batch <recipe.yml>")
+			fmt.Println("    7  Orchestration      compose (batch N→1), batch (legacy), exec (direct MCP)")
 			fmt.Println()
 			fmt.Println("  Themes:")
 			for _, info := range theme.List() {

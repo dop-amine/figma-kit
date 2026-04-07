@@ -33,24 +33,43 @@ func newTextCmd() *cobra.Command {
 
 func newTextCreateCmd() *cobra.Command {
 	var (
-		content string
-		font    string
-		weight  string
-		size    int
-		color   string
-		parent  string
-		x, y    int
-		width   int
+		content       string
+		font          string
+		weight        string
+		size          int
+		color         string
+		parent        string
+		x, y          int
+		width         int
+		lineHeight    int
+		letterSpacing float64
+		align         string
+		autoResize    string
 	)
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a text node",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := codegen.HexToRGB(color)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			if align != "" {
+				a := strings.ToUpper(align)
+				if a != "LEFT" && a != "CENTER" && a != "RIGHT" && a != "JUSTIFIED" {
+					return fmt.Errorf("--align must be LEFT, CENTER, RIGHT, or JUSTIFIED")
+				}
+				align = a
+			}
+			if autoResize != "" {
+				ar := strings.ToUpper(strings.ReplaceAll(autoResize, "-", "_"))
+				if ar != "NONE" && ar != "WIDTH_AND_HEIGHT" && ar != "HEIGHT" {
+					return fmt.Errorf("--auto-resize must be NONE, WIDTH_AND_HEIGHT, or HEIGHT")
+				}
+				autoResize = ar
+			}
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("await figma.loadFontAsync({family:%q, style:%q});", font, weight)
 			b.Line("const t = figma.createText();")
@@ -58,14 +77,32 @@ func newTextCreateCmd() *cobra.Command {
 			b.Linef("t.characters = %q;", content)
 			b.Linef("t.fontSize = %d;", size)
 			b.Linef("t.fills = [{type:'SOLID', color:%s}];", codegen.FormatRGB(c))
+			if lineHeight > 0 {
+				b.Linef("t.lineHeight = {value:%d, unit:'PIXELS'};", lineHeight)
+			}
+			if letterSpacing != 0 {
+				b.Linef("t.letterSpacing = {value:%s, unit:'PIXELS'};", codegen.FmtFloat(letterSpacing))
+			}
+			if align != "" {
+				b.Linef("t.textAlignHorizontal = %q;", align)
+			}
 			b.Linef("t.x = %d;", x)
 			b.Linef("t.y = %d;", y)
 			if width > 0 {
 				b.Linef("t.resize(%d, t.height);", width)
-				b.Line("t.textAutoResize = 'HEIGHT';")
+				if autoResize == "" {
+					autoResize = "HEIGHT"
+				}
+			}
+			if autoResize != "" {
+				b.Linef("t.textAutoResize = %q;", autoResize)
 			}
 			if parent != "" {
-				b.Linef("const par = await figma.getNodeByIdAsync(%q);", parent)
+				if strings.HasPrefix(parent, "_results[") {
+					b.Linef("const par = %s;", parent)
+				} else {
+					b.Linef("const par = await figma.getNodeByIdAsync(%q);", parent)
+				}
 				b.Line("if (par) par.appendChild(t); else figma.currentPage.appendChild(t);")
 			} else {
 				b.Line("figma.currentPage.appendChild(t);")
@@ -80,10 +117,14 @@ func newTextCreateCmd() *cobra.Command {
 	cmd.Flags().StringVar(&weight, "weight", "Regular", "Font style/weight")
 	cmd.Flags().IntVar(&size, "size", 16, "Font size")
 	cmd.Flags().StringVar(&color, "color", "#FFFFFF", "Text color (hex)")
-	cmd.Flags().StringVar(&parent, "parent", "", "Parent node ID")
+	cmd.Flags().StringVar(&parent, "parent", "", "Parent node ID (or _results[N] in compose)")
 	cmd.Flags().IntVar(&x, "x", 0, "X position")
 	cmd.Flags().IntVar(&y, "y", 0, "Y position")
 	cmd.Flags().IntVarP(&width, "width", "w", 0, "Text width (0 = auto)")
+	cmd.Flags().IntVar(&lineHeight, "line-height", 0, "Line height in pixels (0 = auto)")
+	cmd.Flags().Float64Var(&letterSpacing, "letter-spacing", 0, "Letter spacing in pixels")
+	cmd.Flags().StringVar(&align, "align", "", "Text alignment: LEFT, CENTER, RIGHT, JUSTIFIED")
+	cmd.Flags().StringVar(&autoResize, "auto-resize", "", "Auto resize: NONE, WIDTH_AND_HEIGHT, HEIGHT")
 	return cmd
 }
 
@@ -93,8 +134,9 @@ func newTextEditCmd() *cobra.Command {
 		Use:   "edit <nodeId>",
 		Short: "Edit text content of a text node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const t = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!t || t.type !== 'TEXT') throw new Error('Text node not found');")
@@ -121,8 +163,9 @@ func newTextStyleCmd() *cobra.Command {
 		Use:   "style <nodeId>",
 		Short: "Change typography on a text node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const t = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!t || t.type !== 'TEXT') throw new Error('Text node not found');")
@@ -162,8 +205,9 @@ func newTextRangeCmd() *cobra.Command {
 		Use:   "range <nodeId>",
 		Short: "Apply mixed styles to a text range",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const t = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!t || t.type !== 'TEXT') throw new Error('Text node not found');")
@@ -195,7 +239,7 @@ func newTextListFontsCmd() *cobra.Command {
 		Use:   "list-fonts",
 		Short: "Generate JS to list all available fonts in the file",
 		Run: func(cmd *cobra.Command, args []string) {
-			b := codegen.New()
+			b := newBuilder()
 			b.Line("const fonts = await figma.listAvailableFontsAsync();")
 			b.Line("const families = [...new Set(fonts.map(f => f.fontName.family))].sort();")
 			b.ReturnExpr("{ count: families.length, families }")
@@ -209,8 +253,9 @@ func newTextLoadFontsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "load-fonts",
 		Short: "Generate font loading code for specified families",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			fams := strings.Split(families, ",")
 			for _, f := range fams {
 				f = strings.TrimSpace(f)

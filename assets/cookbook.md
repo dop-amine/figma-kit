@@ -671,6 +671,165 @@ Short prompts for common tasks — each is one or two commands:
 
 ---
 
+## Compose Workflows
+
+### Landing Page with Compose
+
+Instead of running individual commands one at a time, use `compose` to batch everything into a single `use_figma` call:
+
+**Prompt:**
+
+```
+Build a SaaS landing page for "Apex" using compose — hero, 3 feature cards,
+pricing, and a CTA. Dark theme with blue accents.
+```
+
+**What the AI does:**
+
+```bash
+# 1. Create the theme
+figma-kit theme init \
+  --name "Apex" \
+  --bg "#0B0F1A" \
+  --primary "#3B82F6" \
+  --accent "#14B8A6" \
+  -o themes/apex.json
+
+# 2. Compose the entire page in one call
+figma-kit exec compose -t apex \
+  "ui hero --title 'Ship 10x Faster' --subtitle 'AI-powered deployment' --cta 'Get Started' --badge 'New'" \
+  "card glass --title 'Lightning Fast' --preset strong" \
+  "card glass --title 'Auto-Scale' --preset strong" \
+  "card glass --title 'Zero Downtime' --preset strong" \
+  "ui pricing --tiers '[{\"name\":\"Free\",\"price\":\"$0\",\"features\":[\"5 deploys\"]},{\"name\":\"Pro\",\"price\":\"$49\",\"highlighted\":true,\"features\":[\"Unlimited\",\"Priority\"]}]'"
+```
+
+Or define it as a recipe YAML for reuse:
+
+```yaml
+# apex-landing.yml
+theme: apex
+steps:
+  - "ui hero --title 'Ship 10x Faster' --subtitle 'AI-powered deployment' --cta 'Get Started' --badge 'New'"
+  - "card glass --title 'Lightning Fast' --preset strong"
+  - "card glass --title 'Auto-Scale' --preset strong"
+  - "card glass --title 'Zero Downtime' --preset strong"
+  - "ui pricing --tiers '[{\"name\":\"Pro\",\"price\":\"$49\",\"highlighted\":true}]'"
+```
+
+```bash
+figma-kit exec compose --recipe apex-landing.yml
+```
+
+**Result:** One round-trip to Figma creates the entire page — shared preamble, all components, all theme tokens. Roughly 5× faster than individual `exec` calls.
+
+---
+
+### Compose with Images
+
+Embed local images alongside UI components in a single compose call:
+
+**Prompt:**
+
+```
+Create a product page with our logo from ./brand/logo.png and a hero
+background from ./assets/hero.jpg. Add a headline and CTA below.
+```
+
+**What the AI does:**
+
+```bash
+figma-kit exec compose -t noir \
+  "image place ./brand/logo.png --name 'Logo' --width 200 --height 60" \
+  "ui hero --title 'Welcome to Apex' --cta 'Learn More'" \
+  "card glass --title 'Feature 1'" \
+  "card glass --title 'Feature 2'"
+```
+
+For images larger than ~33 KB, start a local server first:
+
+```bash
+figma-kit image serve ./assets
+# → Serving on http://127.0.0.1:8741
+
+figma-kit exec compose -t noir \
+  "image place http://127.0.0.1:8741/hero.jpg --width 1440 --height 900" \
+  "ui hero --title 'Welcome'"
+```
+
+---
+
+### Landing Page Section
+
+**Prompt:**
+
+```
+Add a Features section with a label, subtitle, and two glass cards (Fast / Secure) under the noir theme, in one compose run.
+```
+
+**What the AI does:**
+
+```bash
+figma-kit compose -t noir \
+  "ui section --title 'Features' --label 'WHAT WE OFFER' --subtitle 'Everything you need'" \
+  "card glass --parent _results[0] --title 'Fast' --desc 'Blazing speed'" \
+  "card glass --parent _results[0] --title 'Secure' --desc 'Enterprise ready'"
+```
+
+---
+
+### Card with Effects
+
+**Prompt:**
+
+```
+Create a glass Dashboard card, then add noise and a centered glow on that card in one shot.
+```
+
+**What the AI does:**
+
+```bash
+figma-kit compose -t noir \
+  "card glass --title 'Dashboard'" \
+  "fx noise --last" \
+  "fx glow --last --position center"
+```
+
+---
+
+### Stats Row
+
+**Prompt:**
+
+```
+Show a stats row with commands count, themes count, and payload size using compose.
+```
+
+**What the AI does:**
+
+```bash
+figma-kit compose -t noir \
+  "ui stat --items '[{\"value\":\"150+\",\"label\":\"Commands\"},{\"value\":\"3\",\"label\":\"Themes\"},{\"value\":\"<3KB\",\"label\":\"Payload\"}]'"
+```
+
+---
+
+### Text with Typography
+
+**Prompt:**
+
+```
+Add a bold centered headline "Hello World" in Inter at 48px with a 58px line height.
+```
+
+**What the AI does:**
+
+```bash
+figma-kit text create --content "Hello World" --font Inter --weight Bold --size 48 --align CENTER --line-height 58
+```
+
+---
+
 ## Tips
 
 ### Always start with a theme

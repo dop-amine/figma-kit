@@ -8,13 +8,23 @@ import (
 // Builder composes use_figma-compatible JavaScript output.
 // Use the fluent API to add sections, then call String() for the final script.
 type Builder struct {
-	buf strings.Builder
+	buf      strings.Builder
+	bodyOnly bool
 }
 
 // New creates a new Builder.
 func New() *Builder {
 	return &Builder{}
 }
+
+// SetBodyOnly enables body-only mode. When true, preamble methods (PageSetup,
+// FontLoading, ThemeColors*) and return methods (ReturnIDs, ReturnDone,
+// ReturnExpr) become no-ops. Used by the compose engine to avoid duplicate
+// preambles when batching multiple commands.
+func (b *Builder) SetBodyOnly(v bool) { b.bodyOnly = v }
+
+// IsBodyOnly returns true if the builder is in body-only mode.
+func (b *Builder) IsBodyOnly() bool { return b.bodyOnly }
 
 // Comment appends a JS comment line.
 func (b *Builder) Comment(text string) *Builder {
@@ -54,7 +64,11 @@ func (b *Builder) Raw(js string) *Builder {
 }
 
 // PageSetup emits the standard page selection and activation boilerplate.
+// No-op when bodyOnly is true.
 func (b *Builder) PageSetup(pageIndex int) *Builder {
+	if b.bodyOnly {
+		return b
+	}
 	b.Linef("const pg = figma.root.children[%d];", pageIndex)
 	b.Line("await figma.setCurrentPageAsync(pg);")
 	b.Blank()
@@ -62,7 +76,11 @@ func (b *Builder) PageSetup(pageIndex int) *Builder {
 }
 
 // FontLoading emits the standard Inter + Geist Mono font loading block.
+// No-op when bodyOnly is true.
 func (b *Builder) FontLoading() *Builder {
+	if b.bodyOnly {
+		return b
+	}
 	b.Line("const fonts = [")
 	b.Line("  {family:'Inter',style:'Bold'},{family:'Inter',style:'Semi Bold'},")
 	b.Line("  {family:'Inter',style:'Medium'},{family:'Inter',style:'Regular'},")
@@ -74,8 +92,50 @@ func (b *Builder) FontLoading() *Builder {
 	return b
 }
 
+// FontLoadingFromTheme generates font loading from theme font families and weights.
+// Falls back to standard Inter + Geist Mono when theme fonts are empty.
+// No-op when bodyOnly is true.
+func (b *Builder) FontLoadingFromTheme(heading, body, mono string, weights []string) *Builder {
+	if b.bodyOnly {
+		return b
+	}
+	if heading == "" {
+		heading = "Inter"
+	}
+	if body == "" {
+		body = "Inter"
+	}
+	if mono == "" {
+		mono = "Geist Mono"
+	}
+	if len(weights) == 0 {
+		weights = []string{"Bold", "Semi Bold", "Medium", "Regular", "Light"}
+	}
+
+	families := []string{heading}
+	if body != heading {
+		families = append(families, body)
+	}
+
+	b.Line("const fonts = [")
+	for _, fam := range families {
+		for _, w := range weights {
+			b.Linef("  {family:%q,style:%q},", fam, w)
+		}
+	}
+	b.Linef("  {family:%q,style:'Regular'},{family:%q,style:'Medium'}", mono, mono)
+	b.Line("];")
+	b.Line("for (const fn of fonts) await figma.loadFontAsync(fn);")
+	b.Blank()
+	return b
+}
+
 // ThemeColors emits theme color constants from a map of name -> RGB.
+// No-op when bodyOnly is true.
 func (b *Builder) ThemeColors(colors map[string]struct{ R, G, B float64 }) *Builder {
+	if b.bodyOnly {
+		return b
+	}
 	for name, c := range colors {
 		b.Linef("const %s={r:%s,g:%s,b:%s};", name, fmtFloat(c.R), fmtFloat(c.G), fmtFloat(c.B))
 	}
@@ -84,7 +144,11 @@ func (b *Builder) ThemeColors(colors map[string]struct{ R, G, B float64 }) *Buil
 }
 
 // ThemeColorsOrdered emits theme color constants in a specified order.
+// No-op when bodyOnly is true.
 func (b *Builder) ThemeColorsOrdered(names []string, colors map[string][3]float64) *Builder {
+	if b.bodyOnly {
+		return b
+	}
 	for _, name := range names {
 		c := colors[name]
 		b.Linef("const %s={r:%s,g:%s,b:%s};", name, fmtFloat(c[0]), fmtFloat(c[1]), fmtFloat(c[2]))
@@ -94,7 +158,11 @@ func (b *Builder) ThemeColorsOrdered(names []string, colors map[string][3]float6
 }
 
 // ReturnIDs emits a return statement with the given variable names as created node IDs.
+// No-op when bodyOnly is true.
 func (b *Builder) ReturnIDs(varNames ...string) *Builder {
+	if b.bodyOnly {
+		return b
+	}
 	if len(varNames) == 1 {
 		b.Linef("return { createdNodeIds: [%s] };", varNames[0])
 	} else {
@@ -104,13 +172,21 @@ func (b *Builder) ReturnIDs(varNames ...string) *Builder {
 }
 
 // ReturnDone emits a simple return 'Done' statement.
+// No-op when bodyOnly is true.
 func (b *Builder) ReturnDone() *Builder {
+	if b.bodyOnly {
+		return b
+	}
 	b.Line("return 'Done';")
 	return b
 }
 
 // ReturnExpr emits a return statement with an arbitrary expression.
+// No-op when bodyOnly is true.
 func (b *Builder) ReturnExpr(expr string) *Builder {
+	if b.bodyOnly {
+		return b
+	}
 	b.Linef("return %s;", expr)
 	return b
 }

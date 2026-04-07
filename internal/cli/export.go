@@ -39,12 +39,13 @@ func newExportPNGCmd() *cobra.Command {
 		Use:   "png <nodeId>",
 		Short: "Generate JS that exports a node as PNG via exportAsync",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -64,12 +65,13 @@ func newExportSVGCmd() *cobra.Command {
 		Use:   "svg <nodeId>",
 		Short: "Generate JS that exports a node as SVG",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -87,12 +89,13 @@ func newExportPDFCmd() *cobra.Command {
 		Use:   "pdf <nodeId>",
 		Short: "Generate JS that exports a frame or page subtree as PDF",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -109,12 +112,13 @@ func newExportPageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "page",
 		Short: "Generate JS that exports the current page as PNG slices per top-level frame",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const results = [];")
 			b.Line("for (const child of figma.currentPage.children) {")
@@ -134,12 +138,13 @@ func newExportSpritesCmd() *cobra.Command {
 		Use:   "sprites <frameId>",
 		Short: "Generate JS that exports each direct child of a frame as PNG (sprite sheet workflow)",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const frame = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!frame || !('children' in frame)) throw new Error('Frame not found');")

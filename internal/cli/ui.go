@@ -64,11 +64,15 @@ func newUICmd() *cobra.Command {
 	cmd.AddCommand(newUISearchCmd())
 	cmd.AddCommand(newUIPaginationCmd())
 	cmd.AddCommand(newUIColorPickerCmd())
+	cmd.AddCommand(newUISectionCmd())
 	return cmd
 }
 
 // emitUIThemeTokens writes sorted theme color constants and common type-scale tokens as JS consts.
 func emitUIThemeTokens(b *codegen.Builder, t *theme.Theme) {
+	if b.IsBodyOnly() {
+		return
+	}
 	names := make([]string, 0, len(t.Colors))
 	for k := range t.Colors {
 		names = append(names, k)
@@ -99,6 +103,9 @@ func emitUIThemeTokens(b *codegen.Builder, t *theme.Theme) {
 }
 
 func uiPreamble(b *codegen.Builder, t *theme.Theme, page int) {
+	if b.IsBodyOnly() {
+		return
+	}
 	b.PageSetup(page)
 	b.FontLoading()
 	emitUIThemeTokens(b, t)
@@ -109,6 +116,7 @@ func newUIButtonCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "button",
 		Short: "Themed button frame (auto-layout)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -122,7 +130,7 @@ func newUIButtonCmd() *cobra.Command {
 			if sz != "sm" && sz != "md" && sz != "lg" {
 				return fmt.Errorf("size must be sm|md|lg")
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Button")
 			b.Line("const root = figma.createFrame();")
@@ -187,6 +195,7 @@ func newUIInputCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "input",
 		Short: "Labeled input field (auto-layout)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -196,7 +205,7 @@ func newUIInputCmd() *cobra.Command {
 			if tp != "text" && tp != "email" && tp != "password" {
 				return fmt.Errorf("type must be text|email|password")
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Input")
 			b.Line("const root = figma.createFrame();")
@@ -268,52 +277,94 @@ func badgeColorConst(name string) (string, error) {
 }
 
 func newUIBadgeCmd() *cobra.Command {
-	var text, color string
+	var (
+		text      string
+		color     string
+		itemsJSON string
+		parent    string
+	)
 	cmd := &cobra.Command{
 		Use:   "badge",
-		Short: "Pill badge (auto-layout)",
+		Short: "Pill badge (auto-layout), or batch via --items",
+		Example: `  figma-kit ui badge -t noir --text "New" --color blue
+  figma-kit ui badge -t noir --items '[{"text":"v2.1","color":"blue"},{"text":"New","color":"green"}]'`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			cc, err := badgeColorConst(color)
-			if err != nil {
-				return err
-			}
-			ink := "WT"
-			if strings.EqualFold(color, "yellow") {
-				ink = "BG"
-			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Badge")
-			b.Line("const root = figma.createFrame();")
-			b.Line("root.name = 'UI/Badge';")
-			b.Line("root.layoutMode = 'HORIZONTAL';")
-			b.Line("root.primaryAxisAlignItems = 'CENTER';")
-			b.Line("root.counterAxisAlignItems = 'CENTER';")
-			b.Line("root.paddingLeft = 10; root.paddingRight = 10; root.paddingTop = 4; root.paddingBottom = 4;")
-			b.Line("root.itemSpacing = 4;")
-			b.Line("root.cornerRadius = 999;")
-			b.Line("root.primaryAxisSizingMode = 'AUTO';")
-			b.Line("root.counterAxisSizingMode = 'AUTO';")
-			b.Linef("root.fills = [{type:'SOLID', color: %s}];", cc)
-			b.Line("const txt = figma.createText();")
-			b.Line("txt.fontName = { family: 'Inter', style: ST_SMALL };")
-			b.Linef("txt.characters = %q;", text)
-			b.Line("txt.fontSize = TY_SMALL;")
-			b.Linef("txt.fills = [{ type: 'SOLID', color: %s }];", ink)
-			b.Line("txt.textAutoResize = 'WIDTH_AND_HEIGHT';")
-			b.Line("root.appendChild(txt);")
-			b.Line("figma.currentPage.appendChild(root);")
-			b.ReturnIDs("root.id")
+
+			if itemsJSON != "" {
+				b.Linef("const _badgeItems = JSON.parse(%s);", jsStringLiteral(itemsJSON))
+				b.Line("const container = figma.createFrame(); container.name = 'Badges Row';")
+				b.Line("container.layoutMode = 'HORIZONTAL'; container.itemSpacing = 8; container.fills = [];")
+				b.Line("container.primaryAxisSizingMode = 'AUTO'; container.counterAxisSizingMode = 'AUTO';")
+				b.Line("const colorMap = {blue:BL, green:SUCCESS, red:ERR, yellow:WARN, gray:MT};")
+				b.Line("for (const item of _badgeItems) {")
+				b.Line("  const root = figma.createFrame(); root.name = 'UI/Badge';")
+				b.Line("  root.layoutMode = 'HORIZONTAL'; root.primaryAxisAlignItems = 'CENTER'; root.counterAxisAlignItems = 'CENTER';")
+				b.Line("  root.paddingLeft = 10; root.paddingRight = 10; root.paddingTop = 4; root.paddingBottom = 4;")
+				b.Line("  root.itemSpacing = 4; root.cornerRadius = 999;")
+				b.Line("  root.primaryAxisSizingMode = 'AUTO'; root.counterAxisSizingMode = 'AUTO';")
+				b.Line("  root.fills = [{type:'SOLID', color: colorMap[item.color] || BL}];")
+				b.Line("  const txt = figma.createText();")
+				b.Line("  txt.fontName = { family: 'Inter', style: ST_SMALL }; txt.characters = item.text;")
+				b.Line("  txt.fontSize = TY_SMALL; txt.fills = [{type:'SOLID', color: item.color === 'yellow' ? BG : WT}];")
+				b.Line("  txt.textAutoResize = 'WIDTH_AND_HEIGHT'; root.appendChild(txt);")
+				b.Line("  container.appendChild(root);")
+				b.Line("}")
+				if parent != "" {
+					emitParentAppend(b, parent, "container")
+				} else {
+					b.Line("pg.appendChild(container);")
+				}
+				b.ReturnIDs("container.id")
+			} else {
+				cc, err := badgeColorConst(color)
+				if err != nil {
+					return err
+				}
+				ink := "WT"
+				if strings.EqualFold(color, "yellow") {
+					ink = "BG"
+				}
+				b.Line("const root = figma.createFrame();")
+				b.Line("root.name = 'UI/Badge';")
+				b.Line("root.layoutMode = 'HORIZONTAL';")
+				b.Line("root.primaryAxisAlignItems = 'CENTER';")
+				b.Line("root.counterAxisAlignItems = 'CENTER';")
+				b.Line("root.paddingLeft = 10; root.paddingRight = 10; root.paddingTop = 4; root.paddingBottom = 4;")
+				b.Line("root.itemSpacing = 4;")
+				b.Line("root.cornerRadius = 999;")
+				b.Line("root.primaryAxisSizingMode = 'AUTO';")
+				b.Line("root.counterAxisSizingMode = 'AUTO';")
+				b.Linef("root.fills = [{type:'SOLID', color: %s}];", cc)
+				b.Line("const txt = figma.createText();")
+				b.Line("txt.fontName = { family: 'Inter', style: ST_SMALL };")
+				b.Linef("txt.characters = %q;", text)
+				b.Line("txt.fontSize = TY_SMALL;")
+				b.Linef("txt.fills = [{ type: 'SOLID', color: %s }];", ink)
+				b.Line("txt.textAutoResize = 'WIDTH_AND_HEIGHT';")
+				b.Line("root.appendChild(txt);")
+				if parent != "" {
+					emitParentAppend(b, parent, "root")
+				} else {
+					b.Line("pg.appendChild(root);")
+				}
+				b.ReturnIDs("root.id")
+			}
 			output(b.String())
 			return nil
 		},
 	}
 	cmd.Flags().StringVar(&text, "text", "New", "Badge text")
 	cmd.Flags().StringVar(&color, "color", "blue", "blue|green|red|yellow|gray")
+	cmd.Flags().StringVar(&itemsJSON, "items", "", `Batch badges: [{"text":"X","color":"blue"},...]`)
+	cmd.Flags().StringVar(&parent, "parent", "", "Parent node ID (or _results[N] in compose)")
 	return cmd
 }
 
@@ -323,6 +374,7 @@ func newUIAvatarCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "avatar",
 		Short: "Circular avatar with initials",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -338,7 +390,7 @@ func newUIAvatarCmd() *cobra.Command {
 			if len(initials) > 3 {
 				initials = initials[:3]
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Avatar")
 			b.Line("const root = figma.createFrame();")
@@ -376,6 +428,7 @@ func newUIDividerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "divider",
 		Short: "Horizontal or vertical divider line",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -389,7 +442,7 @@ func newUIDividerCmd() *cobra.Command {
 				return fmt.Errorf("length must be positive")
 			}
 			useMuted := strings.EqualFold(colorMode, "muted")
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Divider")
 			b.Line("const root = figma.createFrame();")
@@ -429,6 +482,7 @@ func newUIIconCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "icon",
 		Short: "Icon placeholder frame (square or circle)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -445,7 +499,7 @@ func newUIIconCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Icon")
 			b.Line("const root = figma.createFrame();")
@@ -492,6 +546,7 @@ func newUIProgressCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "progress",
 		Short: "Progress bar (themed track + fill)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -507,7 +562,7 @@ func newUIProgressCmd() *cobra.Command {
 				value = 100
 			}
 			h := 8
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Progress")
 			b.Line("const root = figma.createFrame();")
@@ -543,6 +598,7 @@ func newUIToggleCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "toggle",
 		Short: "On/off switch (auto-layout track + thumb)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -556,7 +612,7 @@ func newUIToggleCmd() *cobra.Command {
 			if sz != "sm" && sz != "md" && sz != "lg" {
 				return fmt.Errorf("size must be sm|md|lg")
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Toggle")
 			var tw, th, pad, dia int
@@ -613,6 +669,7 @@ func newUITooltipCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tooltip",
 		Short: "Tooltip bubble (auto-layout)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -622,7 +679,7 @@ func newUITooltipCmd() *cobra.Command {
 			if pos != "top" && pos != "bottom" && pos != "left" && pos != "right" {
 				return fmt.Errorf("position must be top|bottom|left|right")
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Tooltip")
 			b.Line("const root = figma.createFrame();")
@@ -725,70 +782,58 @@ func newUITooltipCmd() *cobra.Command {
 }
 
 func newUIStatCmd() *cobra.Command {
-	var value, label, trend string
+	var (
+		value     string
+		label     string
+		trend     string
+		itemsJSON string
+		parent    string
+	)
 	cmd := &cobra.Command{
 		Use:   "stat",
-		Short: "Stat callout (value + label + optional trend)",
+		Short: "Stat callout (value + label + optional trend), or batch via --items",
+		Example: `  figma-kit ui stat -t noir --value "150+" --label "Commands"
+  figma-kit ui stat -t noir --items '[{"value":"150+","label":"Commands"},{"value":"4.2x","label":"Faster"}]'`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			tr := strings.ToLower(strings.TrimSpace(trend))
-			if trend != "" && tr != "up" && tr != "down" && tr != "neutral" {
-				return fmt.Errorf("trend must be up|down|neutral when set")
-			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Stat")
-			b.Line("const root = figma.createFrame();")
-			b.Line("root.name = 'UI/Stat';")
-			b.Line("root.layoutMode = 'VERTICAL';")
-			b.Line("root.primaryAxisAlignItems = 'MIN';")
-			b.Line("root.counterAxisAlignItems = 'MIN';")
-			b.Line("root.itemSpacing = 4;")
-			b.Line("root.fills = [];")
-			b.Line("root.primaryAxisSizingMode = 'AUTO';")
-			b.Line("root.counterAxisSizingMode = 'AUTO';")
-			b.Line("const row = figma.createFrame();")
-			b.Line("row.layoutMode = 'HORIZONTAL';")
-			b.Line("row.primaryAxisAlignItems = 'CENTER';")
-			b.Line("row.counterAxisAlignItems = 'CENTER';")
-			b.Line("row.itemSpacing = 8;")
-			b.Line("row.fills = [];")
-			b.Line("row.primaryAxisSizingMode = 'AUTO';")
-			b.Line("row.counterAxisSizingMode = 'AUTO';")
-			b.Line("const val = figma.createText();")
-			b.Line("val.fontName = { family: 'Inter', style: ST_H4 };")
-			b.Linef("val.characters = %q;", value)
-			b.Line("val.fontSize = TY_H4;")
-			b.Line("val.fills = [{ type: 'SOLID', color: WT }];")
-			b.Line("val.textAutoResize = 'WIDTH_AND_HEIGHT';")
-			b.Line("row.appendChild(val);")
-			if tr != "" {
-				b.Line("const trendMark = figma.createText();")
-				b.Line("trendMark.fontName = { family: 'Inter', style: 'Medium' };")
-				switch tr {
-				case "up":
-					b.Line("trendMark.characters = '▲'; trendMark.fontSize = TY_SMALL; trendMark.fills = [{ type: 'SOLID', color: SUCCESS }];")
-				case "down":
-					b.Line("trendMark.characters = '▼'; trendMark.fontSize = TY_SMALL; trendMark.fills = [{ type: 'SOLID', color: ERR }];")
-				default:
-					b.Line("trendMark.characters = '—'; trendMark.fontSize = TY_SMALL; trendMark.fills = [{ type: 'SOLID', color: MT }];")
+
+			if itemsJSON != "" {
+				b.Linef("const _statItems = JSON.parse(%s);", jsStringLiteral(itemsJSON))
+				b.Line("const container = figma.createFrame();")
+				b.Line("container.name = 'Stats Row';")
+				b.Line("container.layoutMode = 'HORIZONTAL'; container.itemSpacing = 48;")
+				b.Line("container.counterAxisAlignItems = 'MIN'; container.fills = [];")
+				b.Line("container.primaryAxisSizingMode = 'AUTO'; container.counterAxisSizingMode = 'AUTO';")
+				b.Line("for (const item of _statItems) {")
+				emitStatBody(b, true)
+				b.Line("  container.appendChild(root);")
+				b.Line("}")
+				if parent != "" {
+					emitParentAppend(b, parent, "container")
+				} else {
+					b.Line("pg.appendChild(container);")
 				}
-				b.Line("trendMark.textAutoResize = 'WIDTH_AND_HEIGHT';")
-				b.Line("row.appendChild(trendMark);")
+				b.ReturnIDs("container.id")
+			} else {
+				tr := strings.ToLower(strings.TrimSpace(trend))
+				if trend != "" && tr != "up" && tr != "down" && tr != "neutral" {
+					return fmt.Errorf("trend must be up|down|neutral when set")
+				}
+				emitStatSingle(b, value, label, tr)
+				if parent != "" {
+					emitParentAppend(b, parent, "root")
+				} else {
+					b.Line("pg.appendChild(root);")
+				}
+				b.ReturnIDs("root.id")
 			}
-			b.Line("root.appendChild(row);")
-			b.Line("const cap = figma.createText();")
-			b.Line("cap.fontName = { family: 'Inter', style: ST_LABEL };")
-			b.Linef("cap.characters = %q;", label)
-			b.Line("cap.fontSize = TY_LABEL;")
-			b.Line("cap.fills = [{ type: 'SOLID', color: MT }];")
-			b.Line("cap.textAutoResize = 'WIDTH_AND_HEIGHT';")
-			b.Line("root.appendChild(cap);")
-			b.Line("figma.currentPage.appendChild(root);")
-			b.ReturnIDs("root.id")
 			output(b.String())
 			return nil
 		},
@@ -796,7 +841,78 @@ func newUIStatCmd() *cobra.Command {
 	cmd.Flags().StringVar(&value, "value", "4.2x", "Primary stat value")
 	cmd.Flags().StringVar(&label, "label", "Faster", "Caption label")
 	cmd.Flags().StringVar(&trend, "trend", "", "optional: up|down|neutral")
+	cmd.Flags().StringVar(&itemsJSON, "items", "", `Batch stats as JSON: [{"value":"X","label":"Y"},...]`)
+	cmd.Flags().StringVar(&parent, "parent", "", "Parent node ID (or _results[N] in compose)")
 	return cmd
+}
+
+func emitStatSingle(b *codegen.Builder, value, label, trend string) {
+	b.Line("const root = figma.createFrame();")
+	b.Line("root.name = 'UI/Stat';")
+	b.Line("root.layoutMode = 'VERTICAL';")
+	b.Line("root.primaryAxisAlignItems = 'MIN';")
+	b.Line("root.counterAxisAlignItems = 'MIN';")
+	b.Line("root.itemSpacing = 4;")
+	b.Line("root.fills = [];")
+	b.Line("root.primaryAxisSizingMode = 'AUTO';")
+	b.Line("root.counterAxisSizingMode = 'AUTO';")
+	b.Line("const val = figma.createText();")
+	b.Line("val.fontName = { family: 'Inter', style: ST_H4 };")
+	b.Linef("val.characters = %q;", value)
+	b.Line("val.fontSize = TY_H4;")
+	b.Line("val.fills = [{ type: 'SOLID', color: WT }];")
+	b.Line("val.textAutoResize = 'WIDTH_AND_HEIGHT';")
+	b.Line("root.appendChild(val);")
+	if trend != "" {
+		b.Line("const trendMark = figma.createText();")
+		b.Line("trendMark.fontName = { family: 'Inter', style: 'Medium' };")
+		switch trend {
+		case "up":
+			b.Line("trendMark.characters = '▲'; trendMark.fontSize = TY_SMALL; trendMark.fills = [{ type: 'SOLID', color: SUCCESS }];")
+		case "down":
+			b.Line("trendMark.characters = '▼'; trendMark.fontSize = TY_SMALL; trendMark.fills = [{ type: 'SOLID', color: ERR }];")
+		default:
+			b.Line("trendMark.characters = '—'; trendMark.fontSize = TY_SMALL; trendMark.fills = [{ type: 'SOLID', color: MT }];")
+		}
+		b.Line("trendMark.textAutoResize = 'WIDTH_AND_HEIGHT';")
+		b.Line("root.appendChild(trendMark);")
+	}
+	b.Line("const cap = figma.createText();")
+	b.Line("cap.fontName = { family: 'Inter', style: ST_LABEL };")
+	b.Linef("cap.characters = %q;", label)
+	b.Line("cap.fontSize = TY_LABEL;")
+	b.Line("cap.fills = [{ type: 'SOLID', color: MT }];")
+	b.Line("cap.textAutoResize = 'WIDTH_AND_HEIGHT';")
+	b.Line("root.appendChild(cap);")
+}
+
+func emitStatBody(b *codegen.Builder, loop bool) {
+	indent := "  "
+	b.Line(indent + "const root = figma.createFrame();")
+	b.Line(indent + "root.name = 'UI/Stat';")
+	b.Line(indent + "root.layoutMode = 'VERTICAL';")
+	b.Line(indent + "root.primaryAxisAlignItems = 'MIN'; root.counterAxisAlignItems = 'MIN';")
+	b.Line(indent + "root.itemSpacing = 4; root.fills = [];")
+	b.Line(indent + "root.primaryAxisSizingMode = 'AUTO'; root.counterAxisSizingMode = 'AUTO';")
+	b.Line(indent + "const val = figma.createText();")
+	b.Line(indent + "val.fontName = { family: 'Inter', style: ST_H4 };")
+	b.Line(indent + "val.characters = item.value; val.fontSize = TY_H4;")
+	b.Line(indent + "val.fills = [{ type: 'SOLID', color: WT }]; val.textAutoResize = 'WIDTH_AND_HEIGHT';")
+	b.Line(indent + "root.appendChild(val);")
+	b.Line(indent + "const cap = figma.createText();")
+	b.Line(indent + "cap.fontName = { family: 'Inter', style: ST_LABEL };")
+	b.Line(indent + "cap.characters = item.label; cap.fontSize = TY_LABEL;")
+	b.Line(indent + "cap.fills = [{ type: 'SOLID', color: MT }]; cap.textAutoResize = 'WIDTH_AND_HEIGHT';")
+	b.Line(indent + "root.appendChild(cap);")
+}
+
+func emitParentAppend(b *codegen.Builder, parent, varName string) {
+	if strings.HasPrefix(parent, "_results[") {
+		b.Linef("const _par = %s;", parent)
+	} else {
+		b.Linef("const _par = await figma.getNodeByIdAsync(%q);", parent)
+	}
+	b.Linef("if (_par && 'appendChild' in _par) _par.appendChild(%s); else pg.appendChild(%s);", varName, varName)
 }
 
 func newUITableCmd() *cobra.Command {
@@ -804,6 +920,7 @@ func newUITableCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "table",
 		Short: "Table from JSON rows + column headers",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -821,7 +938,7 @@ func newUITableCmd() *cobra.Command {
 			if len(headers) == 0 {
 				return fmt.Errorf("cols must list at least one column name")
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Table")
 			b.Line("const root = figma.createFrame();")
@@ -949,6 +1066,7 @@ func newUINavCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "nav",
 		Short: "Navigation links (topbar or sidebar)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -962,7 +1080,7 @@ func newUINavCmd() *cobra.Command {
 			if len(labels) == 0 {
 				return fmt.Errorf("items must list at least one label")
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Nav")
 			b.Line("const root = figma.createFrame();")
@@ -1016,6 +1134,7 @@ func newUIFooterCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "footer",
 		Short: "Footer with N link columns + optional copyright",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -1024,7 +1143,7 @@ func newUIFooterCmd() *cobra.Command {
 			if cols < 1 || cols > 6 {
 				return fmt.Errorf("cols must be 1–6")
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Footer")
 			b.Line("const root = figma.createFrame();")
@@ -1109,12 +1228,13 @@ func newUICheckboxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "checkbox",
 		Short: "Checkbox control with label (auto-layout)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Checkbox")
 			b.Line("const root = figma.createFrame();")
@@ -1169,12 +1289,13 @@ func newUIRadioCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "radio",
 		Short: "Radio button with label (auto-layout)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Radio")
 			b.Line("const root = figma.createFrame();")
@@ -1225,6 +1346,7 @@ func newUITabsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tabs",
 		Short: "Horizontal tab bar (auto-layout)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -1237,7 +1359,7 @@ func newUITabsCmd() *cobra.Command {
 			if active < 0 || active >= len(tabs) {
 				return fmt.Errorf("--active must be between 0 and %d", len(tabs)-1)
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Tabs")
 			b.Line("const root = figma.createFrame();")
@@ -1299,12 +1421,13 @@ func newUIDropdownCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "dropdown",
 		Short: "Select dropdown control (auto-layout)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Dropdown")
 			b.Line("const root = figma.createFrame();")
@@ -1394,6 +1517,7 @@ func newUIBreadcrumbCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "breadcrumb",
 		Short: "Breadcrumb navigation trail (auto-layout)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -1403,7 +1527,7 @@ func newUIBreadcrumbCmd() *cobra.Command {
 			if len(items) < 1 {
 				return fmt.Errorf("provide at least one item via --items")
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Breadcrumb")
 			b.Line("const root = figma.createFrame();")
@@ -1455,6 +1579,7 @@ func newUISkeletonCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "skeleton",
 		Short: "Loading skeleton placeholder (text, card, or list variant)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -1464,7 +1589,7 @@ func newUISkeletonCmd() *cobra.Command {
 			if v != "text" && v != "card" && v != "list" {
 				return fmt.Errorf("variant must be text|card|list")
 			}
-			b := codegen.New()
+			b := newBuilder()
 			uiPreamble(b, t, resolvePage())
 			b.Comment("UI / Skeleton — " + v)
 			b.Line("const shimmer = { type: 'SOLID', color: STK };")
@@ -1549,18 +1674,20 @@ func newUIHeroCmd() *cobra.Command {
 		subtitle string
 		cta      string
 		badge    string
+		parent   string
 	)
 	cmd := &cobra.Command{
 		Use:     "hero",
 		Short:   "Complete hero section with heading, subtitle, and CTA",
 		Example: `  figma-kit ui hero -t noir --title "Build Faster" --subtitle "Ship in days, not months" --cta "Get Started"`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 			emitUIThemeTokens(b, t)
 
@@ -1583,19 +1710,28 @@ func newUIHeroCmd() *cobra.Command {
 			b.Line("hero.paddingTop = hero.paddingBottom = 120;")
 			b.Line("hero.paddingLeft = hero.paddingRight = 80;")
 			b.Line("hero.itemSpacing = 24;")
-			b.Line("hero.fills = typeof bg !== 'undefined' ? [{type:'SOLID', color:bg}] : [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
+			b.Line("hero.fills = [{type:'SOLID', color:BG}];")
 
 			if badge != "" {
-				b.Linef("{ const badge = figma.createFrame(); badge.name = 'Badge'; badge.layoutMode = 'HORIZONTAL'; badge.paddingLeft = badge.paddingRight = 16; badge.paddingTop = badge.paddingBottom = 6; badge.cornerRadius = 999; badge.fills = [{type:'SOLID', color:typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96}, opacity:0.15}]; badge.counterAxisSizingMode = 'AUTO'; badge.primaryAxisSizingMode = 'AUTO';")
-				b.Linef("const bt = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Medium'}); bt.fontName = {family:'Inter',style:'Medium'}; bt.fontSize = 13; bt.characters = %q; bt.fills = [{type:'SOLID', color:typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96}}]; badge.appendChild(bt); hero.appendChild(badge); }", badge)
+				b.Linef("{ const badge = figma.createFrame(); badge.name = 'Badge'; badge.layoutMode = 'HORIZONTAL'; badge.paddingLeft = badge.paddingRight = 16; badge.paddingTop = badge.paddingBottom = 6; badge.cornerRadius = 999; badge.fills = [{type:'SOLID', color:BL, opacity:0.15}]; badge.counterAxisSizingMode = 'AUTO'; badge.primaryAxisSizingMode = 'AUTO';")
+				b.Linef("const bt = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Medium'}); bt.fontName = {family:'Inter',style:'Medium'}; bt.fontSize = 13; bt.characters = %q; bt.fills = [{type:'SOLID', color:BL}]; badge.appendChild(bt); hero.appendChild(badge); }", badge)
 			}
 
-			b.Linef("{ const h1 = figma.createText(); h1.name = 'Heading'; await figma.loadFontAsync({family:'Inter',style:'Bold'}); h1.fontName = {family:'Inter',style:'Bold'}; h1.fontSize = 64; h1.characters = %q; h1.fills = [{type:'SOLID', color:typeof fg !== 'undefined' ? fg : {r:0.95,g:0.95,b:0.97}}]; h1.textAlignHorizontal = 'CENTER'; h1.textAutoResize = 'WIDTH_AND_HEIGHT'; hero.appendChild(h1); }", title)
-			b.Linef("{ const sub = figma.createText(); sub.name = 'Subtitle'; await figma.loadFontAsync({family:'Inter',style:'Regular'}); sub.fontName = {family:'Inter',style:'Regular'}; sub.fontSize = 20; sub.characters = %q; sub.fills = [{type:'SOLID', color:typeof muted !== 'undefined' ? muted : {r:0.55,g:0.55,b:0.6}}]; sub.textAlignHorizontal = 'CENTER'; sub.textAutoResize = 'WIDTH_AND_HEIGHT'; hero.appendChild(sub); }", subtitle)
-			b.Linef("{ const btn = figma.createFrame(); btn.name = 'CTA Button'; btn.layoutMode = 'HORIZONTAL'; btn.paddingLeft = btn.paddingRight = 32; btn.paddingTop = btn.paddingBottom = 14; btn.cornerRadius = 8; btn.fills = [{type:'SOLID', color:typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96}}]; btn.counterAxisSizingMode = 'AUTO'; btn.primaryAxisSizingMode = 'AUTO';")
+			b.Linef("{ const h1 = figma.createText(); h1.name = 'Heading'; await figma.loadFontAsync({family:'Inter',style:'Bold'}); h1.fontName = {family:'Inter',style:'Bold'}; h1.fontSize = 64; h1.characters = %q; h1.fills = [{type:'SOLID', color:WT}]; h1.textAlignHorizontal = 'CENTER'; h1.textAutoResize = 'WIDTH_AND_HEIGHT'; hero.appendChild(h1); }", title)
+			b.Linef("{ const sub = figma.createText(); sub.name = 'Subtitle'; await figma.loadFontAsync({family:'Inter',style:'Regular'}); sub.fontName = {family:'Inter',style:'Regular'}; sub.fontSize = 20; sub.characters = %q; sub.fills = [{type:'SOLID', color:MT}]; sub.textAlignHorizontal = 'CENTER'; sub.textAutoResize = 'WIDTH_AND_HEIGHT'; hero.appendChild(sub); }", subtitle)
+			b.Linef("{ const btn = figma.createFrame(); btn.name = 'CTA Button'; btn.layoutMode = 'HORIZONTAL'; btn.paddingLeft = btn.paddingRight = 32; btn.paddingTop = btn.paddingBottom = 14; btn.cornerRadius = 8; btn.fills = [{type:'SOLID', color:BL}]; btn.counterAxisSizingMode = 'AUTO'; btn.primaryAxisSizingMode = 'AUTO';")
 			b.Linef("const ct = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); ct.fontName = {family:'Inter',style:'Semi Bold'}; ct.fontSize = 16; ct.characters = %q; ct.fills = [{type:'SOLID', color:{r:1,g:1,b:1}}]; btn.appendChild(ct); hero.appendChild(btn); }", cta)
 
-			b.Line("pg.appendChild(hero);")
+			if parent != "" {
+				if strings.HasPrefix(parent, "_results[") {
+					b.Linef("const _par = %s;", parent)
+				} else {
+					b.Linef("const _par = await figma.getNodeByIdAsync(%q);", parent)
+				}
+				b.Linef("if (_par && 'appendChild' in _par) _par.appendChild(%s); else pg.appendChild(%s);", "hero", "hero")
+			} else {
+				b.Linef("pg.appendChild(%s);", "hero")
+			}
 			b.ReturnIDs("hero.id")
 			output(b.String())
 			return nil
@@ -1605,22 +1741,24 @@ func newUIHeroCmd() *cobra.Command {
 	cmd.Flags().StringVar(&subtitle, "subtitle", "", "Hero subtitle text")
 	cmd.Flags().StringVar(&cta, "cta", "", "Call-to-action button text")
 	cmd.Flags().StringVar(&badge, "badge", "", "Optional badge text above heading")
+	cmd.Flags().StringVar(&parent, "parent", "", "Parent node ID (or _results[N] in compose)")
 	return cmd
 }
 
 func newUIPricingCmd() *cobra.Command {
-	var tiersJSON string
+	var tiersJSON, parent string
 	cmd := &cobra.Command{
 		Use:     "pricing",
 		Short:   "Pricing table with tier cards",
 		Example: `  figma-kit ui pricing -t noir --tiers '[{"name":"Free","price":"$0","features":["5 projects","1GB storage"]},{"name":"Pro","price":"$29","features":["Unlimited","100GB"],"highlighted":true}]'`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 			emitUIThemeTokens(b, t)
 
@@ -1630,8 +1768,8 @@ func newUIPricingCmd() *cobra.Command {
 
 			b.Linef("const tiers = JSON.parse(%s);", jsStringLiteral(tiersJSON))
 			b.Line("const grid = figma.createFrame(); grid.name = 'Pricing'; grid.layoutMode = 'HORIZONTAL'; grid.itemSpacing = 24; grid.paddingLeft = grid.paddingRight = 48; grid.paddingTop = grid.paddingBottom = 48; grid.counterAxisAlignItems = 'CENTER';")
-			b.Line("grid.fills = typeof bg !== 'undefined' ? [{type:'SOLID', color:bg}] : [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
-			b.Line("const accColor = typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96};")
+			b.Line("grid.fills = [{type:'SOLID', color:BG}];")
+			b.Line("const accColor = BL;")
 			b.Line("for (const tier of tiers) {")
 			b.Line("  const card = figma.createFrame(); card.name = tier.name; card.layoutMode = 'VERTICAL'; card.itemSpacing = 16; card.paddingLeft = card.paddingRight = 28; card.paddingTop = card.paddingBottom = 32; card.resize(280, 400); card.cornerRadius = 16;")
 			b.Line("  if (tier.highlighted) { card.fills = [{type:'SOLID', color:{r:0.08,g:0.08,b:0.12}}]; card.strokes = [{type:'SOLID', color:accColor}]; card.strokeWeight = 2; card.effects = [{type:'DROP_SHADOW', color:{...accColor, a:0.2}, offset:{x:0,y:0}, radius:20, spread:0, visible:true, blendMode:'NORMAL'}]; }")
@@ -1645,13 +1783,23 @@ func newUIPricingCmd() *cobra.Command {
 			b.Line("  grid.appendChild(card);")
 			b.Line("}")
 			b.Line("grid.resize(grid.children.length * 304 + 96, 500);")
-			b.Line("pg.appendChild(grid);")
+			if parent != "" {
+				if strings.HasPrefix(parent, "_results[") {
+					b.Linef("const _par = %s;", parent)
+				} else {
+					b.Linef("const _par = await figma.getNodeByIdAsync(%q);", parent)
+				}
+				b.Linef("if (_par && 'appendChild' in _par) _par.appendChild(%s); else pg.appendChild(%s);", "grid", "grid")
+			} else {
+				b.Linef("pg.appendChild(%s);", "grid")
+			}
 			b.ReturnIDs("grid.id")
 			output(b.String())
 			return nil
 		},
 	}
 	cmd.Flags().StringVar(&tiersJSON, "tiers", "", "Tiers as JSON array")
+	cmd.Flags().StringVar(&parent, "parent", "", "Parent node ID (or _results[N] in compose)")
 	return cmd
 }
 
@@ -1659,18 +1807,20 @@ func newUIFeatureGridCmd() *cobra.Command {
 	var (
 		featuresJSON string
 		cols         int
+		parent       string
 	)
 	cmd := &cobra.Command{
 		Use:     "feature-grid",
 		Short:   "Grid of feature cards with icon, title, and description",
 		Example: `  figma-kit ui feature-grid -t noir --cols 3 --features '[{"title":"Fast","desc":"Sub-ms reads"},{"title":"Secure","desc":"E2E encrypted"},{"title":"Global","desc":"Edge network"}]'`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 			emitUIThemeTokens(b, t)
 
@@ -1681,19 +1831,28 @@ func newUIFeatureGridCmd() *cobra.Command {
 			b.Linef("const features = JSON.parse(%s);", jsStringLiteral(featuresJSON))
 			b.Linef("const cols = %d;", cols)
 			b.Line("const grid = figma.createFrame(); grid.name = 'Feature Grid'; grid.layoutMode = 'VERTICAL'; grid.itemSpacing = 24; grid.paddingLeft = grid.paddingRight = 48; grid.paddingTop = grid.paddingBottom = 48;")
-			b.Line("grid.fills = typeof bg !== 'undefined' ? [{type:'SOLID', color:bg}] : [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
+			b.Line("grid.fills = [{type:'SOLID', color:BG}];")
 			b.Line("let row;")
 			b.Line("for (let i = 0; i < features.length; i++) {")
 			b.Line("  if (i % cols === 0) { row = figma.createFrame(); row.name = 'Row'; row.layoutMode = 'HORIZONTAL'; row.itemSpacing = 24; row.fills = []; row.counterAxisSizingMode = 'AUTO'; row.primaryAxisSizingMode = 'AUTO'; grid.appendChild(row); }")
 			b.Line("  const f = features[i];")
 			b.Line("  const card = figma.createFrame(); card.name = f.title; card.layoutMode = 'VERTICAL'; card.itemSpacing = 12; card.paddingLeft = card.paddingRight = 24; card.paddingTop = card.paddingBottom = 24; card.resize(280, 180); card.cornerRadius = 12; card.fills = [{type:'SOLID', color:{r:0.06,g:0.06,b:0.09}}]; card.strokes = [{type:'SOLID', color:{r:0.12,g:0.12,b:0.16}}]; card.strokeWeight = 1;")
-			b.Line("  const icon = figma.createFrame(); icon.name = 'icon'; icon.resize(40, 40); icon.cornerRadius = 10; icon.fills = [{type:'SOLID', color:typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96}, opacity:0.15}]; card.appendChild(icon);")
+			b.Line("  const icon = figma.createFrame(); icon.name = 'icon'; icon.resize(40, 40); icon.cornerRadius = 10; icon.fills = [{type:'SOLID', color:BL, opacity:0.15}]; card.appendChild(icon);")
 			b.Line("  const tt = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); tt.fontName = {family:'Inter',style:'Semi Bold'}; tt.fontSize = 16; tt.characters = f.title; tt.fills = [{type:'SOLID', color:{r:0.95,g:0.95,b:0.97}}]; card.appendChild(tt);")
 			b.Line("  const dd = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); dd.fontName = {family:'Inter',style:'Regular'}; dd.fontSize = 14; dd.characters = f.desc || ''; dd.fills = [{type:'SOLID', color:{r:0.55,g:0.55,b:0.6}}]; card.appendChild(dd);")
 			b.Line("  row.appendChild(card);")
 			b.Line("}")
 			b.Line("grid.resize(cols * 304 + 96, Math.ceil(features.length / cols) * 204 + 96);")
-			b.Line("pg.appendChild(grid);")
+			if parent != "" {
+				if strings.HasPrefix(parent, "_results[") {
+					b.Linef("const _par = %s;", parent)
+				} else {
+					b.Linef("const _par = await figma.getNodeByIdAsync(%q);", parent)
+				}
+				b.Linef("if (_par && 'appendChild' in _par) _par.appendChild(%s); else pg.appendChild(%s);", "grid", "grid")
+			} else {
+				b.Linef("pg.appendChild(%s);", "grid")
+			}
 			b.ReturnIDs("grid.id")
 			output(b.String())
 			return nil
@@ -1701,6 +1860,7 @@ func newUIFeatureGridCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&featuresJSON, "features", "", "Features as JSON array [{title,desc}]")
 	cmd.Flags().IntVar(&cols, "cols", 3, "Number of columns (2, 3, or 4)")
+	cmd.Flags().StringVar(&parent, "parent", "", "Parent node ID (or _results[N] in compose)")
 	return cmd
 }
 
@@ -1711,18 +1871,20 @@ func newUITestimonialCmd() *cobra.Command {
 		quote   string
 		rating  int
 		variant string
+		parent  string
 	)
 	cmd := &cobra.Command{
 		Use:     "testimonial",
 		Short:   "Testimonial/quote card with avatar, name, and rating",
 		Example: `  figma-kit ui testimonial -t noir --name "Jane Doe" --role "CEO at Acme" --quote "This changed everything" --rating 5`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 			emitUIThemeTokens(b, t)
 
@@ -1759,13 +1921,22 @@ func newUITestimonialCmd() *cobra.Command {
 			b.Linef("{ const qt = figma.createText(); qt.name = 'Quote'; await figma.loadFontAsync({family:'Inter',style:'Regular'}); qt.fontName = {family:'Inter',style:'Regular'}; qt.fontSize = 16; qt.lineHeight = {unit:'PIXELS',value:24}; qt.characters = '\"' + %q + '\"'; qt.fills = [{type:'SOLID', color:{r:0.8,g:0.8,b:0.85}}]; qt.textAutoResize = 'HEIGHT'; qt.resize(%d - 64, 1); card.appendChild(qt); }", quote, width)
 
 			b.Line("const info = figma.createFrame(); info.name = 'Author'; info.layoutMode = 'HORIZONTAL'; info.itemSpacing = 12; info.counterAxisAlignItems = 'CENTER'; info.fills = []; info.counterAxisSizingMode = 'AUTO'; info.primaryAxisSizingMode = 'AUTO';")
-			b.Line("const av = figma.createEllipse(); av.name = 'Avatar'; av.resize(40, 40); av.fills = [{type:'SOLID', color:typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96}}]; info.appendChild(av);")
+			b.Line("const av = figma.createEllipse(); av.name = 'Avatar'; av.resize(40, 40); av.fills = [{type:'SOLID', color:BL}]; info.appendChild(av);")
 			b.Line("const nameCol = figma.createFrame(); nameCol.layoutMode = 'VERTICAL'; nameCol.itemSpacing = 2; nameCol.fills = []; nameCol.counterAxisSizingMode = 'AUTO'; nameCol.primaryAxisSizingMode = 'AUTO';")
 			b.Linef("const nm = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Semi Bold'}); nm.fontName = {family:'Inter',style:'Semi Bold'}; nm.fontSize = 14; nm.characters = %q; nm.fills = [{type:'SOLID', color:{r:0.95,g:0.95,b:0.97}}]; nameCol.appendChild(nm);", name)
 			b.Linef("const rl = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); rl.fontName = {family:'Inter',style:'Regular'}; rl.fontSize = 13; rl.characters = %q; rl.fills = [{type:'SOLID', color:{r:0.5,g:0.5,b:0.55}}]; nameCol.appendChild(rl);", role)
 			b.Line("info.appendChild(nameCol); card.appendChild(info);")
 
-			b.Line("pg.appendChild(card);")
+			if parent != "" {
+				if strings.HasPrefix(parent, "_results[") {
+					b.Linef("const _par = %s;", parent)
+				} else {
+					b.Linef("const _par = await figma.getNodeByIdAsync(%q);", parent)
+				}
+				b.Linef("if (_par && 'appendChild' in _par) _par.appendChild(%s); else pg.appendChild(%s);", "card", "card")
+			} else {
+				b.Linef("pg.appendChild(%s);", "card")
+			}
 			b.ReturnIDs("card.id")
 			output(b.String())
 			return nil
@@ -1776,22 +1947,24 @@ func newUITestimonialCmd() *cobra.Command {
 	cmd.Flags().StringVar(&quote, "quote", "", "Testimonial quote text")
 	cmd.Flags().IntVar(&rating, "rating", 5, "Star rating (1-5)")
 	cmd.Flags().StringVar(&variant, "variant", "card", "Variant: card, inline, large")
+	cmd.Flags().StringVar(&parent, "parent", "", "Parent node ID (or _results[N] in compose)")
 	return cmd
 }
 
 func newUITimelineCmd() *cobra.Command {
-	var entriesJSON string
+	var entriesJSON, parent string
 	cmd := &cobra.Command{
 		Use:     "timeline",
 		Short:   "Vertical timeline with dated entries",
 		Example: `  figma-kit ui timeline -t noir --entries '[{"date":"2024","title":"Founded","desc":"Started the journey"},{"date":"2025","title":"Series A","desc":"Raised $10M"}]'`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 			emitUIThemeTokens(b, t)
 
@@ -1802,8 +1975,8 @@ func newUITimelineCmd() *cobra.Command {
 			b.Linef("const entries = JSON.parse(%s);", jsStringLiteral(entriesJSON))
 			b.Line("const timeline = figma.createFrame(); timeline.name = 'Timeline'; timeline.layoutMode = 'VERTICAL'; timeline.itemSpacing = 0; timeline.paddingLeft = 60; timeline.paddingRight = 40; timeline.paddingTop = timeline.paddingBottom = 40;")
 			b.Line("timeline.resize(500, entries.length * 120 + 80);")
-			b.Line("timeline.fills = typeof bg !== 'undefined' ? [{type:'SOLID', color:bg}] : [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
-			b.Line("const accColor = typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96};")
+			b.Line("timeline.fills = [{type:'SOLID', color:BG}];")
+			b.Line("const accColor = BL;")
 			b.Line("for (let i = 0; i < entries.length; i++) {")
 			b.Line("  const e = entries[i];")
 			b.Line("  const row = figma.createFrame(); row.name = e.title; row.layoutMode = 'HORIZONTAL'; row.itemSpacing = 20; row.paddingTop = row.paddingBottom = 16; row.fills = []; row.counterAxisSizingMode = 'AUTO'; row.primaryAxisSizingMode = 'AUTO';")
@@ -1814,13 +1987,23 @@ func newUITimelineCmd() *cobra.Command {
 			b.Line("  if (e.desc) { const dd = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); dd.fontName = {family:'Inter',style:'Regular'}; dd.fontSize = 14; dd.characters = e.desc; dd.fills = [{type:'SOLID', color:{r:0.55,g:0.55,b:0.6}}]; content.appendChild(dd); }")
 			b.Line("  row.appendChild(content); timeline.appendChild(row);")
 			b.Line("}")
-			b.Line("pg.appendChild(timeline);")
+			if parent != "" {
+				if strings.HasPrefix(parent, "_results[") {
+					b.Linef("const _par = %s;", parent)
+				} else {
+					b.Linef("const _par = await figma.getNodeByIdAsync(%q);", parent)
+				}
+				b.Linef("if (_par && 'appendChild' in _par) _par.appendChild(%s); else pg.appendChild(%s);", "timeline", "timeline")
+			} else {
+				b.Linef("pg.appendChild(%s);", "timeline")
+			}
 			b.ReturnIDs("timeline.id")
 			output(b.String())
 			return nil
 		},
 	}
 	cmd.Flags().StringVar(&entriesJSON, "entries", "", "Timeline entries as JSON array")
+	cmd.Flags().StringVar(&parent, "parent", "", "Parent node ID (or _results[N] in compose)")
 	return cmd
 }
 
@@ -1830,18 +2013,20 @@ func newUIStepperCmd() *cobra.Command {
 		active    int
 		labelsCSV string
 		direction string
+		parent    string
 	)
 	cmd := &cobra.Command{
 		Use:     "stepper",
 		Short:   "Step indicator / progress stepper",
 		Example: `  figma-kit ui stepper -t noir --steps 4 --active 2 --labels "Account,Profile,Settings,Done"`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 			emitUIThemeTokens(b, t)
 
@@ -1862,8 +2047,8 @@ func newUIStepperCmd() *cobra.Command {
 			} else {
 				b.Linef("stepper.resize(%d, 80);", steps*120+64)
 			}
-			b.Line("stepper.fills = typeof bg !== 'undefined' ? [{type:'SOLID', color:bg}] : [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
-			b.Line("const accColor = typeof accent !== 'undefined' ? accent : {r:0.23,g:0.51,b:0.96};")
+			b.Line("stepper.fills = [{type:'SOLID', color:BG}];")
+			b.Line("const accColor = BL;")
 			b.Linef("const labels = %s;", mustMarshalJSON(labels[:steps]))
 			b.Linef("const activeIdx = %d;", active)
 			b.Line("for (let i = 0; i < labels.length; i++) {")
@@ -1884,7 +2069,16 @@ func newUIStepperCmd() *cobra.Command {
 			b.Line("  const lbl = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); lbl.fontName = {family:'Inter',style:'Regular'}; lbl.fontSize = 12; lbl.characters = labels[i]; lbl.fills = [{type:'SOLID', color: i <= activeIdx ? {r:0.9,g:0.9,b:0.95} : {r:0.45,g:0.45,b:0.5}}];")
 			b.Line("  step.appendChild(lbl); stepper.appendChild(step);")
 			b.Line("}")
-			b.Line("pg.appendChild(stepper);")
+			if parent != "" {
+				if strings.HasPrefix(parent, "_results[") {
+					b.Linef("const _par = %s;", parent)
+				} else {
+					b.Linef("const _par = await figma.getNodeByIdAsync(%q);", parent)
+				}
+				b.Linef("if (_par && 'appendChild' in _par) _par.appendChild(%s); else pg.appendChild(%s);", "stepper", "stepper")
+			} else {
+				b.Linef("pg.appendChild(%s);", "stepper")
+			}
 			b.ReturnIDs("stepper.id")
 			output(b.String())
 			return nil
@@ -1894,6 +2088,7 @@ func newUIStepperCmd() *cobra.Command {
 	cmd.Flags().IntVar(&active, "active", 1, "Current active step (0-indexed)")
 	cmd.Flags().StringVar(&labelsCSV, "labels", "", "Comma-separated step labels")
 	cmd.Flags().StringVar(&direction, "direction", "horizontal", "Direction: horizontal, vertical")
+	cmd.Flags().StringVar(&parent, "parent", "", "Parent node ID (or _results[N] in compose)")
 	return cmd
 }
 
@@ -1901,30 +2096,32 @@ func newUIAccordionCmd() *cobra.Command {
 	var (
 		itemsJSON string
 		openIdx   int
+		parent    string
 	)
 	cmd := &cobra.Command{
 		Use:     "accordion",
 		Short:   "Expandable sections (FAQ accordion)",
 		Example: `  figma-kit ui accordion -t noir --items '[{"question":"What is this?","answer":"A powerful design tool"},{"question":"How much?","answer":"Free and open source"}]'`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 			emitUIThemeTokens(b, t)
 
 			if itemsJSON == "" {
-				itemsJSON = `[{"question":"What is figma-kit?","answer":"A CLI tool for programmatic Figma design, powered by AI and the MCP server."},{"question":"Do I need a Figma account?","answer":"Yes, you need at least a free Figma account to use figma-kit."},{"question":"Can I use it without AI?","answer":"Yes! All commands output JavaScript that can be pasted into Figma plugins."},{"question":"Is it open source?","answer":"Yes, figma-kit is MIT licensed and available on GitHub."}]`
+				itemsJSON = `[{"question":"What is figma-kit?","answer":"A CLI tool for programmatic Figma design, powered by AI and the MCP server."},{"question":"Do I need a Figma account?","answer":"Yes, you need at least a free Figma account to use figma-kit."},{"question":"Can I use it without AI?","answer":"Yes! All commands output JavaScript that can be pasted into Figma plugins."},{"question":"Is it open source?","answer":"figma-kit is source-available under BSL 1.1, free for individuals and non-commercial use."}]`
 			}
 
 			b.Linef("const items = JSON.parse(%s);", jsStringLiteral(itemsJSON))
 			b.Linef("const openIdx = %d;", openIdx)
 			b.Line("const acc = figma.createFrame(); acc.name = 'Accordion'; acc.layoutMode = 'VERTICAL'; acc.itemSpacing = 0; acc.paddingLeft = acc.paddingRight = 32; acc.paddingTop = acc.paddingBottom = 16;")
 			b.Line("acc.resize(600, items.length * (openIdx >= 0 ? 100 : 60) + 80);")
-			b.Line("acc.fills = typeof bg !== 'undefined' ? [{type:'SOLID', color:bg}] : [{type:'SOLID', color:{r:0.02,g:0.02,b:0.05}}];")
+			b.Line("acc.fills = [{type:'SOLID', color:BG}];")
 			b.Line("for (let i = 0; i < items.length; i++) {")
 			b.Line("  const item = items[i]; const isOpen = i === openIdx;")
 			b.Line("  const section = figma.createFrame(); section.name = item.question; section.layoutMode = 'VERTICAL'; section.itemSpacing = 8; section.paddingTop = section.paddingBottom = 16; section.fills = [];")
@@ -1937,7 +2134,16 @@ func newUIAccordionCmd() *cobra.Command {
 			b.Line("  if (i < items.length - 1) { const div = figma.createRectangle(); div.resize(536, 1); div.fills = [{type:'SOLID', color:{r:0.12,g:0.12,b:0.16}}]; section.appendChild(div); }")
 			b.Line("  acc.appendChild(section);")
 			b.Line("}")
-			b.Line("pg.appendChild(acc);")
+			if parent != "" {
+				if strings.HasPrefix(parent, "_results[") {
+					b.Linef("const _par = %s;", parent)
+				} else {
+					b.Linef("const _par = await figma.getNodeByIdAsync(%q);", parent)
+				}
+				b.Linef("if (_par && 'appendChild' in _par) _par.appendChild(%s); else pg.appendChild(%s);", "acc", "acc")
+			} else {
+				b.Linef("pg.appendChild(%s);", "acc")
+			}
 			b.ReturnIDs("acc.id")
 			output(b.String())
 			return nil
@@ -1945,5 +2151,104 @@ func newUIAccordionCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&itemsJSON, "items", "", "FAQ items as JSON array [{question,answer}]")
 	cmd.Flags().IntVar(&openIdx, "open", 0, "Index of initially expanded item (-1 for all closed)")
+	cmd.Flags().StringVar(&parent, "parent", "", "Parent node ID (or _results[N] in compose)")
+	return cmd
+}
+
+func newUISectionCmd() *cobra.Command {
+	var (
+		title      string
+		label      string
+		subtitle   string
+		labelColor string
+		width      int
+		padding    int
+		spacing    int
+		divider    bool
+		parent     string
+	)
+	cmd := &cobra.Command{
+		Use:   "section",
+		Short: "Centered section wrapper with label, heading, and subtitle",
+		Example: `  figma-kit ui section -t noir --title "Features" --label "FEATURES" --subtitle "Everything you need"
+  figma-kit compose "ui section --title Features" "card glass --parent _results[0] --title Card1"`,
+		Annotations: map[string]string{"composable": "true"},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			t, err := resolveTheme(cmd)
+			if err != nil {
+				return err
+			}
+			b := newBuilder()
+			b.PageSetup(resolvePage())
+			emitUIThemeTokens(b, t)
+
+			if title == "" {
+				title = "Section Title"
+			}
+
+			b.Line("const section = figma.createFrame();")
+			b.Linef("section.name = %q;", title)
+			b.Linef("section.resize(%d, 1);", width)
+			b.Line("section.layoutMode = 'VERTICAL';")
+			b.Line("section.primaryAxisSizingMode = 'AUTO';")
+			b.Line("section.counterAxisAlignItems = 'CENTER';")
+			b.Line("section.layoutAlign = 'STRETCH';")
+			b.Linef("section.paddingTop = section.paddingBottom = %d;", padding)
+			b.Linef("section.paddingLeft = section.paddingRight = %d;", padding)
+			b.Linef("section.itemSpacing = %d;", spacing)
+			b.Line("section.fills = [];")
+
+			if divider {
+				b.Line("const div = figma.createRectangle();")
+				b.Linef("div.name = 'Divider'; div.resize(%d, 1);", width-padding*2)
+				b.Line("div.fills = [{type:'SOLID', color:STK, opacity:0.5}];")
+				b.Line("section.appendChild(div);")
+			}
+
+			if label != "" {
+				var labelColorExpr string
+				if labelColor != "" {
+					lc, err := codegen.HexToRGB(labelColor)
+					if err != nil {
+						labelColorExpr = "BL"
+					} else {
+						labelColorExpr = codegen.FormatRGB(lc)
+					}
+				} else {
+					labelColorExpr = "BL"
+				}
+				b.Linef("{ const lbl = figma.createText(); await figma.loadFontAsync({family:'Geist Mono',style:'Medium'}); lbl.fontName = {family:'Geist Mono',style:'Medium'}; lbl.fontSize = 12; lbl.characters = %q; lbl.fills = [{type:'SOLID', color:%s}]; lbl.letterSpacing = {value:2, unit:'PIXELS'}; lbl.textAlignHorizontal = 'CENTER'; lbl.textAutoResize = 'WIDTH_AND_HEIGHT'; section.appendChild(lbl); }", strings.ToUpper(label), labelColorExpr)
+			}
+
+			b.Linef("{ const h = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Bold'}); h.fontName = {family:'Inter',style:'Bold'}; h.fontSize = 40; h.characters = %q; h.fills = [{type:'SOLID', color:WT}]; h.textAlignHorizontal = 'CENTER'; h.textAutoResize = 'WIDTH_AND_HEIGHT'; section.appendChild(h); }", title)
+
+			if subtitle != "" {
+				b.Linef("{ const sub = figma.createText(); await figma.loadFontAsync({family:'Inter',style:'Regular'}); sub.fontName = {family:'Inter',style:'Regular'}; sub.fontSize = 18; sub.characters = %q; sub.fills = [{type:'SOLID', color:MT}]; sub.textAlignHorizontal = 'CENTER'; sub.textAutoResize = 'WIDTH_AND_HEIGHT'; section.appendChild(sub); }", subtitle)
+			}
+
+			if parent != "" {
+				if strings.HasPrefix(parent, "_results[") {
+					b.Linef("const _par = %s;", parent)
+				} else {
+					b.Linef("const _par = await figma.getNodeByIdAsync(%q);", parent)
+				}
+				b.Line("if (_par && 'appendChild' in _par) _par.appendChild(section); else pg.appendChild(section);")
+			} else {
+				b.Line("pg.appendChild(section);")
+			}
+			b.ReturnIDs("section.id")
+			output(b.String())
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&title, "title", "", "Section heading text")
+	cmd.Flags().StringVar(&label, "label", "", "Monospace label above heading (auto-uppercased)")
+	cmd.Flags().StringVar(&subtitle, "subtitle", "", "Subtitle below heading")
+	cmd.Flags().StringVar(&labelColor, "label-color", "", "Label color (hex or theme token)")
+	cmd.Flags().IntVar(&width, "width", 1440, "Section width")
+	cmd.Flags().IntVar(&padding, "padding", 80, "Section padding")
+	cmd.Flags().IntVar(&spacing, "spacing", 24, "Item spacing")
+	cmd.Flags().BoolVar(&divider, "divider", false, "Show divider line at top")
+	cmd.Flags().StringVar(&parent, "parent", "", "Parent node ID (or _results[N] in compose)")
 	return cmd
 }

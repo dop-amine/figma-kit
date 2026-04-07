@@ -28,10 +28,43 @@ without needing an AI agent as a middleman.`,
 }
 
 func newAuthLoginCmd() *cobra.Command {
-	return &cobra.Command{
+	var token string
+	cmd := &cobra.Command{
 		Use:   "login",
 		Short: "Authenticate with the Figma MCP server",
+		Long: `Authenticate with Figma for direct command execution.
+
+Without flags, runs the full OAuth flow (requires a Figma PAT for first-time setup).
+With --token, saves a pre-existing OAuth access token directly.`,
+		Example: `  figma-kit auth login                    # Full OAuth flow
+  figma-kit auth login --token <token>    # Direct token injection`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if token != "" {
+				td := &mcpclient.TokenData{AccessToken: token}
+				if err := mcpclient.SaveToken(td); err != nil {
+					return fmt.Errorf("saving token: %w", err)
+				}
+				fmt.Println("Token saved. Verifying...")
+
+				ctx := context.Background()
+				session, err := mcpclient.Connect(ctx)
+				if err != nil {
+					fmt.Println("Token saved but verification failed:", err)
+					fmt.Println("The token may still work — try 'figma-kit auth status'.")
+					return nil
+				}
+				defer session.Close()
+
+				result, err := session.CallWhoami(ctx)
+				if err != nil {
+					fmt.Println("Authenticated (could not fetch user info).")
+					return nil
+				}
+				fmt.Println("Authenticated successfully!")
+				fmt.Println(result.Raw)
+				return nil
+			}
+
 			fmt.Println("Connecting to Figma MCP server...")
 			ctx := context.Background()
 			session, err := mcpclient.Connect(ctx)
@@ -51,6 +84,8 @@ func newAuthLoginCmd() *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().StringVar(&token, "token", "", "Save a pre-existing OAuth access token directly")
+	return cmd
 }
 
 func newAuthLogoutCmd() *cobra.Command {

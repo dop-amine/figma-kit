@@ -1,27 +1,132 @@
 # figma-kit — Cursor Skill for Programmatic Figma Design
 
-## Overview
+## Compose First
 
-`figma-kit` is a Go CLI with 150+ commands that generates `use_figma`-compatible JavaScript for the Figma MCP server. This skill teaches you how to use it to create, inspect, and audit Figma designs from Cursor.
+**ALWAYS use `figma-kit compose` when building 2+ elements.** Individual commands are for single tweaks only.
 
-## Why Use figma-kit Instead of Raw `use_figma`
+Compose batches N commands into 1 JS payload → 1 `use_figma` call → 1 round-trip. Shared preamble emitted once, each command body scope-isolated in `{ }`, all node IDs collected automatically.
 
-Figma's `use_figma` MCP tool executes raw Plugin API JavaScript. You *can* build anything with it — but you'd need to write 20–80 lines of JS per request, convert hex colors to `{r,g,b}` floats, calculate coordinates manually, and handle Plugin API quirks.
+Compose **tree-shakes** shared helpers into minimal bundles (roughly **14KB → ~3KB** payloads). Behavior for agents is unchanged; payloads are just smaller.
 
-figma-kit solves this by providing named, composable, theme-aware commands:
+The generated script declares `const _results = [];` and, after each step, pushes that step’s main node. Later steps can reference **`_results[0]`**, **`_results[1]`**, and so on in **`--parent`** flags to nest under prior outputs.
 
-- **One command replaces 40+ lines of JS** — `card glass -t noir` outputs 45 lines of tested JS
-- **Themes propagate everywhere** — `-t noir` applies colors, typography, spacing, effects consistently
-- **AI can reliably select from 150+ named commands** — instead of generating fragile raw JS each time
-- **QA, design systems, export built in** — `qa checklist`, `ds create`, `export tokens`
-- **Deterministic output** — same command always produces the same JS, no hallucination risk
+### CLI args
 
-**Always prefer figma-kit commands over writing raw Plugin API JavaScript.**
+```bash
+figma-kit compose -t noir \
+  "ui hero --title 'Ship Faster' --cta 'Start'" \
+  "card glass --title 'Feature 1'" \
+  "card glass --title 'Feature 2'" \
+  "ui footer"
+```
+
+### Chaining with `_results[]`
+
+```bash
+figma-kit compose -t noir \
+  "ui section --title Features --label FEATURES" \
+  "card glass --parent _results[0] --title 'Feature 1'"
+```
+
+### `fx --last` in compose
+
+All **`fx`** commands accept **`--last`** to target the previous step’s result (no manual index):
+
+```bash
+figma-kit compose -t noir \
+  "card glass --title Hero" \
+  "fx noise --last" \
+  "fx glow --last --position center"
+```
+
+**`--parent` in compose**: Key **`ui`** and **`card`** commands accept **`--parent`** for nesting—use a concrete node ID, **`_results[n]`**, or (for **`fx`**) **`--last`**.
+
+### Recipe YAML
+
+```bash
+figma-kit compose --recipe landing.yml
+```
+
+```yaml
+# landing.yml
+theme: noir
+page: 0
+steps:
+  - "preamble"
+  - "ui hero --title 'Ship Faster' --cta 'Get Started'"
+  - "card glass --title 'Speed' --desc 'Sub-ms reads'"
+  - "card glass --title 'Scale' --desc 'Planet-scale'"
+  - "card glass --title 'Sync' --desc 'Real-time sync'"
+  - "ui pricing --tiers '[{\"name\":\"Pro\",\"price\":\"$29\",\"highlighted\":true}]'"
+  - "ui footer"
+```
+
+### Execution
+
+**AI agent**: capture compose stdout → feed to `use_figma` once.
+
+**Direct**: `figma-kit exec compose -t noir --recipe landing.yml` — generates JS and sends to Figma MCP in one shot.
+
+### Images in compose
+
+Local images (< 33KB) embed as base64 inline. Include `image place` steps in your compose:
+
+```bash
+figma-kit compose -t noir \
+  "ui hero --title 'Launch'" \
+  "image place ./logo.png --name Logo --width 200 --height 60" \
+  "card glass --title 'Feature'"
+```
+
+For larger files, start `figma-kit image serve ./assets` first (separate process), then use the URL:
+
+```bash
+figma-kit compose -t noir \
+  "image place http://127.0.0.1:8741/hero.jpg --width 1440 --height 900" \
+  "ui hero --title 'Launch'"
+```
+
+### When to use individual commands
+
+- Single property tweak: `figma-kit style fill <id> --solid "#FF0000"`
+- One-off inspection: `figma-kit inspect <id>`
+- Non-composable operations: `theme init`, `auth`, `config`, `export tokens`, `image serve`
+
+## Rate Limits
+
+| MCP Tool | Limit | Notes |
+|----------|-------|-------|
+| `use_figma` | **Unlimited** (beta) | Write freely. Batch via compose. |
+| `get_screenshot` | 200–600/day | Call ONCE at the end, not between steps. |
+| `get_metadata`, `get_design_context`, etc. | 200–600/day | Minimize reads. |
+
+**Strategy**: maximize writes per `use_figma` call with compose. Call `get_screenshot` once after all mutations are done to verify the final result. Never screenshot between compose steps.
+
+## Verification
+
+After composing and executing:
+
+1. Call `get_screenshot` **once** to verify the final result.
+2. If something is off, fix with a targeted individual command or a small compose, then screenshot again.
+3. Do NOT screenshot after every step — it wastes rate-limited reads.
+
+## Authentication
+
+Several paths, from zero-config to fully manual:
+
+| Tier | Method | Setup |
+|------|--------|-------|
+| **AI agent** | OAuth (MCP) | Cursor/Claude Code handle OAuth transparently. Nothing to configure. |
+| **Cached token** | Browser OAuth after `auth login` | Token stored at `~/.config/figma-kit/token.json` for reuse. |
+| **REST / PAT (optional)** | Personal Access Token | Set `FIGMA_ACCESS_TOKEN` for `exec`, scripts, or REST-style calls without going through MCP OAuth. |
+| **PAT bootstrap** | `FIGMA_TOKEN` + `auth login` | PAT can register the OAuth client; browser flow still caches token at `~/.config/figma-kit/token.json`. |
+
+Use **OAuth + cached token** for interactive MCP workflows; use **PAT / `FIGMA_ACCESS_TOKEN`** when you need a portable token for automation or direct API access.
 
 ## Prerequisites
 
 1. **figma-kit binary** in PATH — verify: `figma-kit --version`
-2. **Figma MCP server** configured in `.cursor/mcp.json`:
+2. **Figma MCP server** in `.cursor/mcp.json`:
    ```json
    { "mcpServers": { "figma": { "url": "https://mcp.figma.com/mcp" } } }
    ```
@@ -29,346 +134,210 @@ figma-kit solves this by providing named, composable, theme-aware commands:
 
 ## Core Workflow
 
-Every interaction follows the same loop:
-
-**AI Agent Workflow (via Cursor/Claude Code):**
-1. **Generate JS** — run a `figma-kit` command to produce use_figma JavaScript
-2. **Execute** — feed the JS output to the `use_figma` MCP tool
-3. **Verify** — call `get_screenshot` to visually confirm the result
-
-**Direct Execution Workflow:**
-1. **Authenticate** — `figma-kit auth login` (one-time)
-2. **Execute** — `figma-kit exec <command>` generates JS and sends to MCP in one shot
-3. **Verify** — add `--screenshot` flag for automatic screenshot
-
 ```
-User: "Create a hero section"
-→ AI: figma-kit exec ui hero -t noir --title "Ship Faster" --cta "Get Started"
-  OR
-→ AI: figma-kit ui hero -t noir ... | feed output to use_figma
-→ get_screenshot to verify
+User prompt → AI picks commands → figma-kit compose → 1 JS payload → use_figma → get_screenshot (once)
 ```
 
-## Command Reference
+For multi-element designs:
+
+```bash
+# 1. Create theme (if needed — not composable, run separately)
+figma-kit theme init --name "Brand" --bg "#0A2540" --primary "#635BFF" --accent "#00D4AA" -o themes/brand.json
+
+# 2. Compose everything into one call
+figma-kit compose -t brand \
+  "preamble" \
+  "ui hero --title 'Title' --cta 'Start'" \
+  "card glass --title 'Feature 1'" \
+  "card glass --title 'Feature 2'" \
+  "ui footer"
+# → feed output to use_figma
+
+# 3. Verify once
+# → call get_screenshot
+```
+
+For single tweaks:
+
+```bash
+figma-kit style fill <id> --solid "#FF0000"
+# → feed to use_figma
+```
+
+## Command Layers
+
+See [docs/STANDARDS.md](../../docs/STANDARDS.md) for the canonical architecture, composable command contract, and JS generation rules.
 
 ### Layer 0 — File & Session
 
-| Command | Description |
-|---------|-------------|
-| `figma-kit init [name]` | Create `.figmarc.json` project config |
-| `figma-kit config set\|get\|list` | Manage config (fileKey, theme, page, exportDir) |
-| `figma-kit auth login\|logout\|status` | Manage Figma MCP authentication |
-| `figma-kit exec <command>` | Generate JS and execute directly via MCP |
-| `figma-kit new-file <name>` | Create a new Figma file via MCP |
-| `figma-kit whoami` | Check Figma identity via MCP |
-| `figma-kit open` | Open current file in browser |
-| `figma-kit status` | JS to inspect pages, frames, node counts |
+| Command | Description | Composable |
+|---------|-------------|:----------:|
+| `init [name]` | Create `.figmarc.json` project config | No |
+| `config set\|get\|list` | Manage config (fileKey, theme, page) | No |
+| `auth login\|logout\|status` | Manage Figma MCP authentication | No |
+| `exec <command>` | Generate JS + send to MCP directly | No |
+| `new-file <name>` | Create a new Figma file via MCP | No |
+| `whoami` | Check Figma identity | No |
+| `open` | Open current file in browser | No |
+| `status` | Inspect pages, frames, node counts | Yes |
 
 ### Layer 1 — Primitives
 
-**Node CRUD** — `figma-kit node <verb>`
-| Verb | Key Flags |
-|------|-----------|
-| `create <type>` | `--name`, `-w`, `--height`, `--x`, `--y` |
-| `clone <id>` | `--dx`, `--dy` |
-| `delete <id>` | — |
-| `move <id>` | `--x`, `--y` |
-| `resize <id>` | `-w`, `--height` |
-| `rename <id>` | `--name` |
-| `reparent <id> <parentId>` | — |
-| `lock <id>` | `--unlock` |
-| `visible <id>` | `--hide` |
-| `boolean <op> <a> <b>` | `op`: union, subtract, intersect, exclude |
-| `svg <path-data>` | `--fill`, `--stroke`, `--size` |
-| `variant-set <compId>` | `--variants` JSON array |
+All composable. Use inside `compose` for multi-element designs.
 
-**Styling** — `figma-kit style <verb>`
-| Verb | Key Flags |
-|------|-----------|
-| `fill <id>` | `--solid "#HEX"`, `--opacity` |
-| `stroke <id>` | `--color`, `--weight`, `--align` |
-| `effect <id>` | `--shadow`, `--blur`, `--blur-type` |
-| `corner <id>` | `--radius` or `--tl/--tr/--br/--bl` |
-| `blend <id>` | `--mode`, `--opacity` |
-| `gradient <id>` | `--type`, `--angle`, `--stops` |
-| `clip <id>` | `--off` |
+**Node CRUD** — `node <verb>`: `create`, `clone`, `delete`, `move`, `resize`, `rename`, `reparent`, `lock`, `visible`, `boolean`, `svg`, `variant-set`
 
-**Text** — `figma-kit text <verb>`
-| Verb | Key Flags |
-|------|-----------|
-| `create` | `--content`, `--font`, `--weight`, `--size`, `--color`, `--parent` |
-| `edit <id>` | `--content` |
-| `style <id>` | `--size`, `--lh`, `--ls`, `--align` |
-| `range <id>` | `--start`, `--end`, `--weight`, `--color` |
-| `list-fonts` | — |
-| `load-fonts` | `--families "Inter,Geist Mono"` |
+**Styling** — `style <verb>`: `fill`, `stroke`, `effect`, `corner`, `blend`, `gradient`, `clip`
 
-**Layout** — `figma-kit layout <verb>`
-| Verb | Key Flags |
-|------|-----------|
-| `auto <id>` | `--dir`, `--gap`, `--pad`, `--align`, `--wrap` |
-| `grid <id>` | `--columns`, `--gutter`, `--margin` |
-| `constraints <id>` | `--h`, `--v` |
-| `sizing <id>` | `-w`, `--height` |
-| `align <id>` | `--primary`, `--counter` |
-| `distribute <ids>` | `--axis`, `--gap` |
+**Text** — `text <verb>`: `create`, `edit`, `style`, `range`, `list-fonts`, `load-fonts`. For **`text create`**, use **`--line-height`**, **`--letter-spacing`**, **`--align`**, and **`--auto-resize`** alongside existing flags.
+
+**Layout** — `layout <verb>`: `auto`, `grid`, `constraints`, `sizing`, `align`, `distribute`
 
 ### Layer 2 — Design Patterns
 
-**Cards** — `figma-kit card <type>`
-- `glass` — glassmorphism with presets (subtle, default, strong, pill)
-- `solid` — flat card with bg, border, shadow, radius
-- `gradient` — gradient fill card
-- `image` — image fill with overlay
-- `bento` — grid layout of cards
-- `neumorphic` — soft UI with inset/outset shadow pair (`--depth`, `--inset`)
-- `clay` — claymorphism / puffy 3D (`--color`)
-- `outline` — ghost card with glow border (`--glow-color`, `--glow-spread`)
+All composable. These are the primary compose building blocks.
 
-**UI Components** — `figma-kit ui <component>`
-- Primitives: `button`, `input`, `badge`, `avatar`, `divider`, `icon`, `progress`, `toggle`, `tooltip`, `stat`, `table`, `nav`, `footer`, `checkbox`, `radio`, `tabs`, `dropdown`, `breadcrumb`, `skeleton`
-- New primitives: `chip`, `toast`, `modal`, `card-list`, `sidebar`, `avatar-group`, `rating`, `search`, `pagination`, `color-picker`
-- Layout compositions: `hero`, `pricing`, `feature-grid`, `testimonial`, `timeline`, `stepper`, `accordion`
+**Cards** — `card <type>`: `glass`, `solid`, `gradient`, `image`, `bento`, `neumorphic`, `clay`, `outline`
 
-**Visual Effects** — `figma-kit fx <effect>`
-- `glow`, `mesh`, `noise`, `vignette`, `grain`, `blur-bg`, `accent-bar`, `shadow`, `parallax-layer`
-- `aurora` — northern lights gradient overlay (`--palette`)
-- `morph` — organic blob shapes (`--count`, `--spread`)
-- `gradient-border` — simulated gradient stroke (`--from`, `--to`)
-- `spotlight` — radial highlight (`--x`, `--y`, `--intensity`)
-- `pattern` — repeating geometric patterns: dots, lines, crosses, diagonal, grid
+**UI Components** — `ui <component>`: `button`, `input`, `badge`, `avatar`, `divider`, `icon`, `progress`, `toggle`, `tooltip`, `stat`, `table`, `nav`, `footer`, `checkbox`, `radio`, `tabs`, `dropdown`, `breadcrumb`, `skeleton`, `chip`, `toast`, `modal`, `card-list`, `sidebar`, `avatar-group`, `rating`, `search`, `pagination`, `color-picker`, `section`, `hero`, `pricing`, `feature-grid`, `testimonial`, `timeline`, `stepper`, `accordion`
 
-**Images** — `figma-kit image <action>`
-- `place <path-or-url>` — local files (base64 embedded, < 33 KB) or URLs
-- `fill <path-or-url> --node <id>` — fill existing node with image
-- `serve [dir]` — start local HTTP server for larger files
+**`ui section`** — Recommended **section wrapper** for pages built with compose. Flags: **`--title`**, **`--label`**, **`--subtitle`**, **`--label-color`**, **`--width`**, **`--padding`**, **`--spacing`**, **`--divider`**, **`--parent`**.
+
+**`ui stat`** and **`ui badge`** accept **`--items`** for **batch** creation (multiple stats/badges in one step).
+
+Key **`ui`** and **`card`** commands accept **`--parent`** for compose chaining wherever nesting applies.
+
+**Effects** — `fx <effect>`: `glow`, `mesh`, `noise`, `vignette`, `grain`, `blur-bg`, `accent-bar`, `shadow`, `parallax-layer`, `aurora`, `morph`, `gradient-border`, `spotlight`, `pattern`
+
+**Images** — `image <action>`: `place` (composable), `fill` (composable), `serve` (not composable — starts HTTP server)
 
 ### Layer 3 — Deliverables
 
-`figma-kit make <deliverable>` — generates complete production designs.
+`make <deliverable>` — composable, generates complete production designs.
 
-**Marketing & Social:** `carousel`, `instagram-post`, `instagram-story`, `twitter-card`, `facebook-cover`, `youtube-thumb`, `og-image`, `banner`, `email-header`, `ad-set`
+Marketing: `carousel`, `instagram-post`, `instagram-story`, `twitter-card`, `facebook-cover`, `youtube-thumb`, `og-image`, `banner`, `email-header`, `ad-set`
 
-**Sales & Business:** `one-pager`, `pitch-deck`, `case-study`, `proposal`, `invoice`, `business-card`, `letterhead`, `contract`
+Business: `one-pager`, `pitch-deck`, `case-study`, `proposal`, `invoice`, `business-card`, `letterhead`, `contract`
 
-**Motion:** `storyboard`, `styleframe`, `animatic`, `transition-spec`
+Motion: `storyboard`, `styleframe`, `animatic`, `transition-spec`
 
-**UI/UX:** `wireframe`, `screen`, `dashboard`, `form`, `modal`, `empty-state`, `error-page`, `onboarding`, `settings`
+UI/UX: `wireframe`, `screen`, `dashboard`, `form`, `modal`, `empty-state`, `error-page`, `onboarding`, `settings`
 
-**Print:** `poster`, `brochure`, `packaging`, `signage`, `menu`
+Print: `poster`, `brochure`, `packaging`, `signage`, `menu`
 
-**Meta:** `changelog` — styled release notes with version entries and type badges
+Meta: `changelog`
 
 Many accept `--content <file.yml>` for data-driven generation.
 
 ### Layer 4 — Design System
 
-`figma-kit ds <verb>` — create, colors, type-scale, spacing, elevation, radius, icons, component, component-sheet, variables, variables-create, search, import, sync-tokens, audit, tokens
+`ds <verb>`: `create`, `colors`, `type-scale`, `spacing`, `elevation`, `radius`, `icons`, `component`, `component-sheet`, `variables`, `variables-create`, `search`, `import`, `sync-tokens`, `audit`, `tokens`
+
+`ds create` and `ds variables-create` are composable. Search/import/audit are MCP-only (not composable).
 
 ### Layer 5 — Inspect & QA
 
-| Command | Description |
-|---------|-------------|
-| `figma-kit inspect <id>` | Dump node properties |
-| `figma-kit screenshot <id>` | Capture via MCP |
-| `figma-kit tree` | Hierarchical node tree |
-| `figma-kit find --name "..."` | Search nodes by name |
-| `figma-kit measure <a> <b>` | Distance between nodes |
-| `figma-kit diff <a> <b>` | Compare node properties |
-| `figma-kit qa <check>` | contrast, touch-targets, orphans, fonts, colors, spacing, naming, responsive, checklist |
+| Command | Composable |
+|---------|:----------:|
+| `inspect <id>` | Yes |
+| `screenshot <id>` | No (MCP read) |
+| `tree` | Yes |
+| `find --name "..."` | Yes |
+| `measure <a> <b>` | Yes |
+| `diff <a> <b>` | Yes |
+| `qa <check>` | Yes |
 
 ### Layer 6 — Export & Handoff
 
-**Export:** `figma-kit export png\|svg\|pdf\|page\|sprites\|tokens`
-**Handoff:** `figma-kit handoff spec\|redline\|css\|react\|assets`
+**Export**: `export png|svg|pdf|page|sprites|tokens` — `tokens` is not composable (Go data output).
 
-### Layer 7 — Batch Orchestration
+**Handoff**: `handoff spec|redline|css|react|assets`
 
-```bash
-figma-kit batch recipe.yml
-```
+### Layer 7 — Compose & Orchestration
 
-Recipe format:
-```yaml
-name: "Q2 Campaign"
-steps:
-  - title: "Carousel"
-    js: |
-      // JS from figma-kit make carousel
-  - title: "One-pager"
-    js: |
-      // JS from figma-kit make one-pager
-```
+| Command | Description |
+|---------|-------------|
+| `compose` | Batch N commands → 1 JS payload (this is the primary workflow) |
+| `batch recipe.yml` | Legacy YAML orchestration (use compose --recipe instead) |
 
 ## Theme System
 
-Three built-in themes, selectable via `-t` flag or `.figmarc.json`:
+Three built-in themes via `-t` flag:
 
 | Theme | Description |
 |-------|-------------|
-| `default` | Dark theme for tech/SaaS. Blue-teal accents. |
-| `light` | Light mode for print-friendly deliverables. |
-| `noir` | Noir dark premium theme. Primary blue #3366FF. |
+| `default` | Dark tech/SaaS. Blue-teal accents. |
+| `light` | Light mode for print-friendly work. |
+| `noir` | Noir premium. Primary blue `#3366FF`. |
 
-Custom themes: place JSON in `~/.config/figma-kit/themes/` or `./themes/`.
+Custom themes: `figma-kit theme init` → place JSON in `~/.config/figma-kit/themes/` or `./themes/`.
 
-Export tokens: `figma-kit export tokens --format css`
+**Fonts**: Compose and standalone commands load fonts from the **active theme’s fonts spec** (not hardcoded Inter/Geist Mono). Ensure the theme defines the families you need; use a **`preamble`** compose step when you need upfront font loading.
 
 ## Workflow Patterns
 
-### Creating a Carousel
-```bash
-figma-kit make carousel --content slides.yml -t noir
-# → produces JS that creates all slides in one use_figma call
-```
-
-### Building a Component from Scratch
-```bash
-figma-kit node create frame --name "Card" -w 400 --height 300
-# → get the node ID from use_figma response
-figma-kit style fill <id> --solid "#1A1C2B"
-figma-kit style corner <id> --radius 16
-figma-kit layout auto <id> --dir VERTICAL --gap 16 --pad 24
-figma-kit text create --content "Title" --size 24 --weight Bold --parent <id>
-```
-
-### QA Audit
-```bash
-figma-kit qa checklist --page 0
-# → generates JS that runs all QA checks and returns scored report
-```
-
-### Design System Setup
-```bash
-figma-kit ds create -t noir
-# → creates full DS page with swatches, type specimens, spacing scale
-```
-
-## Reference-Driven Workflow
-
-When a user shares a URL, screenshot, brand guide, or mood description, follow this sequence:
-
-### 1. Extract colors from the reference
-
-Analyze the image or website. Identify three key colors:
-- **Background** — the dominant dark/light surface color
-- **Primary** — the main brand/accent color
-- **Accent** — a secondary highlight color
-
-### 2. Create a theme
+### Landing Page (compose)
 
 ```bash
-figma-kit theme init \
-  --name "Brand" \
-  --bg "#0A2540" \
-  --primary "#635BFF" \
-  --accent "#00D4AA" \
-  --font-heading "Inter" \
-  --font-body "Inter" \
-  -o themes/brand.json
+figma-kit theme init --name "Brand" --bg "#0A2540" --primary "#635BFF" --accent "#00D4AA" -o themes/brand.json
+
+figma-kit compose -t brand \
+  "preamble" \
+  "ui hero --title 'Ship Faster' --subtitle 'The modern platform' --cta 'Get Started'" \
+  "card glass --title 'Speed' --desc 'Sub-millisecond reads'" \
+  "card glass --title 'Scale' --desc 'Planet-scale infra'" \
+  "card glass --title 'Sync' --desc 'Real-time everywhere'" \
+  "ui pricing --tiers '[{\"name\":\"Free\",\"price\":\"$0\"},{\"name\":\"Pro\",\"price\":\"$29\",\"highlighted\":true}]'" \
+  "ui footer"
+# → single use_figma call, then get_screenshot once
 ```
 
-Optional flags: `--font-mono`, `--warn`, `--error`, `--success`, `--spacing compact|spacious`, `--from` (extend existing theme).
+### Pitch Deck (recipe)
 
-### 3. Preview the theme
+```yaml
+# deck.yml
+theme: brand
+steps:
+  - "make carousel --content deck-content.yml"
+```
 
 ```bash
-figma-kit theme preview -t brand
-# → execute via use_figma, then get_screenshot to verify
+figma-kit compose --recipe deck.yml
 ```
-
-### 4. Build the preamble
-
-```bash
-figma-kit preamble -t brand
-# → execute via use_figma (sets up colors + fonts on the page)
-```
-
-### 5. Compose the design
-
-Sequence commands based on what the user wants:
-
-```bash
-# Landing page
-figma-kit make screen --type landing --sections "hero,features,pricing,cta" -t brand
-figma-kit card glass -t brand --title "Feature 1" --desc "Description"
-figma-kit ui button --variant primary -t brand
-figma-kit fx mesh <heroId> -t brand
-
-# Pitch deck
-figma-kit make pitch-deck --slides 7 --template saas -t brand
-
-# Design system
-figma-kit ds create -t brand
-
-# Social assets
-figma-kit make og-image --title "Product" --description "Tagline" -t brand
-figma-kit make carousel --content slides.yml -t brand
-```
-
-### 6. QA and export
-
-```bash
-figma-kit qa checklist --page 0
-figma-kit export tokens -t brand --format css
-```
-
-## Project Templates
-
-Common prompt patterns with recommended command sequences:
-
-### Landing Page
-```
-preamble → node create frame "Hero" → fx mesh → text create (headline) →
-text create (subtitle) → ui button → card glass ×3 → make screen --type pricing →
-ui footer → qa checklist
-```
-
-### Pitch Deck
-```
-preamble → make pitch-deck --slides 7 --content deck.yml
-```
-Or with carousel format: `make carousel --content deck.yml`
 
 ### Design System
-```
-preamble → ds create → ds variables-create → export tokens --format css
+
+```bash
+figma-kit compose -t brand \
+  "ds create" \
+  "ds variables-create"
+# then separately: figma-kit export tokens -t brand --format css
 ```
 
-### Social Campaign
-```
-preamble → make carousel --content slides.yml → make og-image → make twitter-card →
-make instagram-post
-```
+### Reference-Driven (from URL/screenshot/brand guide)
 
-### Full Project (multiple pages)
-```
-page create "Landing" → page create "Dashboard" → page create "Design System" →
-(switch to each page and build with above patterns)
-```
-
-## Prompt Cookbook
-
-Run `figma-kit cookbook` to browse 15 complete prompt-to-design sessions, or see [docs/COOKBOOK.md](../../docs/COOKBOOK.md).
+1. Extract 3 colors: background, primary, accent
+2. `figma-kit theme init --bg ... --primary ... --accent ... -o themes/ref.json`
+3. `figma-kit compose -t ref "preamble" "ui hero ..." "card glass ..." ...`
+4. `get_screenshot` once to verify
 
 ## MCP Tool Routing
 
-| figma-kit output | MCP tool to use |
-|------------------|-----------------|
-| JavaScript code | `use_figma` (or `figma-kit exec` for direct execution) |
-| Screenshot requests | `get_screenshot` (or `figma-kit screenshot --node <id>`) |
-| Design system search | `search_design_system` (or `figma-kit ds search <query>`) |
-| File creation | `create_new_file` (or `figma-kit new-file <name>`) |
-| React/handoff | `get_design_context` |
-| Plain text (themes, info) | Display directly |
+| figma-kit output | MCP tool |
+|------------------|----------|
+| JavaScript code | `use_figma` |
+| Screenshot requests | `get_screenshot` (rate limited — use sparingly) |
+| Design system search | `search_design_system` |
+| File creation | `create_new_file` |
+| Plain text (themes, tokens) | Display directly |
 
 ## Error Recovery
 
-- **Font not loaded**: Always call `figma-kit preamble` or use `scaffold` which includes font loading
-- **Node not found**: Use `figma-kit tree` to list available nodes and get correct IDs
-- **Theme not found**: Check available themes with `figma-kit themes`
-- **use_figma fails**: Check that the JS is a single top-level async expression (figma-kit handles this)
-- **Visual issues**: Always verify with `get_screenshot` after mutations
+- **Font not loaded**: Use `preamble` as a compose step — it loads all fonts.
+- **Node not found**: `figma-kit tree` to list nodes and get IDs.
+- **Theme not found**: `figma-kit themes` to list available themes.
+- **use_figma fails**: Ensure JS is a single top-level async expression (figma-kit handles this).
+- **Payload too large**: Split compose into multiple calls (50,000 char limit per `use_figma`).
 
 ## Global Flags
 

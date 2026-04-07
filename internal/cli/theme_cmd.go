@@ -264,6 +264,7 @@ func newThemePreviewCmd() *cobra.Command {
 		Long: `Outputs use_figma JS that creates a compact theme preview in Figma:
 color swatches, type scale using the theme's actual fonts, sample components,
 gradient swatches, and brand info (if present).`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -284,7 +285,7 @@ gradient swatches, and brand info (if present).`,
 				monoFont = t.Fonts.Mono
 			}
 
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, page)
 
 			b.Comment("Load theme fonts")

@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/dop-amine/figma-kit/internal/codegen"
 	"github.com/dop-amine/figma-kit/internal/config"
 	"github.com/dop-amine/figma-kit/internal/theme"
 )
@@ -14,8 +15,9 @@ var (
 	// Version is set at build time via ldflags.
 	Version = "dev"
 
-	flagTheme string
-	flagPage  int
+	flagTheme    string
+	flagPage     int
+	flagBodyOnly bool
 )
 
 func newRootCmd() *cobra.Command {
@@ -29,13 +31,18 @@ that into named, composable, theme-aware commands — so you (or your AI agent)
 don't have to write 40 lines of JS for a glass card.
 
   AI workflow:   Prompt in Cursor / Claude Code → AI picks commands → Figma renders
-  Direct exec:   figma-kit exec make carousel -t noir --content slides.yml
+  Compose:       figma-kit compose -t noir "ui section --title X" "card glass --parent _results[0]"
+                 (batch N commands into 1 use_figma call, tree-shaken helpers)
+  Direct exec:   figma-kit exec compose -t noir --recipe landing.yml
   Standalone:    figma-kit card glass -t noir | pipe to use_figma
 
+Compose features: _results[] for cross-step references, --last on fx commands
+for chaining, --parent on all composable commands, tree-shaken helpers (~3KB).
+
 Commands span 8 layers: node primitives, styles, cards (glass, neumorphic,
-clay, outline), 29 UI components (hero, pricing, modal, pagination...),
+clay, outline), 30 UI components (hero, section, pricing, modal, pagination...),
 14 effects (aurora, morph, spotlight...), 37 templates, design systems,
-QA audits, export, and batch orchestration.
+QA audits, export, and compose (batch N commands into 1 call).
 
 Run 'figma-kit cookbook' to browse real-world prompt examples.
 Run 'figma-kit examples' to get starter content YAML files.
@@ -47,6 +54,8 @@ Run 'figma-kit docs' to read the full documentation.`,
 
 	cmd.PersistentFlags().StringVarP(&flagTheme, "theme", "t", "", "Theme name (default, light, noir, or path)")
 	cmd.PersistentFlags().IntVarP(&flagPage, "page", "p", -1, "Page index (0-based)")
+	cmd.PersistentFlags().BoolVar(&flagBodyOnly, "body-only", false, "Emit only the command body (used internally by compose)")
+	_ = cmd.PersistentFlags().MarkHidden("body-only")
 
 	// Phase 1: ported commands
 	cmd.AddCommand(newPreambleCmd())
@@ -115,6 +124,9 @@ Run 'figma-kit docs' to read the full documentation.`,
 	cmd.AddCommand(newAuthCmd())
 	cmd.AddCommand(newNewFileCmd())
 
+	// Phase 14: Compose
+	cmd.AddCommand(newComposeCmd())
+
 	return cmd
 }
 
@@ -164,4 +176,13 @@ func resolveFileKey() string {
 // output writes the generated JS to stdout.
 func output(js string) {
 	_, _ = fmt.Fprint(os.Stdout, js)
+}
+
+// newBuilder creates a codegen.Builder that respects the --body-only flag.
+func newBuilder() *codegen.Builder {
+	b := codegen.New()
+	if flagBodyOnly {
+		b.SetBodyOnly(true)
+	}
+	return b
 }

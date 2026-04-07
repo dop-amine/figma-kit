@@ -33,4 +33,4 @@ The AI extracts the colors (#0A2540, #635BFF, #00D4AA), runs `figma-kit theme in
 
 Works with Cursor, Claude Code, or any MCP-compatible AI agent. Also runs standalone from the terminal.
 
-MIT licensed, free, open source. Happy to answer questions about the architecture, the Figma MCP protocol, or the prompt-driven workflow.
+Source-available under BSL 1.1 — free for individuals and non-commercial use, converts to MPL 2.0 in 2030. Happy to answer questions about the architecture, the Figma MCP protocol, or the prompt-driven workflow.

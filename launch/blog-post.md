@@ -112,7 +112,7 @@ figma-kit themes
 figma-kit make og-image --title "Hello HN" -t default
 ```
 
-The project is MIT licensed and open source: [github.com/dop-amine/figma-kit](https://github.com/dop-amine/figma-kit)
+The project is source-available under BSL 1.1 — free for individuals and non-commercial use: [github.com/dop-amine/figma-kit](https://github.com/dop-amine/figma-kit)
 
 ---
 

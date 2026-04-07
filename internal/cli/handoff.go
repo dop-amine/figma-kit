@@ -36,12 +36,13 @@ func newHandoffSpecCmd() *cobra.Command {
 		Use:   "spec <nodeId>",
 		Short: "Generate JS that returns a Markdown spec from node properties",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -65,12 +66,13 @@ func newHandoffRedlineCmd() *cobra.Command {
 		Use:   "redline <nodeId>",
 		Short: "Generate JS that draws measurement overlay lines on a duplicate above the node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const target = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!target || !('absoluteBoundingBox' in target) || !target.absoluteBoundingBox) throw new Error('Node or bounds not found');")
@@ -95,12 +97,13 @@ func newHandoffCSSCmd() *cobra.Command {
 		Use:   "css <nodeId>",
 		Short: "Generate JS that builds a CSS snippet from solid fills, radius, and dimensions",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -125,6 +128,7 @@ func newHandoffReactCmd() *cobra.Command {
 		Use:   "react <nodeId>",
 		Short: "Instructions for generating React via the get_design_context MCP tool",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			msg := strings.TrimSpace(fmt.Sprintf(`
 Use the Figma MCP tool **get_design_context** with node ID **%s**.
@@ -146,12 +150,13 @@ func newHandoffAssetsCmd() *cobra.Command {
 		Use:   "assets <nodeId>",
 		Short: "Generate JS that lists export settings and child assets under a node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const root = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!root) throw new Error('Node not found');")

@@ -7,7 +7,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/dop-amine/figma-kit/internal/codegen"
 	"github.com/dop-amine/figma-kit/internal/config"
 	"github.com/dop-amine/figma-kit/internal/mcpclient"
 )
@@ -137,7 +136,7 @@ func newStatusCmd() *cobra.Command {
 		Use:   "status",
 		Short: "Generate JS to inspect file structure (pages, frames, node counts)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.Comment("figma-kit status: inspect file structure")
 			b.Line("const pages = figma.root.children;")
 			b.Line("const result = [];")

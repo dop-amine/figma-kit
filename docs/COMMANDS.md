@@ -142,12 +142,17 @@ figma-kit status
 
 ### `auth login`
 
-**Usage:** `figma-kit auth login`
+**Usage:** `figma-kit auth login [flags]`
 
-**Description:** Initiate Figma OAuth flow. Opens a browser for authorization, caches the token at `~/.config/figma-kit/token.json`. Required for `exec` and direct MCP commands.
+**Description:** Authenticate with Figma for direct command execution. Without flags, runs the full OAuth flow (opens browser). With `--token`, saves a pre-existing access token directly — useful for CI or headless environments.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--token` | string | `""` | Pre-existing OAuth access token (skips browser flow) |
 
 ```bash
-figma-kit auth login
+figma-kit auth login                    # Full OAuth flow (opens browser)
+figma-kit auth login --token <token>    # Direct token injection (CI / headless)
 ```
 
 ---
@@ -180,7 +185,7 @@ figma-kit auth status
 
 **Usage:** `figma-kit exec <sub-command> [flags]`
 
-**Description:** Generate JS from any figma-kit command and execute it directly in Figma via the MCP server in one shot. No AI middleman required. Requires prior `auth login`.
+**Description:** Generate JS from any figma-kit command and execute it directly in Figma via the MCP server in one shot. No AI middleman required. Requires prior `auth login`. Works with any subcommand including `compose` for batched multi-step execution.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
@@ -192,6 +197,9 @@ figma-kit auth status
 figma-kit exec make carousel -t noir --content slides.yml
 figma-kit exec card glass -t noir --title "Feature" --screenshot
 figma-kit exec ui hero -t noir --title "Ship Faster"
+
+# Execute a compose recipe directly
+figma-kit exec compose -t noir --recipe landing.yml
 ```
 
 ---
@@ -633,9 +641,14 @@ figma-kit style apply "123:456" --name "Primary Blue" --type fill
 | `--x` | | int | `0` | X. |
 | `--y` | | int | `0` | Y. |
 | `--width` | `-w` | int | `0` | Text box width; `0` = auto. |
+| `--line-height` | | int | `0` | Line height in px; `0` = default auto behavior. |
+| `--letter-spacing` | | float | `0` | Letter spacing in pixels. |
+| `--align` | | string | `""` | `LEFT`, `CENTER`, `RIGHT`, or `JUSTIFIED` when set. |
+| `--auto-resize` | | string | `""` | `NONE`, `WIDTH_AND_HEIGHT`, or `HEIGHT` when set (with width, defaults to `HEIGHT` if unset). |
 
 ```bash
 figma-kit text create --content "Hello" --font Inter --weight Bold --size 24 --color "#0F172A"
+figma-kit text create --content "Subhead" --line-height 28 --letter-spacing 0.5 --align CENTER --auto-resize WIDTH_AND_HEIGHT
 ```
 
 ---
@@ -834,6 +847,8 @@ figma-kit layout distribute "id1,id2,id3" --axis H --gap 16
 
 ## Layer 2 — Patterns
 
+Composable **`ui`** and **`card`** commands accept **`--parent`** with either a Figma node id or a compose expression **`_results[N]`** (emitted as JS, not wrapped in `getNodeByIdAsync`). Use this to nest outputs inside a prior compose step.
+
 ### `card glass`
 
 **Usage:** `figma-kit card glass`
@@ -1027,11 +1042,14 @@ figma-kit ui input --label "Password" --placeholder "••••••••" -
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--text` | string | `New` | Badge copy. |
-| `--color` | string | `blue` | `blue`, `green`, `red`, `yellow`, `gray`. |
+| `--text` | string | `New` | Badge copy (single-badge mode). |
+| `--color` | string | `blue` | `blue`, `green`, `red`, `yellow`, `gray` (single-badge mode). |
+| `--items` | string (JSON) | `""` | Batch mode: `[{"text":"…","color":"blue"},…]` builds a horizontal row; omit `--text`/`--color` when set. |
+| `--parent` | string | `""` | Parent node id or `_results[N]` in compose. |
 
 ```bash
 figma-kit ui badge --text "Beta" --color yellow
+figma-kit ui badge --items '[{"text":"v2.1","color":"blue"},{"text":"New","color":"green"}]'
 ```
 
 ---
@@ -1148,12 +1166,15 @@ figma-kit ui tooltip --text "Saved" --position bottom
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--value` | string | `4.2x` | Main value. |
-| `--label` | string | `Faster` | Caption. |
-| `--trend` | string | `""` | `up`, `down`, or `neutral`. |
+| `--value` | string | `4.2x` | Main value (single-stat mode). |
+| `--label` | string | `Faster` | Caption (single-stat mode). |
+| `--trend` | string | `""` | `up`, `down`, or `neutral` (single-stat mode only). |
+| `--items` | string (JSON) | `""` | Batch mode: `[{"value":"…","label":"…"},…]` as a horizontal stats row (no per-item `trend`; use single-stat mode for `--trend`). |
+| `--parent` | string | `""` | Parent node id or `_results[N]` in compose. |
 
 ```bash
 figma-kit ui stat --value "12%" --label "MoM" --trend up
+figma-kit ui stat --items '[{"value":"150+","label":"Commands"},{"value":"4.2x","label":"Faster"}]'
 ```
 
 ---
@@ -1449,6 +1470,31 @@ figma-kit ui search --placeholder "Search components..."
 
 ---
 
+### `ui section`
+
+**Usage:** `figma-kit ui section`
+
+**Description:** Centered vertical section wrapper (label, heading, subtitle) with auto-layout — **recommended** for page blocks inside `compose`. Children from later steps attach with `--parent _results[N]` where `N` is this step’s index.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--title` | string | `Section Title` | Main heading text. |
+| `--label` | string | `""` | Monospace eyebrow above heading (stored uppercased). |
+| `--subtitle` | string | `""` | Subtitle below heading. |
+| `--label-color` | string | `""` | Label fill: hex or theme token; default uses theme `BL`. |
+| `--width` | int | `1440` | Section frame width. |
+| `--padding` | int | `80` | Uniform padding. |
+| `--spacing` | int | `24` | Vertical spacing between stacked items. |
+| `--divider` | bool | `false` | Draw a top divider line inside the section. |
+| `--parent` | string | `""` | Parent node id or `_results[N]` in compose. |
+
+```bash
+figma-kit ui section -t noir --title "Features" --label "PRODUCT" --subtitle "Everything you need"
+figma-kit compose "ui section --title Features" "card glass --parent _results[0] --title Card1"
+```
+
+---
+
 ### `ui pagination`
 
 **Usage:** `figma-kit ui pagination`
@@ -1598,19 +1644,26 @@ figma-kit ui stepper --steps "Account,Profile,Billing,Confirm" --current 2
 | `--items` | string (JSON) | *(3 defaults)* | Array of `{question, answer}` |
 
 ```bash
-figma-kit ui accordion -t noir --items '[{"question":"Is it free?","answer":"Yes, MIT licensed."}]'
+figma-kit ui accordion -t noir --items '[{"question":"Is it free?","answer":"Yes, free for individuals under BSL 1.1."}]'
 ```
+
+---
+
+### `fx` — compose chaining (`--last`)
+
+Every **`fx`** subcommand accepts **`--last`**. In **`figma-kit compose`**, pass **`--last`** instead of a positional `<nodeId>` (or `<parentId>` where applicable) to target **`_results[_results.length - 1]`** — the main node from the immediately previous step. Standalone CLI use still requires the explicit id argument.
 
 ---
 
 ### `fx glow`
 
-**Usage:** `figma-kit fx glow <nodeId>`
+**Usage:** `figma-kit fx glow <nodeId>` (or `figma-kit fx glow --last` in compose)
 
 **Description:** Layered radial gradient glows; optional hex tint overrides inner color.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: target previous step’s result instead of `<nodeId>`. |
 | `--position` | string | `subtle` | `topRight`, `center`, `subtle`, `cta`. |
 | `--intensity` | float | `1` | Multiplier for glow alphas. |
 | `--color` | string | `""` | Optional `#RRGGBB` tint. |
@@ -1623,12 +1676,13 @@ figma-kit fx glow "123:456" --position cta --intensity 1.2 --color "#6366F1"
 
 ### `fx mesh`
 
-**Usage:** `figma-kit fx mesh <nodeId>`
+**Usage:** `figma-kit fx mesh <nodeId>` (or `--last` in compose)
 
 **Description:** Mesh-like stacked radial fills.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: target previous step’s result instead of `<nodeId>`. |
 | `--points` | int | `5` | Count (min 2). |
 | `--palette` | string | `#2563eb,#14b8a6,#8b5cf6` | Comma hex or names (`blue`, `teal`, …). |
 
@@ -1640,12 +1694,13 @@ figma-kit fx mesh "123:456" --points 7 --palette "purple,pink,orange"
 
 ### `fx noise`
 
-**Usage:** `figma-kit fx noise <nodeId>`
+**Usage:** `figma-kit fx noise <nodeId>` (or `--last` in compose)
 
 **Description:** Overlay rectangle with dithered gradient (child of target).
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: target previous step’s result instead of `<nodeId>`. |
 | `--opacity` | float | `0.35` | Strength 0–1. |
 
 ```bash
@@ -1656,12 +1711,13 @@ figma-kit fx noise "123:456" --opacity 0.25
 
 ### `fx vignette`
 
-**Usage:** `figma-kit fx vignette <nodeId>`
+**Usage:** `figma-kit fx vignette <nodeId>` (or `--last` in compose)
 
 **Description:** Radial darkening overlay child.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: target previous step’s result instead of `<nodeId>`. |
 | `--strength` | float | `0.6` | Vignette strength. |
 
 ```bash
@@ -1672,12 +1728,13 @@ figma-kit fx vignette "123:456" --strength 0.8
 
 ### `fx grain`
 
-**Usage:** `figma-kit fx grain <nodeId>`
+**Usage:** `figma-kit fx grain <nodeId>` (or `--last` in compose)
 
 **Description:** Film grain overlay.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: target previous step’s result instead of `<nodeId>`. |
 | `--amount` | string | `medium` | `light`, `medium`, or `heavy`. |
 
 ```bash
@@ -1688,12 +1745,13 @@ figma-kit fx grain "123:456" --amount light
 
 ### `fx blur-bg`
 
-**Usage:** `figma-kit fx blur-bg <nodeId>`
+**Usage:** `figma-kit fx blur-bg <nodeId>` (or `--last` in compose)
 
 **Description:** Frosted rectangle + background blur child.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: target previous step’s result instead of `<nodeId>`. |
 | `--radius` | int | `24` | Blur radius. |
 | `--tint` | string | `""` | Optional `rgba(r,g,b,a)` (0–1 or 0–255 channels). |
 
@@ -1705,12 +1763,13 @@ figma-kit fx blur-bg "123:456" --radius 32 --tint "rgba(255,255,255,0.25)"
 
 ### `fx accent-bar`
 
-**Usage:** `figma-kit fx accent-bar <parentId>`
+**Usage:** `figma-kit fx accent-bar <parentId>` (or `--last` in compose)
 
 **Description:** Gradient bar child inside parent.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: use previous step’s result as parent instead of `<parentId>`. |
 | `--from` | string | `#3366FF` | Start hex. |
 | `--to` | string | `#14B8A6` | End hex. |
 | `--w` | int | `240` | Bar width. |
@@ -1726,12 +1785,13 @@ figma-kit fx accent-bar "123:456" --w 400 --h 6 --from "#F97316" --to "#EF4444"
 
 ### `fx shadow`
 
-**Usage:** `figma-kit fx shadow <nodeId>`
+**Usage:** `figma-kit fx shadow <nodeId>` (or `--last` in compose)
 
 **Description:** Replace `effects` with one shadow preset.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: target previous step’s result instead of `<nodeId>`. |
 | `--preset` | string | `md` | `sm`, `md`, `lg`, `xl`, `glow`, `inner`. |
 
 ```bash
@@ -1742,12 +1802,13 @@ figma-kit fx shadow "123:456" --preset xl
 
 ### `fx parallax-layer`
 
-**Usage:** `figma-kit fx parallax-layer <parentId>`
+**Usage:** `figma-kit fx parallax-layer <parentId>` (or `--last` in compose)
 
 **Description:** Stack of inset frames inside parent.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: use previous step’s result as parent instead of `<parentId>`. |
 | `--layers` | int | `3` | Count (min 2). |
 
 ```bash
@@ -1758,12 +1819,13 @@ figma-kit fx parallax-layer "123:456" --layers 5
 
 ### `fx aurora`
 
-**Usage:** `figma-kit fx aurora <nodeId>`
+**Usage:** `figma-kit fx aurora <nodeId>` (or `--last` in compose)
 
 **Description:** Northern lights gradient overlay effect with layered ellipses.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: target previous step’s result instead of `<nodeId>`. |
 | `--palette` | string | `default` | Color palette: `default`, `sunset`, `ocean`, `forest` |
 
 ```bash
@@ -1774,12 +1836,13 @@ figma-kit fx aurora "123:456" --palette sunset
 
 ### `fx morph`
 
-**Usage:** `figma-kit fx morph <nodeId>`
+**Usage:** `figma-kit fx morph <nodeId>` (or `--last` in compose)
 
 **Description:** Organic blob / morphism shapes inside a parent frame.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: target previous step’s result instead of `<nodeId>`. |
 | `--count` | int | `3` | Number of blobs |
 | `--spread` | float | `0.8` | Spread factor (0–1) |
 
@@ -1791,12 +1854,13 @@ figma-kit fx morph "123:456" --count 5 --spread 0.6
 
 ### `fx gradient-border`
 
-**Usage:** `figma-kit fx gradient-border <nodeId>`
+**Usage:** `figma-kit fx gradient-border <nodeId>` (or `--last` in compose)
 
 **Description:** Simulated gradient stroke by layering a slightly larger gradient-filled frame behind the target.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: target previous step’s result instead of `<nodeId>`. |
 | `--from` | string | theme primary | Start color hex |
 | `--to` | string | theme accent | End color hex |
 | `--width` | int | `2` | Border thickness in px |
@@ -1809,12 +1873,13 @@ figma-kit fx gradient-border "123:456" --from "#3B82F6" --to "#8B5CF6"
 
 ### `fx spotlight`
 
-**Usage:** `figma-kit fx spotlight <nodeId>`
+**Usage:** `figma-kit fx spotlight <nodeId>` (or `--last` in compose)
 
 **Description:** Circular radial highlight effect.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: target previous step’s result instead of `<nodeId>`. |
 | `--x` | float | `0.5` | Horizontal position (0–1) |
 | `--y` | float | `0.3` | Vertical position (0–1) |
 | `--intensity` | float | `0.4` | Opacity of the highlight |
@@ -1827,12 +1892,13 @@ figma-kit fx spotlight "123:456" --x 0.7 --y 0.2 --intensity 0.6
 
 ### `fx pattern`
 
-**Usage:** `figma-kit fx pattern <nodeId>`
+**Usage:** `figma-kit fx pattern <nodeId>` (or `--last` in compose)
 
 **Description:** Repeating geometric background patterns.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--last` | bool | `false` | Compose: target previous step’s result instead of `<nodeId>`. |
 | `--type` | string | `dots` | Pattern type: `dots`, `lines`, `crosses`, `diagonal`, `grid` |
 | `--scale` | float | `1.0` | Scale factor |
 | `--opacity` | float | `0.1` | Pattern opacity |
@@ -3175,6 +3241,112 @@ steps:
 
 ```bash
 figma-kit batch ./recipe.yaml > combined.js
+```
+
+---
+
+### `compose`
+
+**Usage:** `figma-kit compose [flags] "cmd1 args..." "cmd2 args..." ...`
+
+**Description:** Batch N figma-kit commands into a single JavaScript payload for one `use_figma` call. The shared preamble (page setup, **theme-aware** font loading, theme colors, type scale) is emitted once; **only helper functions referenced by the merged steps** are included (**tree-shaking** via `detectNeededHelpers`). Each command body is scope-isolated in `{ }`. Compose emits **`const _results = [];`** and pushes each step’s primary node so later steps can use **`--parent _results[N]`** (or **`fx … --last`**) for chaining. See [STANDARDS.md](STANDARDS.md) compose contracts.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--recipe` | string | `""` | Path to a compose recipe YAML file |
+| *(global)* | — | — | `--theme` / `-t` and `--page` / `-p` apply to all steps |
+
+**Recipe YAML shape:**
+
+```yaml
+theme: noir
+page: 0
+steps:
+  - "ui section --title 'Features' --label 'PRODUCT'"
+  - "card glass --parent _results[0] --title 'Feature 1'"
+  - "card glass --parent _results[0] --title 'Feature 2'"
+  - "fx glow --last --position subtle"
+  - "ui pricing --tiers '[{\"name\":\"Pro\",\"price\":\"$29\"}]'"
+```
+
+```bash
+# Inline commands
+figma-kit compose -t noir \
+  "ui section --title 'Features' --label 'PRODUCT'" \
+  "card glass --parent _results[0] --title 'Feature 1'" \
+  "fx glow --last --position subtle"
+
+# From a recipe YAML
+figma-kit compose --recipe landing.yml
+
+# Direct execution (generate + send to Figma in one shot)
+figma-kit exec compose -t noir --recipe landing.yml
+```
+
+Only commands annotated as `composable` are allowed as steps (most Layer 1–2 commands that emit Plugin API JS). Composable **`ui`** and **`card`** commands accept **`--parent`** with a node id or **`_results[N]`** (emitted as a JS expression). Non-composable commands (e.g. `init`, `config`, `auth`) are rejected with an error.
+
+---
+
+### `image`
+
+**Usage:** `figma-kit image <subcommand>`
+
+**Description:** Place local images or URLs into Figma. Local files are base64-encoded and embedded directly in the generated JavaScript — no server, no public URL needed. Files up to ~33 KB work inline; for larger files, use a URL or `image serve`.
+
+---
+
+### `image place`
+
+**Usage:** `figma-kit image place <path-or-url>`
+
+**Description:** Create a new image frame from a local file or URL.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--width` | int | `400` | Frame width in pixels |
+| `--height` | int | `300` | Frame height in pixels |
+| `--name` | string | *(filename)* | Frame name |
+| `--scale-mode` | string | `FILL` | `FILL`, `FIT`, `CROP`, or `TILE` |
+
+```bash
+figma-kit image place ./logo.png --name "Brand Logo" --width 200 --height 60
+figma-kit image place https://example.com/hero.jpg --width 1440 --height 900
+```
+
+---
+
+### `image fill`
+
+**Usage:** `figma-kit image fill <path-or-url>`
+
+**Description:** Replace an existing node's fill with an image.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--node` | string | *(required)* | Target node ID (e.g. `"2:5"`) |
+| `--scale-mode` | string | `FILL` | `FILL`, `FIT`, `CROP`, or `TILE` |
+
+```bash
+figma-kit image fill ./hero.jpg --node "2:5"
+figma-kit image fill https://example.com/bg.png --node "12:34" --scale-mode FIT
+```
+
+---
+
+### `image serve`
+
+**Usage:** `figma-kit image serve [directory]`
+
+**Description:** Start a local HTTP server for image files too large for base64 embedding. Prints URLs you can use with `image place` or `card image`.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--port` | int | *(random)* | Port to listen on |
+
+```bash
+figma-kit image serve ./assets
+# → Serving on http://127.0.0.1:8741
+figma-kit image place http://127.0.0.1:8741/hero.jpg --width 1440 --height 900
 ```
 
 ---

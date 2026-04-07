@@ -10,18 +10,47 @@ import (
 	"github.com/dop-amine/figma-kit/internal/codegen"
 )
 
+// addLastFlag adds the --last flag to an fx command and returns a resolver
+// that emits JS to obtain the target node (from args or _results).
+func addLastFlag(cmd *cobra.Command) *bool {
+	useLast := new(bool)
+	cmd.Flags().BoolVar(useLast, "last", false, "Target the last _results[] node (for compose chaining)")
+	return useLast
+}
+
+// fxResolveNode emits JS to resolve the target node. When useLast is true,
+// it reads from _results[_results.length-1]; otherwise it uses the provided nodeId arg.
+func fxResolveNode(b *codegen.Builder, args []string, useLast bool) error {
+	if useLast {
+		b.Line("const node = _results[_results.length - 1];")
+		b.Line("if (!node) throw new Error('No previous result to target with --last');")
+		return nil
+	}
+	if len(args) == 0 {
+		return fmt.Errorf("requires a <nodeId> argument (or use --last in compose)")
+	}
+	b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
+	b.Line("if (!node) throw new Error('Node not found');")
+	return nil
+}
+
 func newFXCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "fx",
 		Short: "Visual effects (glow, mesh, noise, vignette, grain, blur, shadow, ...)",
-		Example: `  # "Add a colorful mesh gradient to the hero background"
+		Long: `Visual effects that can target a node by ID or chain onto the previous
+step in compose via --last. All fx commands are composable.
+
+In compose workflows, use --last to apply effects to the previous step's output:
+  figma-kit compose "card glass --title X" "fx noise --last" "fx glow --last"`,
+		Example: `  # Target a specific node
   figma-kit fx mesh <frameId> -t noir
 
-  # "Add a subtle glow effect behind the card"
-  figma-kit fx glow <frameId> -t noir
-
-  # "Apply film grain for texture"
-  figma-kit fx grain <frameId>`,
+  # Chain in compose via --last
+  figma-kit compose -t noir \
+    "card glass --title Hero" \
+    "fx noise --last" \
+    "fx glow --last --position center"`,
 	}
 	cmd.AddCommand(newFXGlowCmd())
 	cmd.AddCommand(newFXMeshCmd())
@@ -77,11 +106,13 @@ func newFXGlowCmd() *cobra.Command {
 		position  string
 		intensity float64
 		colorHex  string
+		useLast   *bool
 	)
 	cmd := &cobra.Command{
-		Use:   "glow <nodeId>",
+		Use:   "glow [nodeId]",
 		Short: "Add radial gradient glow fills to a frame",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pos := position
 			switch pos {
@@ -101,10 +132,11 @@ func newFXGlowCmd() *cobra.Command {
 			}
 			layers := glowPresetLayers(pos)
 
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
-			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!node) throw new Error('Node not found');")
+			if err := fxResolveNode(b, args, *useLast); err != nil {
+				return err
+			}
 			b.Line("if (!('fills' in node)) throw new Error('Node has no fills');")
 			b.Line("function __fxFirstSolid(n) {")
 			b.Line("  if (!n.fills || n.fills.length === 0) return null;")
@@ -148,6 +180,7 @@ func newFXGlowCmd() *cobra.Command {
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().StringVar(&position, "position", "subtle", "Glow preset: topRight, center, subtle, cta")
 	cmd.Flags().Float64Var(&intensity, "intensity", 1, "Multiplier for glow gradient alphas")
 	cmd.Flags().StringVar(&colorHex, "color", "", "Optional hex tint for glow (#RRGGBB)")
@@ -173,11 +206,13 @@ func newFXMeshCmd() *cobra.Command {
 	var (
 		pointsN int
 		palette string
+		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:   "mesh <nodeId>",
+		Use:   "mesh [nodeId]",
 		Short: "Multi-point mesh gradient (layered radial fills)",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if pointsN < 2 {
 				return fmt.Errorf("--points must be at least 2")
@@ -195,10 +230,11 @@ func newFXMeshCmd() *cobra.Command {
 				colors = append(colors, c)
 			}
 
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
-			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!node) throw new Error('Node not found');")
+			if err := fxResolveNode(b, args, *useLast); err != nil {
+				return err
+			}
 			b.Line("if (!('fills' in node)) throw new Error('Node has no fills');")
 			b.Line("if (!('width' in node) || !('height' in node)) throw new Error('Node needs width/height');")
 			b.Linef("const __nw = %d;", pointsN)
@@ -237,6 +273,7 @@ node.fills = __fills;
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().IntVar(&pointsN, "points", 5, "Number of radial mesh points")
 	cmd.Flags().StringVar(&palette, "palette", "#2563eb,#14b8a6,#8b5cf6", "Comma-separated hex or named colors (blue,teal,...)")
 	return cmd
@@ -256,16 +293,21 @@ func splitCommaTrim(s string) []string {
 // --- noise ---
 
 func newFXNoiseCmd() *cobra.Command {
-	var opacity float64
+	var (
+		opacity float64
+		useLast *bool
+	)
 	cmd := &cobra.Command{
-		Use:   "noise <nodeId>",
+		Use:   "noise [nodeId]",
 		Short: "Subtle noise overlay via gradient dithering",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
-			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!node) throw new Error('Node not found');")
+			if err := fxResolveNode(b, args, *useLast); err != nil {
+				return err
+			}
 			b.Line("if (!('appendChild' in node)) throw new Error('Expected frame-like parent');")
 			b.Line("if (!('width' in node) || !('height' in node)) throw new Error('Parent needs width/height');")
 			b.Linef("const o = %s;", codegen.FmtFloat(opacity))
@@ -299,6 +341,7 @@ node.appendChild(n);
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().Float64Var(&opacity, "opacity", 0.35, "Noise overlay strength (0–1)")
 	return cmd
 }
@@ -306,16 +349,21 @@ node.appendChild(n);
 // --- vignette ---
 
 func newFXVignetteCmd() *cobra.Command {
-	var strength float64
+	var (
+		strength float64
+		useLast  *bool
+	)
 	cmd := &cobra.Command{
-		Use:   "vignette <nodeId>",
+		Use:   "vignette [nodeId]",
 		Short: "Edge vignette darkening overlay",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
-			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!node) throw new Error('Node not found');")
+			if err := fxResolveNode(b, args, *useLast); err != nil {
+				return err
+			}
 			b.Line("if (!('appendChild' in node)) throw new Error('Expected frame-like parent');")
 			b.Line("if (!('width' in node) || !('height' in node)) throw new Error('Parent needs width/height');")
 			b.Linef("const s = %s;", codegen.FmtFloat(strength))
@@ -342,6 +390,7 @@ node.appendChild(v);
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().Float64Var(&strength, "strength", 0.6, "Vignette strength")
 	return cmd
 }
@@ -349,11 +398,15 @@ node.appendChild(v);
 // --- grain ---
 
 func newFXGrainCmd() *cobra.Command {
-	var amount string
+	var (
+		amount  string
+		useLast *bool
+	)
 	cmd := &cobra.Command{
-		Use:   "grain <nodeId>",
+		Use:   "grain [nodeId]",
 		Short: "Film grain overlay (dithered gradient)",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var steps int
 			var amp float64
@@ -365,10 +418,11 @@ func newFXGrainCmd() *cobra.Command {
 			default: // medium
 				steps, amp = 52, 0.22
 			}
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
-			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!node) throw new Error('Node not found');")
+			if err := fxResolveNode(b, args, *useLast); err != nil {
+				return err
+			}
 			b.Line("if (!('appendChild' in node)) throw new Error('Expected frame-like parent');")
 			b.Line("if (!('width' in node) || !('height' in node)) throw new Error('Parent needs width/height');")
 			b.Linef("const __steps = %d;", steps)
@@ -401,6 +455,7 @@ node.appendChild(g);
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().StringVar(&amount, "amount", "medium", "Grain density: light, medium, heavy")
 	return cmd
 }
@@ -461,13 +516,15 @@ func parseRGBAString(s string) (codegen.RGB, float64, error) {
 
 func newFXBlurBgCmd() *cobra.Command {
 	var (
-		radius int
-		tint   string
+		radius  int
+		tint    string
+		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:   "blur-bg <nodeId>",
+		Use:   "blur-bg [nodeId]",
 		Short: "Frosted-glass overlay (fill + background blur)",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fillLit := "{ type: 'SOLID', color: { r: 1, g: 1, b: 1 }, opacity: 0.35 }"
 			if strings.TrimSpace(tint) != "" {
@@ -478,10 +535,11 @@ func newFXBlurBgCmd() *cobra.Command {
 				fillLit = fmt.Sprintf("{ type: 'SOLID', color: %s, opacity: %s }",
 					codegen.FormatRGB(c), codegen.FmtFloat(a))
 			}
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
-			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!node) throw new Error('Node not found');")
+			if err := fxResolveNode(b, args, *useLast); err != nil {
+				return err
+			}
 			b.Line("if (!('appendChild' in node)) throw new Error('Expected frame-like parent');")
 			b.Line("if (!('width' in node) || !('height' in node)) throw new Error('Parent needs width/height');")
 			b.Linef("const __fill = %s;", fillLit)
@@ -500,6 +558,7 @@ node.appendChild(glass);
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().IntVar(&radius, "radius", 24, "Background blur radius")
 	cmd.Flags().StringVar(&tint, "tint", "", `Optional tint as rgba(255,255,255,0.35)`)
 	return cmd
@@ -513,11 +572,13 @@ func newFXAccentBarCmd() *cobra.Command {
 		toHex   string
 		w, h    int
 		x, y    int
+		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:   "accent-bar <parentId>",
+		Use:   "accent-bar [parentId]",
 		Short: "Gradient accent bar (linear fill)",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c0, err := codegen.HexToRGB(fromHex)
 			if err != nil {
@@ -533,10 +594,17 @@ func newFXAccentBarCmd() *cobra.Command {
 			if h <= 0 {
 				h = 4
 			}
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
-			b.Linef("const par = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!par) throw new Error('Parent not found');")
+			if *useLast {
+				b.Line("const par = _results[_results.length - 1];")
+				b.Line("if (!par) throw new Error('No previous result to target with --last');")
+			} else if len(args) == 0 {
+				return fmt.Errorf("requires a <parentId> argument (or use --last in compose)")
+			} else {
+				b.Linef("const par = await figma.getNodeByIdAsync(%q);", args[0])
+				b.Line("if (!par) throw new Error('Parent not found');")
+			}
 			b.Line("if (!('appendChild' in par)) throw new Error('Expected frame-like parent');")
 			b.Line("const bar = figma.createRectangle();")
 			b.Linef("bar.name = %q;", "Accent bar")
@@ -556,6 +624,7 @@ func newFXAccentBarCmd() *cobra.Command {
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().StringVar(&fromHex, "from", "#3366FF", "Start color (hex)")
 	cmd.Flags().StringVar(&toHex, "to", "#14B8A6", "End color (hex)")
 	cmd.Flags().IntVar(&w, "w", 240, "Bar width")
@@ -594,20 +663,25 @@ func shadowPresetByName(name string) (shadowPreset, error) {
 }
 
 func newFXShadowCmd() *cobra.Command {
-	var preset string
+	var (
+		preset  string
+		useLast *bool
+	)
 	cmd := &cobra.Command{
-		Use:   "shadow <nodeId>",
+		Use:   "shadow [nodeId]",
 		Short: "Apply a drop/inner shadow preset",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			p, err := shadowPresetByName(preset)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
-			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!node) throw new Error('Node not found');")
+			if err := fxResolveNode(b, args, *useLast); err != nil {
+				return err
+			}
 			b.Line("if (!('effects' in node)) throw new Error('Node has no effects');")
 			b.Linef(`node.effects = [{
   type: %q,
@@ -627,6 +701,7 @@ func newFXShadowCmd() *cobra.Command {
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().StringVar(&preset, "preset", "md", "sm | md | lg | xl | glow | inner")
 	return cmd
 }
@@ -634,19 +709,30 @@ func newFXShadowCmd() *cobra.Command {
 // --- parallax ---
 
 func newFXParallaxLayerCmd() *cobra.Command {
-	var layersN int
+	var (
+		layersN int
+		useLast *bool
+	)
 	cmd := &cobra.Command{
-		Use:   "parallax-layer <parentId>",
+		Use:   "parallax-layer [parentId]",
 		Short: "Layered depth stack (offset frames for parallax-style composition)",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if layersN < 2 {
 				return fmt.Errorf("--layers must be at least 2")
 			}
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
-			b.Linef("const parent = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!parent) throw new Error('Parent not found');")
+			if *useLast {
+				b.Line("const parent = _results[_results.length - 1];")
+				b.Line("if (!parent) throw new Error('No previous result to target with --last');")
+			} else if len(args) == 0 {
+				return fmt.Errorf("requires a <parentId> argument (or use --last in compose)")
+			} else {
+				b.Linef("const parent = await figma.getNodeByIdAsync(%q);", args[0])
+				b.Line("if (!parent) throw new Error('Parent not found');")
+			}
 			b.Line("if (!('appendChild' in parent)) throw new Error('Expected frame-like parent');")
 			b.Line("if (!('width' in parent) || !('height' in parent)) throw new Error('Parent needs width/height');")
 			b.Linef("const __n = %d;", layersN)
@@ -677,6 +763,7 @@ for (let i = 0; i < __n; i++) {
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().IntVar(&layersN, "layers", 3, "Number of depth layers")
 	return cmd
 }
@@ -684,20 +771,25 @@ for (let i = 0; i < __n; i++) {
 // --- aurora ---
 
 func newFXAuroraCmd() *cobra.Command {
-	var palette string
+	var (
+		palette string
+		useLast *bool
+	)
 	cmd := &cobra.Command{
-		Use:     "aurora <nodeId>",
+		Use:     "aurora [nodeId]",
 		Short:   "Apply aurora borealis gradient overlay to a frame",
 		Example: `  figma-kit fx aurora <frameId> --palette sunset`,
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
-			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!node) throw new Error('Node not found');")
+			b := newBuilder()
+			if err := fxResolveNode(b, args, *useLast); err != nil {
+				return err
+			}
 
 			var colors string
 			switch palette {
@@ -731,6 +823,7 @@ func newFXAuroraCmd() *cobra.Command {
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().StringVar(&palette, "palette", "northern", "Color palette: northern, sunset, custom")
 	return cmd
 }
@@ -742,20 +835,23 @@ func newFXMorphCmd() *cobra.Command {
 		count   int
 		spread  int
 		palette string
+		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:     "morph <nodeId>",
+		Use:     "morph [nodeId]",
 		Short:   "Add organic blob shapes as background elements",
 		Example: `  figma-kit fx morph <frameId> --count 5 --spread 200`,
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
-			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!node) throw new Error('Node not found');")
+			b := newBuilder()
+			if err := fxResolveNode(b, args, *useLast); err != nil {
+				return err
+			}
 
 			var colors string
 			switch palette {
@@ -789,6 +885,7 @@ func newFXMorphCmd() *cobra.Command {
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().IntVar(&count, "count", 4, "Number of blobs")
 	cmd.Flags().IntVar(&spread, "spread", 150, "Spread area in pixels")
 	cmd.Flags().StringVar(&palette, "palette", "default", "Color palette: default, warm, cool")
@@ -802,12 +899,14 @@ func newFXGradientBorderCmd() *cobra.Command {
 		fromHex string
 		toHex   string
 		width   int
+		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:     "gradient-border <nodeId>",
+		Use:     "gradient-border [nodeId]",
 		Short:   "Simulate a gradient border around a node",
 		Example: `  figma-kit fx gradient-border <frameId> --from "#3B82F6" --to "#8B5CF6"`,
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := resolveTheme(cmd)
 			if err != nil {
@@ -822,9 +921,10 @@ func newFXGradientBorderCmd() *cobra.Command {
 				toRGB = codegen.RGB{R: 0.55, G: 0.36, B: 0.96}
 			}
 
-			b := codegen.New()
-			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!node) throw new Error('Node not found');")
+			b := newBuilder()
+			if err := fxResolveNode(b, args, *useLast); err != nil {
+				return err
+			}
 			b.Line("const w = node.width; const h = node.height;")
 			b.Line("const parent = node.parent;")
 			b.Linef("const bw = %d;", width)
@@ -850,6 +950,7 @@ func newFXGradientBorderCmd() *cobra.Command {
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().StringVar(&fromHex, "from", "#3B82F6", "Start gradient color (hex)")
 	cmd.Flags().StringVar(&toHex, "to", "#8B5CF6", "End gradient color (hex)")
 	cmd.Flags().IntVar(&width, "width", 2, "Border width in pixels")
@@ -863,20 +964,23 @@ func newFXSpotlightCmd() *cobra.Command {
 		x, y      float64
 		radius    int
 		intensity float64
+		useLast   *bool
 	)
 	cmd := &cobra.Command{
-		Use:     "spotlight <nodeId>",
+		Use:     "spotlight [nodeId]",
 		Short:   "Add a circular spotlight/highlight effect",
 		Example: `  figma-kit fx spotlight <frameId> --x 0.5 --y 0.3 --radius 300`,
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
-			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!node) throw new Error('Node not found');")
+			b := newBuilder()
+			if err := fxResolveNode(b, args, *useLast); err != nil {
+				return err
+			}
 			b.Line("const existing = node.fills ? [...node.fills] : [];")
 			b.Linef("const spotlight = {")
 			b.Line("  type: 'GRADIENT_RADIAL',")
@@ -896,6 +1000,7 @@ func newFXSpotlightCmd() *cobra.Command {
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().Float64Var(&x, "x", 0.5, "Spotlight center X (0-1)")
 	cmd.Flags().Float64Var(&y, "y", 0.3, "Spotlight center Y (0-1)")
 	cmd.Flags().IntVar(&radius, "radius", 200, "Spotlight radius in pixels")
@@ -911,12 +1016,14 @@ func newFXPatternCmd() *cobra.Command {
 		spacing     int
 		size        int
 		colorHex    string
+		useLast     *bool
 	)
 	cmd := &cobra.Command{
-		Use:     "pattern <nodeId>",
+		Use:     "pattern [nodeId]",
 		Short:   "Add a repeating geometric pattern to a frame",
 		Example: `  figma-kit fx pattern <frameId> --type dots --spacing 24 --size 3`,
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := resolveTheme(cmd)
 			if err != nil {
@@ -927,9 +1034,10 @@ func newFXPatternCmd() *cobra.Command {
 				rgb = codegen.RGB{R: 0.4, G: 0.4, B: 0.45}
 			}
 
-			b := codegen.New()
-			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
-			b.Line("if (!node) throw new Error('Node not found');")
+			b := newBuilder()
+			if err := fxResolveNode(b, args, *useLast); err != nil {
+				return err
+			}
 			b.Line("const w = node.width || 400; const h = node.height || 300;")
 			b.Linef("const spacing = %d;", spacing)
 			b.Linef("const sz = %d;", size)
@@ -992,6 +1100,7 @@ func newFXPatternCmd() *cobra.Command {
 			return nil
 		},
 	}
+	useLast = addLastFlag(cmd)
 	cmd.Flags().StringVar(&patternType, "type", "dots", "Pattern type: dots, lines, crosses, diagonal, grid")
 	cmd.Flags().IntVar(&spacing, "spacing", 24, "Space between pattern elements")
 	cmd.Flags().IntVar(&size, "size", 3, "Size of pattern elements")

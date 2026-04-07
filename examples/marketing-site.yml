@@ -1,0 +1,36 @@
+theme: noir
+page: 0
+steps:
+  # Hero Section
+  - ui hero --title "figma-kit" --subtitle "AI-powered Figma design. 150+ commands via the Figma MCP server." --cta "Get Started" --badge "Open Source"
+
+  # How It Works — 4 workflow cards
+  - card solid --title "You Prompt" --desc "Describe what you want in natural language" --width 280
+  - card solid --title "AI Reasons" --desc "Your agent picks the right figma-kit commands" --width 280
+  - card solid --title "figma-kit Generates" --desc "Each command outputs Plugin API JavaScript" --width 280
+  - card solid --title "Figma Renders" --desc "MCP server executes — design appears" --width 280
+
+  # Prompt Gallery — 4 cards
+  - card outline --title "From a Website" --desc "Match stripe.com and build a landing page with hero and pricing"
+  - card outline --title "From a Screenshot" --desc "Extract colors from this screenshot, create a theme, build a dashboard"
+  - card outline --title "From a Description" --desc "Build a 7-slide pitch deck for a climate-tech startup"
+  - card outline --title "From a Brand Guide" --desc "Use our brand colors and fonts to generate a full design system"
+
+  # Features — 6 glass cards
+  - card glass --title "One command, not 40 lines" --desc "card glass compresses 45 lines of Plugin API JS into a single command"
+  - card glass --title "150+ composable commands" --desc "8 card styles, 29 UI components, 14 effects, 37 templates, DS generation"
+  - card glass --title "Themes, not hex codes" --desc "Propagate colors, typography, spacing to every command with -t noir"
+  - card glass --title "Direct execution" --desc "figma-kit exec sends JS to Figma in one shot. No AI middleman."
+  - card glass --title "QA in seconds" --desc "qa checklist walks every node checking contrast, targets, naming, spacing"
+  - card glass --title "Works everywhere" --desc "AI agent in Cursor or terminal. One Go binary. No Node.js, no plugins."
+
+  # Theme Builder — 3 cards
+  - card solid --title "Visual Theme Builder" --desc "Pick 3 colors. See a live preview. Download JSON. Zero code." --width 360
+  - card solid --title "CLI Theme Init" --desc "Run theme init with hex colors. Full palette derived automatically." --width 360
+  - card solid --title "Community Themes" --desc "Fork the repo, add JSON, open PR. CI validates. No code review." --width 360
+
+  # Install CTA
+  - ui button --label "brew install dop-amine/tap/figma-kit"
+
+  # Footer
+  - ui footer --cols 4 --copyright "2026 dop-amine"

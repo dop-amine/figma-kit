@@ -3,7 +3,7 @@
 **AI-powered Figma design.**
 
 [![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go&logoColor=white)](https://go.dev)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: BSL 1.1](https://img.shields.io/badge/License-BSL_1.1-blue.svg)](LICENSE)
 [![CI](https://github.com/dop-amine/figma-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/dop-amine/figma-kit/actions/workflows/ci.yml)
 
 Describe what you want in natural language — your AI agent picks the right figma-kit commands and the [Figma MCP server](https://mcp.figma.com) executes them. A single Go binary with 150+ commands across 8 layers of abstraction, from `node create frame` to `make carousel --content slides.yml`.
@@ -69,9 +69,58 @@ figma-kit examples --dump
 figma-kit make carousel --content examples/saas-landing.yml -t noir
 # → outputs use_figma JS — feed it to the MCP tool
 
+# 5b. Or compose several steps into one payload (tree-shaken helpers)
+figma-kit compose -t noir "ui section --title 'Demo'" "ui stat --parent _results[0] --value '150+' --label 'Commands'"
+
 # 6. Run a QA audit
 figma-kit qa checklist --page 0
 ```
+
+### Compose (batch N commands → 1 call)
+
+`compose` is the primary workflow for multi-step designs. It batches N commands into a single `use_figma` call — shared preamble, one JS payload, one round-trip. The engine **tree-shakes** embedded helpers: only functions your steps reference are emitted (often **~3KB** of helpers vs **~14KB** for the full bundle), which keeps recipes closer to the 50KB `use_figma` limit.
+
+Chain steps with **`_results[]`**: compose emits `const _results = [];` and pushes each step’s main node. Reference prior steps with `--parent _results[0]` (or `fx … --last` for the immediately previous result):
+
+```bash
+figma-kit compose -t noir \
+  "ui section --title 'Features' --label 'PRODUCT'" \
+  "card glass --parent _results[0] --title 'Feature 1'" \
+  "card glass --parent _results[0] --title 'Feature 2'" \
+  "fx glow --last --position subtle"
+```
+
+Or define a recipe YAML:
+
+```yaml
+# landing.yml
+theme: noir
+steps:
+  - "ui section --title 'Features' --label 'PRODUCT'"
+  - "card glass --parent _results[0] --title 'Feature 1'"
+  - "card glass --parent _results[0] --title 'Feature 2'"
+  - "ui pricing --tiers '[{\"name\":\"Pro\",\"price\":\"$29\",\"highlighted\":true}]'"
+```
+
+```bash
+figma-kit compose --recipe landing.yml
+# or execute directly:
+figma-kit exec compose --recipe landing.yml
+```
+
+### Authentication
+
+Three paths depending on your workflow:
+
+| Who | Setup | Run |
+|-----|-------|-----|
+| **Designers** | Install in Cursor / Claude Code. Add the [Figma MCP server](https://mcp.figma.com). | Prompt in natural language. Zero config. |
+| **Developers** | `export FIGMA_TOKEN=<pat>` + `figma-kit auth login` | `figma-kit exec compose -t noir --recipe landing.yml` |
+| **CI / Scripts** | `export FIGMA_ACCESS_TOKEN=<oauth-token>` | `figma-kit exec compose --recipe landing.yml` |
+
+When a Personal Access Token (`FIGMA_TOKEN`) is set, the optional **REST API** client activates automatically — enabling file metadata, image exports, and other operations that complement the MCP-based Plugin API path.
+
+See [docs/STANDARDS.md](docs/STANDARDS.md) for design conventions and coding standards.
 
 ## Why figma-kit?
 
@@ -139,12 +188,12 @@ The entire [marketing site](https://dop-amine.github.io/figma-kit/) and its [Fig
 |-------|-------|----------|-------------|
 | 0 | Session | `init`, `config`, `whoami`, `open`, `status`, `auth`, `exec`, `new-file` | File, auth & direct execution |
 | 1 | Primitives | `node`, `style`, `text`, `layout` | Low-level node ops + boolean, svg, variant-set |
-| 2 | Patterns | `card`, `ui`, `fx`, `image` | 8 card types, 29 UI components, 14 effects |
+| 2 | Patterns | `card`, `ui` (incl. `ui section` wrapper), `fx`, `image` | 8 card types, UI components + section layout helper, 14 effects |
 | 3 | Deliverables | `make` | 37 production templates + changelog |
 | 4 | Design System | `ds` | Token management, specimens, component-sheet, audit |
 | 5 | Inspect & QA | `inspect`, `tree`, `find`, `screenshot`, `qa` | Quality checks & MCP-backed screenshot |
 | 6 | Export | `export`, `handoff` | PNG/SVG/PDF, CSS, React specs |
-| 7 | Orchestration | `batch` | YAML-driven multi-step recipes |
+| 7 | Orchestration | `batch`, `compose` | YAML-driven recipes; compose batches N commands into 1 call |
 
 Run `figma-kit --help` or `figma-kit <command> --help` for full details.
 
@@ -238,9 +287,9 @@ internal/config/                # .figmarc.json management
 assets/                         # Embedded JS helpers, themes, templates, examples, cookbook
 ```
 
-Build with OAuth support (for `exec` and `auth` commands):
+Build from source:
 ```bash
-go build -tags mcp_go_client_oauth ./cmd/figma-kit
+go build ./cmd/figma-kit
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
@@ -274,4 +323,4 @@ To add a new command, create a function in `internal/cli/` following the existin
 
 ## License
 
-[MIT](LICENSE)
+[BSL 1.1](LICENSE) — free for individuals and non-commercial use. Converts to MPL 2.0 on April 6, 2030.

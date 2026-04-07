@@ -86,6 +86,69 @@ After filling in real JS:
 figma-kit batch campaign.yml
 ```
 
+## Compose recipes (command-based format)
+
+The newer `compose` command uses a simpler recipe format where steps are **command strings** instead of raw JS. The compose engine runs each command internally, merges the output into one JS payload with a shared preamble, and emits it as a single `use_figma` call.
+
+### Compose YAML format
+
+```yaml
+theme: noir       # optional — overrides -t flag
+page: 0           # optional — overrides -p flag
+steps:
+  - "ui hero --title 'Ship Faster' --cta 'Start'"
+  - "card glass --title 'Feature 1'"
+  - "card glass --title 'Feature 2'"
+  - "ui pricing --tiers '[{\"name\":\"Pro\",\"price\":\"$29\"}]'"
+```
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `theme` | No | Theme name; overridden by `-t` flag if both set. |
+| `page` | No | Page index; overridden by `-p` flag. |
+| `steps` | Yes | List of figma-kit command strings (without the `figma-kit` prefix). |
+
+Only commands annotated as `composable` (most Layer 1–2 commands that emit Plugin API JS) are valid as steps.
+
+### Running compose recipes
+
+```bash
+# Generate merged JS to stdout
+figma-kit compose --recipe landing.yml
+
+# Generate + execute directly in Figma
+figma-kit exec compose --recipe landing.yml
+
+# Mix recipe steps with inline commands
+figma-kit compose --recipe base.yml "ui footer --cols 4"
+```
+
+### Example: landing page compose recipe
+
+```yaml
+# landing.yml
+theme: noir
+steps:
+  - "ui hero --title 'Build Faster' --subtitle 'AI-powered design' --cta 'Get Started'"
+  - "card glass --title 'Speed' --preset strong"
+  - "card glass --title 'Scale' --preset strong"
+  - "card glass --title 'Security' --preset strong"
+  - "image place ./brand/logo.png --name 'Logo' --width 200 --height 60"
+  - "ui footer --cols 3 --copyright '© 2026 Acme'"
+```
+
+### Compose vs batch
+
+| | `batch` | `compose` |
+|---|---|---|
+| Step format | Raw JS (pre-generated output) | Command strings |
+| Preamble | Repeated per step | Shared (emitted once) |
+| Output | Concatenated JS blocks | Single merged JS payload |
+| Execution | One `use_figma` call per block | One `use_figma` call total |
+| Best for | Pre-built JS workflows | Multi-command designs |
+
+Both formats are valid. Use `compose` when you want the engine to handle preamble merging and scope isolation automatically. Use `batch` when you have pre-generated JS snippets you want to sequence.
+
 ## Tips
 
 - **Validate between steps**: Use the Figma MCP **get_screenshot** tool on key frames after each block; `figma-kit screenshot` prints guidance for that workflow.

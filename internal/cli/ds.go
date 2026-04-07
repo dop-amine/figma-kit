@@ -50,12 +50,13 @@ func newDSCreateCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "create",
 		Short: "Create a design system page with swatches, type specimens, and spacing scale",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Comment("--- Design system page ---")
 			b.Line("const page = figma.currentPage;")
@@ -139,6 +140,7 @@ func newDSColorsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "colors",
 		Short: "Create a palette page with tints and shades from a primary color",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
@@ -156,7 +158,7 @@ func newDSColorsCmd() *cobra.Command {
 				tints = append(tints, mixRGB(base, white, f))
 				shades = append(shades, mixRGB(base, black, f))
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Comment("--- Palette from primary ---")
 			b.Line("const page = figma.currentPage;")
@@ -208,12 +210,13 @@ func newDSTypeScaleCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "type-scale",
 		Short: "Create a dedicated type-scale specimen frame from the theme",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const col = figma.createFrame(); col.name = 'Type scale';")
 			b.Line("col.layoutMode = 'VERTICAL'; col.itemSpacing = 20; col.paddingLeft = col.paddingRight = 48; col.paddingTop = col.paddingBottom = 48;")
@@ -247,12 +250,13 @@ func newDSSpacingCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "spacing",
 		Short: "Visualize theme spacing presets as labeled bars",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const f = figma.createFrame(); f.name = 'Spacing / Theme';")
 			b.Line("f.layoutMode = 'VERTICAL'; f.itemSpacing = 16; f.paddingLeft = 40; f.paddingTop = 40;")
@@ -292,12 +296,13 @@ func newDSElevationCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "elevation",
 		Short: "Create frames demonstrating theme shadow presets",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const grid = figma.createFrame(); grid.name = 'Elevation';")
 			b.Line("grid.layoutMode = 'HORIZONTAL'; grid.itemSpacing = 24; grid.paddingLeft = grid.paddingRight = 40; grid.paddingTop = grid.paddingBottom = 40;")
@@ -335,12 +340,13 @@ func newDSRadiusCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "radius",
 		Short: "Create corner-radius reference chips",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const row = figma.createFrame(); row.name = 'Radius scale'; row.layoutMode = 'HORIZONTAL'; row.itemSpacing = 16;")
 			b.Line("row.paddingLeft = row.paddingRight = row.paddingTop = row.paddingBottom = 32; row.fills = [{type:'SOLID', color:{r:0.93,g:0.93,b:0.94}}];")
@@ -361,12 +367,13 @@ func newDSIconsCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "icons",
 		Short: "Create a placeholder grid for iconography slots",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const grid = figma.createFrame(); grid.name = 'Icons / Grid';")
 			b.Line("grid.layoutMode = 'VERTICAL'; grid.itemSpacing = 8; grid.paddingLeft = grid.paddingRight = 24; grid.paddingTop = grid.paddingBottom = 24;")
@@ -388,12 +395,13 @@ func newDSComponentCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "component",
 		Short: "Create a starter component with variant placeholders",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const set = figma.createComponentSet();")
 			b.Line("set.name = 'Button'; set.layoutMode = 'HORIZONTAL'; set.itemSpacing = 16; set.paddingLeft = set.paddingRight = 24; set.paddingTop = set.paddingBottom = 16;")
@@ -414,12 +422,13 @@ func newDSVariablesCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "variables",
 		Short: "List local variable collections (figma.variables API)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const cols = await figma.variables.getLocalVariableCollectionsAsync();")
 			b.Line("const out = cols.map(c => ({ id: c.id, name: c.name, modes: c.modes.map(m => m.name) }));")
@@ -435,12 +444,13 @@ func newDSVariablesCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "variables-create",
 		Short: "Create Figma variable collection and color variables from theme tokens",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const col = figma.variables.createVariableCollection(%q);", collectionName)
 			b.Line("const modeId = col.modes[0].modeId;")
@@ -498,7 +508,7 @@ func newDSImportCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Comment("Import tokens: map theme colors to variables — customize collection/mode names")
 			b.Line("const collections = await figma.variables.getLocalVariableCollectionsAsync();")
@@ -569,7 +579,7 @@ func newDSAuditCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const palette = [")
 			for _, name := range t.ColorNames() {
@@ -618,12 +628,13 @@ func newDSComponentSheetCmd() *cobra.Command {
 		Use:     "component-sheet",
 		Short:   "Generate a reference sheet showing button and input component states",
 		Example: `  figma-kit ds component-sheet -t noir`,
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 
 			b.Line("const sheet = figma.createFrame(); sheet.name = 'Component Sheet';")

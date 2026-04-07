@@ -69,6 +69,7 @@ For files larger than ~33 KB, use a URL instead or run
   # With custom scale mode
   figma-kit image place ./photo.jpg --scale-mode FIT --width 800 --height 600`,
 		Args: cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			src := args[0]
 			mode := strings.ToUpper(scaleMode)
@@ -79,7 +80,7 @@ For files larger than ~33 KB, use a URL instead or run
 			}
 
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 
 			if err := emitImageLoad(b, src); err != nil {
@@ -128,6 +129,7 @@ The target node must already exist. Use 'figma-kit find' or
   # Fill from a URL with FIT mode
   figma-kit image fill https://example.com/bg.png --node "12:34" --scale-mode FIT`,
 		Args: cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if nodeID == "" {
 				return fmt.Errorf("--node is required (e.g. --node \"2:5\")")
@@ -140,7 +142,7 @@ The target node must already exist. Use 'figma-kit find' or
 				return fmt.Errorf("invalid --scale-mode %q (use FILL, FIT, CROP, or TILE)", scaleMode)
 			}
 
-			b := codegen.New()
+			b := newBuilder()
 
 			if err := emitImageLoad(b, src); err != nil {
 				return err

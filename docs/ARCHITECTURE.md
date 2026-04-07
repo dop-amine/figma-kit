@@ -28,6 +28,8 @@ The AI agent (via Cursor, Claude Code, or any MCP-compatible client) acts as the
 | `internal/codegen/` | Fluent **Builder** for composing JS (`New`, `Line`, `Raw`, `Preamble`, `PreambleWithPage`, etc.). |
 | `internal/theme/` | Theme structs, JSON parse/validate, `Load` / `LoadFile`, embedded theme registry. |
 | `internal/config/` | `.figmarc.json` load/save and `config set` / `get` helpers. |
+| `internal/mcpclient/` | Embedded MCP client for direct `exec` execution; OAuth flow, token caching, `use_figma` calls. |
+| `internal/restapi/` | Optional Figma REST API client; auto-enabled when a PAT is set (`FIGMA_TOKEN`). File metadata, image exports. |
 | `assets/` | `go:embed` for themes, templates, helper JS; re-exported into `internal/theme` / codegen where needed. |
 
 YAML batch recipes are parsed in **`internal/cli/batch.go`** (not a separate `internal/batch` package).
@@ -62,6 +64,49 @@ Most commands follow the same shape:
 4. **Emit** — `output(b.String())` writes JS to stdout.
 
 Commands that only export tokens from Go (e.g. `figma-kit export tokens`) skip the Builder and write JSON/CSS directly after `resolveTheme`.
+
+## Compose engine
+
+`internal/cli/compose.go` implements the `compose` command — the primary workflow for batching N figma-kit commands into a single `use_figma` call.
+
+**How it works:**
+
+1. **Resolve steps** — from positional args (`"ui hero --title X" "card glass"`) and/or `--recipe` YAML.
+2. **Validate** — each step is resolved against the command tree; only commands annotated `composable: true` are allowed.
+3. **Capture** — each step is executed as a child invocation of the root command, capturing its full JS stdout.
+4. **Merge** — a superset preamble (page setup, **theme-aware font loading from `theme.Fonts`**, theme colors, type scale) is emitted once, plus **only helper functions referenced across steps** (`detectNeededHelpers` tree-shakes the embedded helper bundle). Each step's body is stripped of its individual preamble/return and wrapped in `{ }` for scope isolation.
+5. **Cross-step results** — compose emits `const _results = [];` and pushes each step’s primary node id so later steps can use `--parent _results[N]`, `text create --parent _results[0]`, or `fx … --last` to target the previous step’s output without hard-coded ids.
+6. **Emit** — the merged JS is printed to stdout, ending with `return { createdNodeIds: _ids }`.
+
+The compose recipe YAML format uses `theme`, `page`, and `steps` (list of command strings) — distinct from the older `batch` format which stores raw JS.
+
+## MCP client (`internal/mcpclient/`)
+
+`internal/mcpclient/client.go` provides a `Session` that connects to `https://mcp.figma.com/mcp` over MCP Streamable HTTP. Used by `exec` and `new-file` commands.
+
+- **OAuth flow** — `auth login` opens a browser for Figma authorization using PKCE. Tokens are cached at `~/.config/figma-kit/token.json`.
+- **Direct token** — `auth login --token <token>` saves a pre-existing access token, skipping the browser flow.
+- **Session lifecycle** — `Connect(ctx)` creates a session, `CallUseFigma(fileKey, js)` invokes the `use_figma` tool, `GetScreenshot(fileKey)` captures a frame.
+
+## REST API client (`internal/restapi/`)
+
+`internal/restapi/client.go` wraps the Figma REST API (`https://api.figma.com`). Created via `NewClient()`, which returns `nil` when no PAT is available — callers check for nil before using.
+
+Token resolution order: `FIGMA_TOKEN` → `FIGMA_PAT` → `FIGMA_PERSONAL_ACCESS_TOKEN`.
+
+The REST API is optional and complements the MCP path. It enables operations like file metadata retrieval and image exports that don't require Plugin API execution.
+
+## Image pipeline
+
+`internal/cli/image.go` provides three subcommands:
+
+- **`image place`** — creates a new image frame from a local file or URL. Local files ≤ 33 KB are base64-encoded inline; larger files require a URL.
+- **`image fill`** — replaces an existing node's fill with an image.
+- **`image serve`** — starts a local HTTP file server for images too large for inline embedding.
+
+Both `image place` and `image fill` are annotated `composable: true` and work inside `compose` recipes.
+
+See [STANDARDS.md](STANDARDS.md) for design conventions and coding standards.
 
 ## Adding a new command
 

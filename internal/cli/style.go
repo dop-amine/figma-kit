@@ -42,12 +42,13 @@ func newStyleFillCmd() *cobra.Command {
 		Use:   "fill <nodeId>",
 		Short: "Set solid fill on a node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := codegen.HexToRGB(solid)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -73,12 +74,13 @@ func newStyleStrokeCmd() *cobra.Command {
 		Use:   "stroke <nodeId>",
 		Short: "Set stroke on a node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := codegen.HexToRGB(color)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -106,8 +108,9 @@ func newStyleEffectCmd() *cobra.Command {
 		Use:   "effect <nodeId>",
 		Short: "Apply effects (shadow, blur) to a node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -142,8 +145,9 @@ func newStyleCornerCmd() *cobra.Command {
 		Use:   "corner <nodeId>",
 		Short: "Set corner radius on a node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -179,8 +183,9 @@ func newStyleBlendCmd() *cobra.Command {
 		Use:   "blend <nodeId>",
 		Short: "Set blend mode and opacity",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -206,8 +211,9 @@ func newStyleGradientCmd() *cobra.Command {
 		Use:   "gradient <nodeId>",
 		Short: "Apply a gradient fill",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -245,8 +251,9 @@ func newStyleClipCmd() *cobra.Command {
 		Use:   "clip <nodeId>",
 		Short: "Toggle clip content on a frame",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -267,8 +274,9 @@ func newStyleApplyCmd() *cobra.Command {
 		Use:   "apply <nodeId>",
 		Short: "Apply a named local style (paint, text, or effect) to a node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")

@@ -7,8 +7,6 @@ builds:
     binary: figma-kit
     ldflags:
       - -s -w -X github.com/dop-amine/figma-kit/internal/cli.Version={{.Version}}
-    tags:
-      - mcp_go_client_oauth
     goos:
       - darwin
       - linux
@@ -48,6 +46,6 @@ brews:
     directory: Formula
     homepage: https://github.com/dop-amine/figma-kit
     description: CLI for programmatic Figma design via the MCP server
-    license: MIT
+    license: BSL-1.1
     install: |
       bin.install "figma-kit"

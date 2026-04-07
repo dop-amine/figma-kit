@@ -17,12 +17,13 @@ func newInspectCmd() *cobra.Command {
 		Use:   "inspect <nodeId>",
 		Short: "Generate JS that dumps node properties (fills, strokes, layout, geometry)",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -51,6 +52,7 @@ func newScreenshotCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "screenshot",
 		Short: "Capture a screenshot of a Figma node via MCP (falls back to instructions)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fk := resolveFileKey()
 			if fk == "" || nodeID == "" {
@@ -88,12 +90,13 @@ func newTreeCmd() *cobra.Command {
 		Use:   "tree [nodeId]",
 		Short: "Generate JS that prints a hierarchical node tree (default: current page)",
 		Args:  cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const maxDepth = %d;", maxDepth)
 			b.Line("function describe(n, depth) {")
@@ -125,12 +128,13 @@ func newFindCmd() *cobra.Command {
 		Use:   "find <pattern>",
 		Short: "Generate JS that finds nodes by substring match on name",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			pat := strings.ToLower(args[0])
 			b.Linef("const needle = %q;", pat)
@@ -151,12 +155,13 @@ func newMeasureCmd() *cobra.Command {
 		Use:   "measure <nodeIdA> <nodeIdB>",
 		Short: "Generate JS that measures axis-aligned distance between two nodes' bounding boxes",
 		Args:  cobra.ExactArgs(2),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const a = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Linef("const b = await figma.getNodeByIdAsync(%q);", args[1])
@@ -178,12 +183,13 @@ func newDiffCmd() *cobra.Command {
 		Use:   "diff <nodeIdA> <nodeIdB>",
 		Short: "Generate JS that compares dimensions and fill colors between two nodes",
 		Args:  cobra.ExactArgs(2),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const a = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Linef("const b = await figma.getNodeByIdAsync(%q);", args[1])
@@ -228,12 +234,13 @@ func newQAContrastCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "contrast",
 		Short: "Traverse text nodes and flag potential contrast issues (heuristic)",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("function lum(c){ const r = c.r <= 0.03928 ? c.r/12.92 : Math.pow((c.r+0.055)/1.055,2.4);")
 			b.Line("  const g = c.g <= 0.03928 ? c.g/12.92 : Math.pow((c.g+0.055)/1.055,2.4);")
@@ -258,12 +265,13 @@ func newQATouchTargetsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "touch-targets",
 		Short: "Flag frames/components smaller than minimum touch target size",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Linef("const minSize = %d;", min)
 			b.Line("const bad = [];")
@@ -285,12 +293,13 @@ func newQAOrphansCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "orphans",
 		Short: "List top-level nodes on the page that look like stray layers",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const orphans = [];")
 			b.Line("for (const c of figma.currentPage.children) {")
@@ -306,12 +315,13 @@ func newQAFontsCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "fonts",
 		Short: "Collect font combinations used by text nodes",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const map = {};")
 			b.Line("function walk(n){")
@@ -329,12 +339,13 @@ func newQAColorsCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "colors",
 		Short: "Aggregate solid fill colors used in the subtree",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const map = {};")
 			b.Line("function key(c){ return c.r.toFixed(3)+','+c.g.toFixed(3)+','+c.b.toFixed(3); }")
@@ -354,12 +365,13 @@ func newQASpacingCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "spacing",
 		Short: "Flag auto-layout frames with itemSpacing below a threshold",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const tight = [];")
 			b.Line("function walk(n){")
@@ -378,12 +390,13 @@ func newQANamingCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "naming",
 		Short: "Flag default or empty layer names",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const bad = []; const defaults = /^(Frame|Group|Rectangle|Ellipse|Vector|Line|Text|Star|Polygon) \\d+$/i;")
 			b.Line("function walk(n){")
@@ -401,12 +414,13 @@ func newQAResponsiveCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "responsive",
 		Short: "Summarize horizontal/vertical constraints usage",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const summary = { scaleH: 0, scaleV: 0, fixedH: 0, fixedV: 0, other: 0 };")
 			b.Line("function walk(n){")
@@ -427,12 +441,13 @@ func newQAChecklistCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "checklist",
 		Short: "Run a lightweight bundled QA pass and return combined findings",
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
 			if err != nil {
 				return err
 			}
-			b := codegen.New()
+			b := newBuilder()
 			codegen.PreambleWithPage(b, t, resolvePage())
 			b.Line("const report = { emptyNames: [], tinyTargets: [], tightSpacing: [] };")
 			b.Line("function walk(n){")

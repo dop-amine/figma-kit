@@ -55,10 +55,11 @@ func newNodeCreateCmd() *cobra.Command {
 		Use:   "create <type>",
 		Short: "Create a Figma node (frame, rect, text, ellipse, line, polygon, star, vector, component)",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			nodeType := args[0]
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 
 			figmaMethod := nodeTypeToMethod(nodeType)
@@ -101,8 +102,9 @@ func newNodeCloneCmd() *cobra.Command {
 		Use:   "clone <nodeId>",
 		Short: "Duplicate a node with optional offset",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const src = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!src) throw new Error('Node not found: ' + " + fmt.Sprintf("%q", args[0]) + ");")
@@ -125,8 +127,9 @@ func newNodeDeleteCmd() *cobra.Command {
 		Use:   "delete <nodeId>",
 		Short: "Remove a node from the canvas",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -144,8 +147,9 @@ func newNodeMoveCmd() *cobra.Command {
 		Use:   "move <nodeId>",
 		Short: "Reposition a node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -167,8 +171,9 @@ func newNodeResizeCmd() *cobra.Command {
 		Use:   "resize <nodeId>",
 		Short: "Resize a node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -189,8 +194,9 @@ func newNodeRenameCmd() *cobra.Command {
 		Use:   "rename <nodeId>",
 		Short: "Rename a node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -210,8 +216,9 @@ func newNodeReparentCmd() *cobra.Command {
 		Use:   "reparent <nodeId> <parentId>",
 		Short: "Move a node to a different parent",
 		Args:  cobra.ExactArgs(2),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Linef("const parent = await figma.getNodeByIdAsync(%q);", args[1])
@@ -231,8 +238,9 @@ func newNodeLockCmd() *cobra.Command {
 		Use:   "lock <nodeId>",
 		Short: "Lock or unlock a node",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -252,8 +260,9 @@ func newNodeVisibleCmd() *cobra.Command {
 		Use:   "visible <nodeId>",
 		Short: "Toggle node visibility",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -272,10 +281,11 @@ func newNodeOrderCmd() *cobra.Command {
 		Use:   "order <direction> <nodeId>",
 		Short: "Change layer order: front, back, forward, backward",
 		Args:  cobra.ExactArgs(2),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir := strings.ToLower(args[0])
 			id := args[1]
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", id)
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -307,8 +317,9 @@ func newNodeGroupCmd() *cobra.Command {
 		Use:   "group <nodeId> [nodeId...]",
 		Short: "Group two or more nodes together",
 		Args:  cobra.MinimumNArgs(2),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			nodeVars := make([]string, len(args))
 			for i, id := range args {
@@ -333,8 +344,9 @@ func newNodeUngroupCmd() *cobra.Command {
 		Use:   "ungroup <nodeId>",
 		Short: "Ungroup a group node, returning children to the parent",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const grp = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!grp) throw new Error('Node not found');")
@@ -353,8 +365,9 @@ func newNodeComponentCmd() *cobra.Command {
 		Use:   "component <nodeId>",
 		Short: "Convert an existing node into a Figma component",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -371,8 +384,9 @@ func newNodeFlattenCmd() *cobra.Command {
 		Use:   "flatten <nodeId>",
 		Short: "Flatten a node subtree into a single vector",
 		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(resolvePage())
 			b.Linef("const node = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!node) throw new Error('Node not found');")
@@ -391,6 +405,7 @@ func newNodeBooleanCmd() *cobra.Command {
 		Example: `  figma-kit node boolean union "1:2" "1:3"
   figma-kit node boolean subtract "1:2" "1:3"`,
 		Args: cobra.ExactArgs(3),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			op := strings.ToLower(args[0])
 			var figmaOp string
@@ -406,7 +421,7 @@ func newNodeBooleanCmd() *cobra.Command {
 			default:
 				return fmt.Errorf("unknown operation %q — use union, subtract, intersect, or exclude", op)
 			}
-			b := codegen.New()
+			b := newBuilder()
 			b.Linef("const a = await figma.getNodeByIdAsync(%q);", args[1])
 			b.Linef("const b = await figma.getNodeByIdAsync(%q);", args[2])
 			b.Line("if (!a || !b) throw new Error('One or both nodes not found');")
@@ -433,9 +448,10 @@ func newNodeSVGCmd() *cobra.Command {
 		Example: `  figma-kit node svg "M10 10 L90 10 L90 90 L10 90 Z" --size 100
   figma-kit node svg "M50 0 L100 100 L0 100 Z" --fill "#3B82F6" --size 80`,
 		Args: cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			page := resolvePage()
-			b := codegen.New()
+			b := newBuilder()
 			b.PageSetup(page)
 
 			fillRGB := codegen.RGB{R: 0, G: 0, B: 0}
@@ -478,8 +494,9 @@ func newNodeVariantSetCmd() *cobra.Command {
 		Short:   "Create a component set with variants from a base component",
 		Example: `  figma-kit node variant-set "1:2" --variants '[{"name":"State=default"},{"name":"State=hover"},{"name":"State=active"}]'`,
 		Args:    cobra.ExactArgs(1),
+		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b := codegen.New()
+			b := newBuilder()
 			b.Linef("const base = await figma.getNodeByIdAsync(%q);", args[0])
 			b.Line("if (!base || base.type !== 'COMPONENT') throw new Error('Node must be a COMPONENT');")
 
