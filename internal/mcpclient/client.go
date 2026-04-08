@@ -166,13 +166,13 @@ func runOAuthFlow(ctx context.Context) (*TokenData, error) {
 			state: r.URL.Query().Get("state"),
 		}
 		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprint(w, `<html><body style="font-family:system-ui;padding:3em;text-align:center">
+		_, _ = fmt.Fprint(w, `<html><body style="font-family:system-ui;padding:3em;text-align:center">
 			<h2 style="color:#33CC80">✓ Authenticated!</h2>
 			<p>You can close this tab and return to the terminal.</p></body></html>`)
 	})
 	srv := &http.Server{Handler: mux}
-	go srv.Serve(listener)
-	defer srv.Close()
+	go func() { _ = srv.Serve(listener) }()
+	defer func() { _ = srv.Close() }()
 
 	// Step 5: PKCE challenge
 	verifier := generateVerifier()

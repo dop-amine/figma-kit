@@ -27,7 +27,7 @@ to specify a team/plan if you have multiple.`,
 			if err != nil {
 				return fmt.Errorf("not authenticated — run 'figma-kit auth login' first: %w", err)
 			}
-			defer session.Close()
+			defer func() { _ = session.Close() }()
 
 			result, err := session.CallCreateFile(ctx, args[0], planKey)
 			if err != nil {

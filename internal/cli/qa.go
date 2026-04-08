@@ -71,7 +71,7 @@ Set the file key via .figmarc.json or FIGMA_FILE_KEY env var.
 				fmt.Println("Not authenticated. Run 'figma-kit auth login' first.")
 				return nil
 			}
-			defer session.Close()
+			defer func() { _ = session.Close() }()
 			result, sErr := session.CallScreenshot(ctx, fk, nodeID)
 			if sErr != nil {
 				return sErr

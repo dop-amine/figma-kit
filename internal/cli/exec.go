@@ -93,7 +93,7 @@ Requires a file key: set via --file-key, .figmarc.json, or FIGMA_FILE_KEY env va
 				fmt.Print(js)
 				return nil
 			}
-			defer session.Close()
+			defer func() { _ = session.Close() }()
 
 			desc := fmt.Sprintf("figma-kit exec %s", strings.Join(subArgs, " "))
 			if len(desc) > 200 {
@@ -149,10 +149,10 @@ func parseExecFlags(args []string) (fileKey string, screenshot bool, timeout int
 		case args[i] == "--screenshot":
 			screenshot = true
 		case args[i] == "--timeout" && i+1 < len(args):
-			fmt.Sscanf(args[i+1], "%d", &timeout)
+			_, _ = fmt.Sscanf(args[i+1], "%d", &timeout)
 			i++
 		case strings.HasPrefix(args[i], "--timeout="):
-			fmt.Sscanf(strings.TrimPrefix(args[i], "--timeout="), "%d", &timeout)
+			_, _ = fmt.Sscanf(strings.TrimPrefix(args[i], "--timeout="), "%d", &timeout)
 		default:
 			remaining = append(remaining, args[i:]...)
 			return
@@ -178,11 +178,11 @@ func captureSubCommand(args []string) (string, error) {
 
 	execErr := root.Execute()
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = origStdout
 
 	var captured bytes.Buffer
-	captured.ReadFrom(r)
+	_, _ = captured.ReadFrom(r)
 
 	if execErr != nil {
 		return "", fmt.Errorf("sub-command failed: %w", execErr)

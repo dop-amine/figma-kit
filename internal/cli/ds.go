@@ -489,7 +489,7 @@ func newDSSearchCmd() *cobra.Command {
 				fmt.Println("Not authenticated. Run 'figma-kit auth login' first.")
 				return nil
 			}
-			defer session.Close()
+			defer func() { _ = session.Close() }()
 			result, sErr := session.CallSearchDS(ctx, fk, query)
 			if sErr != nil {
 				return sErr
