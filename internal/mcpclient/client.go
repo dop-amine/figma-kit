@@ -290,7 +290,7 @@ func discoverOAuthMetadata(ctx context.Context) (*oauthServerMeta, error) {
 	if err != nil {
 		return nil, fmt.Errorf("fetching auth server metadata: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("auth server metadata returned HTTP %d", resp.StatusCode)
@@ -333,7 +333,7 @@ func registerClient(ctx context.Context, meta *oauthServerMeta, pat string) (*re
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == 403 {
 		return nil, fmt.Errorf("registration forbidden — check that your Figma PAT is valid")
@@ -388,7 +388,7 @@ func exchangeCode(ctx context.Context, tokenEndpoint, clientID, clientSecret, co
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(resp.Body)

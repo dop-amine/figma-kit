@@ -398,9 +398,7 @@ func collapseBlankLines(s string) string {
 
 var themeConstRe = regexp.MustCompile(`^const [A-Z][A-Z_]*=\{r:`)
 
-
 var returnIDsRe = regexp.MustCompile(`return\s*\{\s*createdNodeIds:\s*\[([^\]]+)\]\s*\}`)
-var returnExprRe = regexp.MustCompile(`return\s+['"]`)
 
 // extractReturnIDs parses return expressions from the body to collect IDs.
 // Returns the expression to push, or empty string if not found.

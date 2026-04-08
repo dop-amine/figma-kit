@@ -45,12 +45,12 @@ that runs in use_figma — no PAT needed for imports.
 
 func newDSLibraryListCmd() *cobra.Command {
 	var (
-		teamID     string
-		fileKey    string
-		assetType  string
-		asJSON     bool
-		limit      int
-		cursor     string
+		teamID    string
+		fileKey   string
+		assetType string
+		asJSON    bool
+		limit     int
+		cursor    string
 	)
 	cmd := &cobra.Command{
 		Use:   "list",

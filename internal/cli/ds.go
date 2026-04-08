@@ -49,8 +49,8 @@ func newDSCmd() *cobra.Command {
 
 func newDSCreateCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "create",
-		Short: "Create a design system page with swatches, type specimens, and spacing scale",
+		Use:         "create",
+		Short:       "Create a design system page with swatches, type specimens, and spacing scale",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -139,8 +139,8 @@ func newDSCreateCmd() *cobra.Command {
 func newDSColorsCmd() *cobra.Command {
 	var primary string
 	cmd := &cobra.Command{
-		Use:   "colors",
-		Short: "Create a palette page with tints and shades from a primary color",
+		Use:         "colors",
+		Short:       "Create a palette page with tints and shades from a primary color",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -209,8 +209,8 @@ func mixRGB(a, b codegen.RGB, t float64) codegen.RGB {
 
 func newDSTypeScaleCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "type-scale",
-		Short: "Create a dedicated type-scale specimen frame from the theme",
+		Use:         "type-scale",
+		Short:       "Create a dedicated type-scale specimen frame from the theme",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -249,8 +249,8 @@ func newDSTypeScaleCmd() *cobra.Command {
 
 func newDSSpacingCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "spacing",
-		Short: "Visualize theme spacing presets as labeled bars",
+		Use:         "spacing",
+		Short:       "Visualize theme spacing presets as labeled bars",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -295,8 +295,8 @@ func newDSSpacingCmd() *cobra.Command {
 
 func newDSElevationCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "elevation",
-		Short: "Create frames demonstrating theme shadow presets",
+		Use:         "elevation",
+		Short:       "Create frames demonstrating theme shadow presets",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -339,8 +339,8 @@ func newDSElevationCmd() *cobra.Command {
 
 func newDSRadiusCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "radius",
-		Short: "Create corner-radius reference chips",
+		Use:         "radius",
+		Short:       "Create corner-radius reference chips",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -366,8 +366,8 @@ func newDSRadiusCmd() *cobra.Command {
 
 func newDSIconsCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "icons",
-		Short: "Create a placeholder grid for iconography slots",
+		Use:         "icons",
+		Short:       "Create a placeholder grid for iconography slots",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -394,8 +394,8 @@ func newDSIconsCmd() *cobra.Command {
 
 func newDSComponentCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "component",
-		Short: "Create a starter component with variant placeholders",
+		Use:         "component",
+		Short:       "Create a starter component with variant placeholders",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -421,8 +421,8 @@ func newDSComponentCmd() *cobra.Command {
 
 func newDSVariablesCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "variables",
-		Short: "List local variable collections (figma.variables API)",
+		Use:         "variables",
+		Short:       "List local variable collections (figma.variables API)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -443,8 +443,8 @@ func newDSVariablesCmd() *cobra.Command {
 func newDSVariablesCreateCmd() *cobra.Command {
 	var collectionName string
 	cmd := &cobra.Command{
-		Use:   "variables-create",
-		Short: "Create Figma variable collection and color variables from theme tokens",
+		Use:         "variables-create",
+		Short:       "Create Figma variable collection and color variables from theme tokens",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -608,9 +608,9 @@ func newDSTokensCmd() *cobra.Command {
 
 func newDSComponentSheetCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:     "component-sheet",
-		Short:   "Generate a reference sheet showing button and input component states",
-		Example: `  figma-kit ds component-sheet -t noir`,
+		Use:         "component-sheet",
+		Short:       "Generate a reference sheet showing button and input component states",
+		Example:     `  figma-kit ds component-sheet -t noir`,
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
