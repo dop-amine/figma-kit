@@ -107,14 +107,14 @@ func listComponents(c *restapi.Client, teamID, fileKey string, limit int, cursor
 		return writeJSON(resp)
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "KEY\tNAME\tDESCRIPTION\tUPDATED")
+	_, _ = fmt.Fprintln(w, "KEY\tNAME\tDESCRIPTION\tUPDATED")
 	for _, comp := range resp.Meta.Components {
 		desc := truncateDesc(comp.Description, 40)
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", comp.Key, comp.Name, desc, comp.UpdatedAt)
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", comp.Key, comp.Name, desc, comp.UpdatedAt)
 	}
-	w.Flush()
+	_ = w.Flush()
 	if resp.Meta.Cursor.After != "" {
-		fmt.Fprintf(os.Stderr, "\nNext page: --cursor %s\n", resp.Meta.Cursor.After)
+		_, _ = fmt.Fprintf(os.Stderr, "\nNext page: --cursor %s\n", resp.Meta.Cursor.After)
 	}
 	return nil
 }
@@ -134,14 +134,14 @@ func listComponentSets(c *restapi.Client, teamID, fileKey string, limit int, cur
 		return writeJSON(resp)
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "KEY\tNAME\tDESCRIPTION\tUPDATED")
+	_, _ = fmt.Fprintln(w, "KEY\tNAME\tDESCRIPTION\tUPDATED")
 	for _, cs := range resp.Meta.ComponentSets {
 		desc := truncateDesc(cs.Description, 40)
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", cs.Key, cs.Name, desc, cs.UpdatedAt)
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", cs.Key, cs.Name, desc, cs.UpdatedAt)
 	}
-	w.Flush()
+	_ = w.Flush()
 	if resp.Meta.Cursor.After != "" {
-		fmt.Fprintf(os.Stderr, "\nNext page: --cursor %s\n", resp.Meta.Cursor.After)
+		_, _ = fmt.Fprintf(os.Stderr, "\nNext page: --cursor %s\n", resp.Meta.Cursor.After)
 	}
 	return nil
 }
@@ -161,14 +161,14 @@ func listStyles(c *restapi.Client, teamID, fileKey string, limit int, cursor str
 		return writeJSON(resp)
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "KEY\tNAME\tTYPE\tDESCRIPTION\tUPDATED")
+	_, _ = fmt.Fprintln(w, "KEY\tNAME\tTYPE\tDESCRIPTION\tUPDATED")
 	for _, s := range resp.Meta.Styles {
 		desc := truncateDesc(s.Description, 40)
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", s.Key, s.Name, s.StyleType, desc, s.UpdatedAt)
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", s.Key, s.Name, s.StyleType, desc, s.UpdatedAt)
 	}
-	w.Flush()
+	_ = w.Flush()
 	if resp.Meta.Cursor.After != "" {
-		fmt.Fprintf(os.Stderr, "\nNext page: --cursor %s\n", resp.Meta.Cursor.After)
+		_, _ = fmt.Fprintf(os.Stderr, "\nNext page: --cursor %s\n", resp.Meta.Cursor.After)
 	}
 	return nil
 }

@@ -53,25 +53,25 @@ With --token, saves a pre-existing OAuth access token directly.`,
 					fmt.Println("The token may still work — try 'figma-kit auth status'.")
 					return nil
 				}
-				defer session.Close()
+			defer func() { _ = session.Close() }()
 
-				result, err := session.CallWhoami(ctx)
-				if err != nil {
-					fmt.Println("Authenticated (could not fetch user info).")
-					return nil
-				}
-				fmt.Println("Authenticated successfully!")
-				fmt.Println(result.Raw)
+			result, err := session.CallWhoami(ctx)
+			if err != nil {
+				fmt.Println("Authenticated (could not fetch user info).")
 				return nil
 			}
+			fmt.Println("Authenticated successfully!")
+			fmt.Println(result.Raw)
+			return nil
+		}
 
-			fmt.Println("Connecting to Figma MCP server...")
-			ctx := context.Background()
-			session, err := mcpclient.Connect(ctx)
-			if err != nil {
-				return fmt.Errorf("authentication failed: %w", err)
-			}
-			defer session.Close()
+		fmt.Println("Connecting to Figma MCP server...")
+		ctx := context.Background()
+		session, err := mcpclient.Connect(ctx)
+		if err != nil {
+			return fmt.Errorf("authentication failed: %w", err)
+		}
+		defer func() { _ = session.Close() }()
 
 			result, err := session.CallWhoami(ctx)
 			if err != nil {

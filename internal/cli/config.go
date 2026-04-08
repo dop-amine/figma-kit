@@ -101,7 +101,7 @@ func newWhoamiCmd() *cobra.Command {
 				fmt.Println("or ask the AI to call the 'whoami' MCP tool.")
 				return nil
 			}
-			defer session.Close()
+			defer func() { _ = session.Close() }()
 			result, sErr := session.CallWhoami(ctx)
 			if sErr != nil {
 				return sErr

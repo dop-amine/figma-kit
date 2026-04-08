@@ -319,11 +319,11 @@ func captureStepFull(step string) (string, error) {
 
 	execErr := root.Execute()
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = origStdout
 
 	var captured bytes.Buffer
-	captured.ReadFrom(r)
+	_, _ = captured.ReadFrom(r)
 
 	if execErr != nil {
 		return "", fmt.Errorf("command failed: %w", execErr)
