@@ -111,7 +111,7 @@ Requires a file key: set via --file-key, .figmarc.json, or FIGMA_FILE_KEY env va
 				for _, c := range result.Content {
 					fmt.Fprintln(os.Stderr, c)
 				}
-				return fmt.Errorf("Figma returned an error")
+				return fmt.Errorf("figma returned an error")
 			}
 
 			fmt.Fprintf(os.Stderr, "Done.\n")

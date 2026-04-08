@@ -141,8 +141,8 @@ func newCardSolidCmd() *cobra.Command {
 		desc   string
 	)
 	cmd := &cobra.Command{
-		Use:   "solid",
-		Short: "Solid fill card with optional border, shadow, and corner radius",
+		Use:         "solid",
+		Short:       "Solid fill card with optional border, shadow, and corner radius",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := codegen.HexToRGB(bg)
@@ -246,8 +246,8 @@ func newCardGradientCmd() *cobra.Command {
 		angle float64
 	)
 	cmd := &cobra.Command{
-		Use:   "gradient",
-		Short: "Linear gradient fill card",
+		Use:         "gradient",
+		Short:       "Linear gradient fill card",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c0, err := codegen.HexToRGB(from)
@@ -295,8 +295,8 @@ func newCardImageCmd() *cobra.Command {
 		title   string
 	)
 	cmd := &cobra.Command{
-		Use:   "image",
-		Short: "Image fill card with optional overlay and title",
+		Use:         "image",
+		Short:       "Image fill card with optional overlay and title",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ov := strings.ToLower(strings.TrimSpace(overlay))
@@ -365,8 +365,8 @@ func newCardImageCmd() *cobra.Command {
 func newCardBentoCmd() *cobra.Command {
 	var cols, rows, gap int
 	cmd := &cobra.Command{
-		Use:   "bento",
-		Short: "Grid of card frames (bento layout)",
+		Use:         "bento",
+		Short:       "Grid of card frames (bento layout)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cols < 1 || rows < 1 {

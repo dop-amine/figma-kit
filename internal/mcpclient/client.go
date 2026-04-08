@@ -128,7 +128,7 @@ func runOAuthFlow(ctx context.Context) (*TokenData, error) {
 	// Step 1: Get PAT
 	pat := getFigmaPAT()
 	if pat == "" {
-		return nil, fmt.Errorf("Figma Personal Access Token required for first-time setup\n\n" +
+		return nil, fmt.Errorf("figma Personal Access Token required for first-time setup\n\n" +
 			"Get one at: Figma → Settings → Security → Personal access tokens\n" +
 			"Then either:\n" +
 			"  export FIGMA_PAT=your_token\n" +
@@ -266,13 +266,13 @@ func discoverOAuthMetadata(ctx context.Context) (*oauthServerMeta, error) {
 			var prm struct {
 				AuthorizationServers []string `json:"authorization_servers"`
 			}
-			json.NewDecoder(resp.Body).Decode(&prm)
-			resp.Body.Close()
+			_ = json.NewDecoder(resp.Body).Decode(&prm)
+			_ = resp.Body.Close()
 			if len(prm.AuthorizationServers) > 0 {
 				authServerBase = prm.AuthorizationServers[0]
 			}
 		} else if resp != nil {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 	}
 
@@ -314,11 +314,11 @@ func registerClient(ctx context.Context, meta *oauthServerMeta, pat string) (*re
 
 	regBody := map[string]any{
 		"client_name":                "figma-kit",
-		"redirect_uris":             []string{"http://127.0.0.1"},
-		"grant_types":               []string{"authorization_code", "refresh_token"},
-		"response_types":            []string{"code"},
+		"redirect_uris":              []string{"http://127.0.0.1"},
+		"grant_types":                []string{"authorization_code", "refresh_token"},
+		"response_types":             []string{"code"},
 		"token_endpoint_auth_method": "none",
-		"scope":                     "mcp:connect",
+		"scope":                      "mcp:connect",
 	}
 	body, _ := json.Marshal(regBody)
 

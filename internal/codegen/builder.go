@@ -43,7 +43,7 @@ func (b *Builder) Line(line string) *Builder {
 
 // Linef appends a formatted line of JS.
 func (b *Builder) Linef(format string, args ...any) *Builder {
-	b.buf.WriteString(fmt.Sprintf(format, args...))
+	_, _ = fmt.Fprintf(&b.buf, format, args...)
 	b.buf.WriteByte('\n')
 	return b
 }
