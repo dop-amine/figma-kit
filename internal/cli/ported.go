@@ -22,8 +22,8 @@ var embeddedTemplates = map[string]string{
 
 func newPreambleCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "preamble",
-		Short: "Generate the use_figma preamble (theme colors + font loading)",
+		Use:         "preamble",
+		Short:       "Generate the use_figma preamble (theme colors + font loading)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -40,8 +40,8 @@ func newPreambleCmd() *cobra.Command {
 
 func newHelpersCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "helpers",
-		Short: "Output the full helpers.js code for injection into use_figma",
+		Use:         "helpers",
+		Short:       "Output the full helpers.js code for injection into use_figma",
 		Annotations: map[string]string{"composable": "true"},
 		Run: func(cmd *cobra.Command, args []string) {
 			output(codegen.AllHelpers())
@@ -110,8 +110,8 @@ func newScaffoldCmd() *cobra.Command {
 	var templateName string
 
 	cmd := &cobra.Command{
-		Use:   "scaffold",
-		Short: "Generate a full use_figma code block ready for execution",
+		Use:         "scaffold",
+		Short:       "Generate a full use_figma code block ready for execution",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)

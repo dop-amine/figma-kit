@@ -34,9 +34,9 @@ func newLayoutAutoCmd() *cobra.Command {
 		wrap  bool
 	)
 	cmd := &cobra.Command{
-		Use:   "auto <nodeId>",
-		Short: "Set auto-layout on a frame",
-		Args:  cobra.ExactArgs(1),
+		Use:         "auto <nodeId>",
+		Short:       "Set auto-layout on a frame",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -73,9 +73,9 @@ func newLayoutGridCmd() *cobra.Command {
 		margin  int
 	)
 	cmd := &cobra.Command{
-		Use:   "grid <nodeId>",
-		Short: "Add layout grid to a frame",
-		Args:  cobra.ExactArgs(1),
+		Use:         "grid <nodeId>",
+		Short:       "Add layout grid to a frame",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -98,9 +98,9 @@ func newLayoutGridCmd() *cobra.Command {
 func newLayoutConstraintsCmd() *cobra.Command {
 	var h, v string
 	cmd := &cobra.Command{
-		Use:   "constraints <nodeId>",
-		Short: "Set constraints on a node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "constraints <nodeId>",
+		Short:       "Set constraints on a node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -121,9 +121,9 @@ func newLayoutConstraintsCmd() *cobra.Command {
 func newLayoutSizingCmd() *cobra.Command {
 	var w, h string
 	cmd := &cobra.Command{
-		Use:   "sizing <nodeId>",
-		Short: "Set sizing behavior (FIXED, HUG, FILL)",
-		Args:  cobra.ExactArgs(1),
+		Use:         "sizing <nodeId>",
+		Short:       "Set sizing behavior (FIXED, HUG, FILL)",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -149,9 +149,9 @@ func newLayoutSizingCmd() *cobra.Command {
 func newLayoutAlignCmd() *cobra.Command {
 	var primary, counter string
 	cmd := &cobra.Command{
-		Use:   "align <nodeId>",
-		Short: "Set alignment for auto-layout children",
-		Args:  cobra.ExactArgs(1),
+		Use:         "align <nodeId>",
+		Short:       "Set alignment for auto-layout children",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -180,9 +180,9 @@ func newLayoutDistributeCmd() *cobra.Command {
 		gap  int
 	)
 	cmd := &cobra.Command{
-		Use:   "distribute <nodeIds>",
-		Short: "Distribute nodes evenly along an axis",
-		Args:  cobra.ExactArgs(1),
+		Use:         "distribute <nodeIds>",
+		Short:       "Distribute nodes evenly along an axis",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ids := strings.Split(args[0], ",")

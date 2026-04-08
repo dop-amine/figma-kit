@@ -14,9 +14,9 @@ import (
 func newInspectCmd() *cobra.Command {
 	var deep bool
 	cmd := &cobra.Command{
-		Use:   "inspect <nodeId>",
-		Short: "Generate JS that dumps node properties (fills, strokes, layout, geometry)",
-		Args:  cobra.ExactArgs(1),
+		Use:         "inspect <nodeId>",
+		Short:       "Generate JS that dumps node properties (fills, strokes, layout, geometry)",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -50,8 +50,8 @@ func newInspectCmd() *cobra.Command {
 func newScreenshotCmd() *cobra.Command {
 	var nodeID string
 	cmd := &cobra.Command{
-		Use:   "screenshot",
-		Short: "Capture a screenshot of a Figma node via MCP (falls back to instructions)",
+		Use:         "screenshot",
+		Short:       "Capture a screenshot of a Figma node via MCP (falls back to instructions)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fk := resolveFileKey()
@@ -87,9 +87,9 @@ Set the file key via .figmarc.json or FIGMA_FILE_KEY env var.
 func newTreeCmd() *cobra.Command {
 	var maxDepth int
 	cmd := &cobra.Command{
-		Use:   "tree [nodeId]",
-		Short: "Generate JS that prints a hierarchical node tree (default: current page)",
-		Args:  cobra.MaximumNArgs(1),
+		Use:         "tree [nodeId]",
+		Short:       "Generate JS that prints a hierarchical node tree (default: current page)",
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -125,9 +125,9 @@ func newTreeCmd() *cobra.Command {
 
 func newFindCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "find <pattern>",
-		Short: "Generate JS that finds nodes by substring match on name",
-		Args:  cobra.ExactArgs(1),
+		Use:         "find <pattern>",
+		Short:       "Generate JS that finds nodes by substring match on name",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -152,9 +152,9 @@ func newFindCmd() *cobra.Command {
 
 func newMeasureCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "measure <nodeIdA> <nodeIdB>",
-		Short: "Generate JS that measures axis-aligned distance between two nodes' bounding boxes",
-		Args:  cobra.ExactArgs(2),
+		Use:         "measure <nodeIdA> <nodeIdB>",
+		Short:       "Generate JS that measures axis-aligned distance between two nodes' bounding boxes",
+		Args:        cobra.ExactArgs(2),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -180,9 +180,9 @@ func newMeasureCmd() *cobra.Command {
 
 func newDiffCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "diff <nodeIdA> <nodeIdB>",
-		Short: "Generate JS that compares dimensions and fill colors between two nodes",
-		Args:  cobra.ExactArgs(2),
+		Use:         "diff <nodeIdA> <nodeIdB>",
+		Short:       "Generate JS that compares dimensions and fill colors between two nodes",
+		Args:        cobra.ExactArgs(2),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -232,8 +232,8 @@ func newQACmd() *cobra.Command {
 
 func newQAContrastCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "contrast",
-		Short: "Traverse text nodes and flag potential contrast issues (heuristic)",
+		Use:         "contrast",
+		Short:       "Traverse text nodes and flag potential contrast issues (heuristic)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -263,8 +263,8 @@ func newQAContrastCmd() *cobra.Command {
 func newQATouchTargetsCmd() *cobra.Command {
 	var min int
 	cmd := &cobra.Command{
-		Use:   "touch-targets",
-		Short: "Flag frames/components smaller than minimum touch target size",
+		Use:         "touch-targets",
+		Short:       "Flag frames/components smaller than minimum touch target size",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -291,8 +291,8 @@ func newQATouchTargetsCmd() *cobra.Command {
 
 func newQAOrphansCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "orphans",
-		Short: "List top-level nodes on the page that look like stray layers",
+		Use:         "orphans",
+		Short:       "List top-level nodes on the page that look like stray layers",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -313,8 +313,8 @@ func newQAOrphansCmd() *cobra.Command {
 
 func newQAFontsCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "fonts",
-		Short: "Collect font combinations used by text nodes",
+		Use:         "fonts",
+		Short:       "Collect font combinations used by text nodes",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -337,8 +337,8 @@ func newQAFontsCmd() *cobra.Command {
 
 func newQAColorsCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "colors",
-		Short: "Aggregate solid fill colors used in the subtree",
+		Use:         "colors",
+		Short:       "Aggregate solid fill colors used in the subtree",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -363,8 +363,8 @@ func newQAColorsCmd() *cobra.Command {
 
 func newQASpacingCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "spacing",
-		Short: "Flag auto-layout frames with itemSpacing below a threshold",
+		Use:         "spacing",
+		Short:       "Flag auto-layout frames with itemSpacing below a threshold",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -388,8 +388,8 @@ func newQASpacingCmd() *cobra.Command {
 
 func newQANamingCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "naming",
-		Short: "Flag default or empty layer names",
+		Use:         "naming",
+		Short:       "Flag default or empty layer names",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -412,8 +412,8 @@ func newQANamingCmd() *cobra.Command {
 
 func newQAResponsiveCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "responsive",
-		Short: "Summarize horizontal/vertical constraints usage",
+		Use:         "responsive",
+		Short:       "Summarize horizontal/vertical constraints usage",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -439,8 +439,8 @@ func newQAResponsiveCmd() *cobra.Command {
 
 func newQAChecklistCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "checklist",
-		Short: "Run a lightweight bundled QA pass and return combined findings",
+		Use:         "checklist",
+		Short:       "Run a lightweight bundled QA pass and return combined findings",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)

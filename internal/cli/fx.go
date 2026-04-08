@@ -109,9 +109,9 @@ func newFXGlowCmd() *cobra.Command {
 		useLast   *bool
 	)
 	cmd := &cobra.Command{
-		Use:   "glow [nodeId]",
-		Short: "Add radial gradient glow fills to a frame",
-		Args:  cobra.MaximumNArgs(1),
+		Use:         "glow [nodeId]",
+		Short:       "Add radial gradient glow fills to a frame",
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pos := position
@@ -209,9 +209,9 @@ func newFXMeshCmd() *cobra.Command {
 		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:   "mesh [nodeId]",
-		Short: "Multi-point mesh gradient (layered radial fills)",
-		Args:  cobra.MaximumNArgs(1),
+		Use:         "mesh [nodeId]",
+		Short:       "Multi-point mesh gradient (layered radial fills)",
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if pointsN < 2 {
@@ -298,9 +298,9 @@ func newFXNoiseCmd() *cobra.Command {
 		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:   "noise [nodeId]",
-		Short: "Subtle noise overlay via gradient dithering",
-		Args:  cobra.MaximumNArgs(1),
+		Use:         "noise [nodeId]",
+		Short:       "Subtle noise overlay via gradient dithering",
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -354,9 +354,9 @@ func newFXVignetteCmd() *cobra.Command {
 		useLast  *bool
 	)
 	cmd := &cobra.Command{
-		Use:   "vignette [nodeId]",
-		Short: "Edge vignette darkening overlay",
-		Args:  cobra.MaximumNArgs(1),
+		Use:         "vignette [nodeId]",
+		Short:       "Edge vignette darkening overlay",
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -403,9 +403,9 @@ func newFXGrainCmd() *cobra.Command {
 		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:   "grain [nodeId]",
-		Short: "Film grain overlay (dithered gradient)",
-		Args:  cobra.MaximumNArgs(1),
+		Use:         "grain [nodeId]",
+		Short:       "Film grain overlay (dithered gradient)",
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var steps int
@@ -521,9 +521,9 @@ func newFXBlurBgCmd() *cobra.Command {
 		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:   "blur-bg [nodeId]",
-		Short: "Frosted-glass overlay (fill + background blur)",
-		Args:  cobra.MaximumNArgs(1),
+		Use:         "blur-bg [nodeId]",
+		Short:       "Frosted-glass overlay (fill + background blur)",
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fillLit := "{ type: 'SOLID', color: { r: 1, g: 1, b: 1 }, opacity: 0.35 }"
@@ -575,9 +575,9 @@ func newFXAccentBarCmd() *cobra.Command {
 		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:   "accent-bar [parentId]",
-		Short: "Gradient accent bar (linear fill)",
-		Args:  cobra.MaximumNArgs(1),
+		Use:         "accent-bar [parentId]",
+		Short:       "Gradient accent bar (linear fill)",
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c0, err := codegen.HexToRGB(fromHex)
@@ -668,9 +668,9 @@ func newFXShadowCmd() *cobra.Command {
 		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:   "shadow [nodeId]",
-		Short: "Apply a drop/inner shadow preset",
-		Args:  cobra.MaximumNArgs(1),
+		Use:         "shadow [nodeId]",
+		Short:       "Apply a drop/inner shadow preset",
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			p, err := shadowPresetByName(preset)
@@ -714,9 +714,9 @@ func newFXParallaxLayerCmd() *cobra.Command {
 		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:   "parallax-layer [parentId]",
-		Short: "Layered depth stack (offset frames for parallax-style composition)",
-		Args:  cobra.MaximumNArgs(1),
+		Use:         "parallax-layer [parentId]",
+		Short:       "Layered depth stack (offset frames for parallax-style composition)",
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if layersN < 2 {
@@ -776,10 +776,10 @@ func newFXAuroraCmd() *cobra.Command {
 		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:     "aurora [nodeId]",
-		Short:   "Apply aurora borealis gradient overlay to a frame",
-		Example: `  figma-kit fx aurora <frameId> --palette sunset`,
-		Args:    cobra.MaximumNArgs(1),
+		Use:         "aurora [nodeId]",
+		Short:       "Apply aurora borealis gradient overlay to a frame",
+		Example:     `  figma-kit fx aurora <frameId> --palette sunset`,
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := resolveTheme(cmd)
@@ -838,10 +838,10 @@ func newFXMorphCmd() *cobra.Command {
 		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:     "morph [nodeId]",
-		Short:   "Add organic blob shapes as background elements",
-		Example: `  figma-kit fx morph <frameId> --count 5 --spread 200`,
-		Args:    cobra.MaximumNArgs(1),
+		Use:         "morph [nodeId]",
+		Short:       "Add organic blob shapes as background elements",
+		Example:     `  figma-kit fx morph <frameId> --count 5 --spread 200`,
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := resolveTheme(cmd)
@@ -902,10 +902,10 @@ func newFXGradientBorderCmd() *cobra.Command {
 		useLast *bool
 	)
 	cmd := &cobra.Command{
-		Use:     "gradient-border [nodeId]",
-		Short:   "Simulate a gradient border around a node",
-		Example: `  figma-kit fx gradient-border <frameId> --from "#3B82F6" --to "#8B5CF6"`,
-		Args:    cobra.MaximumNArgs(1),
+		Use:         "gradient-border [nodeId]",
+		Short:       "Simulate a gradient border around a node",
+		Example:     `  figma-kit fx gradient-border <frameId> --from "#3B82F6" --to "#8B5CF6"`,
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := resolveTheme(cmd)
@@ -967,10 +967,10 @@ func newFXSpotlightCmd() *cobra.Command {
 		useLast   *bool
 	)
 	cmd := &cobra.Command{
-		Use:     "spotlight [nodeId]",
-		Short:   "Add a circular spotlight/highlight effect",
-		Example: `  figma-kit fx spotlight <frameId> --x 0.5 --y 0.3 --radius 300`,
-		Args:    cobra.MaximumNArgs(1),
+		Use:         "spotlight [nodeId]",
+		Short:       "Add a circular spotlight/highlight effect",
+		Example:     `  figma-kit fx spotlight <frameId> --x 0.5 --y 0.3 --radius 300`,
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := resolveTheme(cmd)
@@ -1019,10 +1019,10 @@ func newFXPatternCmd() *cobra.Command {
 		useLast     *bool
 	)
 	cmd := &cobra.Command{
-		Use:     "pattern [nodeId]",
-		Short:   "Add a repeating geometric pattern to a frame",
-		Example: `  figma-kit fx pattern <frameId> --type dots --spacing 24 --size 3`,
-		Args:    cobra.MaximumNArgs(1),
+		Use:         "pattern [nodeId]",
+		Short:       "Add a repeating geometric pattern to a frame",
+		Example:     `  figma-kit fx pattern <frameId> --type dots --spacing 24 --size 3`,
+		Args:        cobra.MaximumNArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := resolveTheme(cmd)

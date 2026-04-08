@@ -62,8 +62,8 @@ type FrameInfo struct {
 
 // ComponentsResponse wraps a paginated list of components.
 type ComponentsResponse struct {
-	Status int         `json:"status"`
-	Error  bool        `json:"error"`
+	Status int            `json:"status"`
+	Error  bool           `json:"error"`
 	Meta   ComponentsMeta `json:"meta"`
 }
 

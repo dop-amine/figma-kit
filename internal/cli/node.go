@@ -52,9 +52,9 @@ func newNodeCreateCmd() *cobra.Command {
 		x, y   int
 	)
 	cmd := &cobra.Command{
-		Use:   "create <type>",
-		Short: "Create a Figma node (frame, rect, text, ellipse, line, polygon, star, vector, component)",
-		Args:  cobra.ExactArgs(1),
+		Use:         "create <type>",
+		Short:       "Create a Figma node (frame, rect, text, ellipse, line, polygon, star, vector, component)",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			nodeType := args[0]
@@ -99,9 +99,9 @@ func newNodeCreateCmd() *cobra.Command {
 func newNodeCloneCmd() *cobra.Command {
 	var dx, dy int
 	cmd := &cobra.Command{
-		Use:   "clone <nodeId>",
-		Short: "Duplicate a node with optional offset",
-		Args:  cobra.ExactArgs(1),
+		Use:         "clone <nodeId>",
+		Short:       "Duplicate a node with optional offset",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -124,9 +124,9 @@ func newNodeCloneCmd() *cobra.Command {
 
 func newNodeDeleteCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "delete <nodeId>",
-		Short: "Remove a node from the canvas",
-		Args:  cobra.ExactArgs(1),
+		Use:         "delete <nodeId>",
+		Short:       "Remove a node from the canvas",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -144,9 +144,9 @@ func newNodeDeleteCmd() *cobra.Command {
 func newNodeMoveCmd() *cobra.Command {
 	var x, y int
 	cmd := &cobra.Command{
-		Use:   "move <nodeId>",
-		Short: "Reposition a node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "move <nodeId>",
+		Short:       "Reposition a node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -168,9 +168,9 @@ func newNodeMoveCmd() *cobra.Command {
 func newNodeResizeCmd() *cobra.Command {
 	var w, h int
 	cmd := &cobra.Command{
-		Use:   "resize <nodeId>",
-		Short: "Resize a node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "resize <nodeId>",
+		Short:       "Resize a node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -191,9 +191,9 @@ func newNodeResizeCmd() *cobra.Command {
 func newNodeRenameCmd() *cobra.Command {
 	var name string
 	cmd := &cobra.Command{
-		Use:   "rename <nodeId>",
-		Short: "Rename a node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "rename <nodeId>",
+		Short:       "Rename a node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -213,9 +213,9 @@ func newNodeRenameCmd() *cobra.Command {
 
 func newNodeReparentCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "reparent <nodeId> <parentId>",
-		Short: "Move a node to a different parent",
-		Args:  cobra.ExactArgs(2),
+		Use:         "reparent <nodeId> <parentId>",
+		Short:       "Move a node to a different parent",
+		Args:        cobra.ExactArgs(2),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -235,9 +235,9 @@ func newNodeReparentCmd() *cobra.Command {
 func newNodeLockCmd() *cobra.Command {
 	var unlock bool
 	cmd := &cobra.Command{
-		Use:   "lock <nodeId>",
-		Short: "Lock or unlock a node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "lock <nodeId>",
+		Short:       "Lock or unlock a node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -257,9 +257,9 @@ func newNodeLockCmd() *cobra.Command {
 func newNodeVisibleCmd() *cobra.Command {
 	var hide bool
 	cmd := &cobra.Command{
-		Use:   "visible <nodeId>",
-		Short: "Toggle node visibility",
-		Args:  cobra.ExactArgs(1),
+		Use:         "visible <nodeId>",
+		Short:       "Toggle node visibility",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -278,9 +278,9 @@ func newNodeVisibleCmd() *cobra.Command {
 
 func newNodeOrderCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "order <direction> <nodeId>",
-		Short: "Change layer order: front, back, forward, backward",
-		Args:  cobra.ExactArgs(2),
+		Use:         "order <direction> <nodeId>",
+		Short:       "Change layer order: front, back, forward, backward",
+		Args:        cobra.ExactArgs(2),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir := strings.ToLower(args[0])
@@ -314,9 +314,9 @@ func newNodeOrderCmd() *cobra.Command {
 func newNodeGroupCmd() *cobra.Command {
 	var name string
 	cmd := &cobra.Command{
-		Use:   "group <nodeId> [nodeId...]",
-		Short: "Group two or more nodes together",
-		Args:  cobra.MinimumNArgs(2),
+		Use:         "group <nodeId> [nodeId...]",
+		Short:       "Group two or more nodes together",
+		Args:        cobra.MinimumNArgs(2),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -341,9 +341,9 @@ func newNodeGroupCmd() *cobra.Command {
 
 func newNodeUngroupCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "ungroup <nodeId>",
-		Short: "Ungroup a group node, returning children to the parent",
-		Args:  cobra.ExactArgs(1),
+		Use:         "ungroup <nodeId>",
+		Short:       "Ungroup a group node, returning children to the parent",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -362,9 +362,9 @@ func newNodeUngroupCmd() *cobra.Command {
 
 func newNodeComponentCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "component <nodeId>",
-		Short: "Convert an existing node into a Figma component",
-		Args:  cobra.ExactArgs(1),
+		Use:         "component <nodeId>",
+		Short:       "Convert an existing node into a Figma component",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -381,9 +381,9 @@ func newNodeComponentCmd() *cobra.Command {
 
 func newNodeFlattenCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "flatten <nodeId>",
-		Short: "Flatten a node subtree into a single vector",
-		Args:  cobra.ExactArgs(1),
+		Use:         "flatten <nodeId>",
+		Short:       "Flatten a node subtree into a single vector",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -404,7 +404,7 @@ func newNodeBooleanCmd() *cobra.Command {
 		Short: "Boolean shape operation (union, subtract, intersect, exclude)",
 		Example: `  figma-kit node boolean union "1:2" "1:3"
   figma-kit node boolean subtract "1:2" "1:3"`,
-		Args: cobra.ExactArgs(3),
+		Args:        cobra.ExactArgs(3),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			op := strings.ToLower(args[0])
@@ -447,7 +447,7 @@ func newNodeSVGCmd() *cobra.Command {
 		Short: "Create a vector node from SVG path data",
 		Example: `  figma-kit node svg "M10 10 L90 10 L90 90 L10 90 Z" --size 100
   figma-kit node svg "M50 0 L100 100 L0 100 Z" --fill "#3B82F6" --size 80`,
-		Args: cobra.ExactArgs(1),
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			page := resolvePage()
@@ -490,10 +490,10 @@ func newNodeSVGCmd() *cobra.Command {
 func newNodeVariantSetCmd() *cobra.Command {
 	var variantsJSON string
 	cmd := &cobra.Command{
-		Use:     "variant-set <componentId>",
-		Short:   "Create a component set with variants from a base component",
-		Example: `  figma-kit node variant-set "1:2" --variants '[{"name":"State=default"},{"name":"State=hover"},{"name":"State=active"}]'`,
-		Args:    cobra.ExactArgs(1),
+		Use:         "variant-set <componentId>",
+		Short:       "Create a component set with variants from a base component",
+		Example:     `  figma-kit node variant-set "1:2" --variants '[{"name":"State=default"},{"name":"State=hover"},{"name":"State=active"}]'`,
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()

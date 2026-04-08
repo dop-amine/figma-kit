@@ -36,9 +36,9 @@ func newExportCmd() *cobra.Command {
 func newExportPNGCmd() *cobra.Command {
 	var scale float64
 	cmd := &cobra.Command{
-		Use:   "png <nodeId>",
-		Short: "Generate JS that exports a node as PNG via exportAsync",
-		Args:  cobra.ExactArgs(1),
+		Use:         "png <nodeId>",
+		Short:       "Generate JS that exports a node as PNG via exportAsync",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -62,9 +62,9 @@ func newExportPNGCmd() *cobra.Command {
 
 func newExportSVGCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "svg <nodeId>",
-		Short: "Generate JS that exports a node as SVG",
-		Args:  cobra.ExactArgs(1),
+		Use:         "svg <nodeId>",
+		Short:       "Generate JS that exports a node as SVG",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -86,9 +86,9 @@ func newExportSVGCmd() *cobra.Command {
 
 func newExportPDFCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pdf <nodeId>",
-		Short: "Generate JS that exports a frame or page subtree as PDF",
-		Args:  cobra.ExactArgs(1),
+		Use:         "pdf <nodeId>",
+		Short:       "Generate JS that exports a frame or page subtree as PDF",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -110,8 +110,8 @@ func newExportPDFCmd() *cobra.Command {
 
 func newExportPageCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "page",
-		Short: "Generate JS that exports the current page as PNG slices per top-level frame",
+		Use:         "page",
+		Short:       "Generate JS that exports the current page as PNG slices per top-level frame",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -135,9 +135,9 @@ func newExportPageCmd() *cobra.Command {
 
 func newExportSpritesCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "sprites <frameId>",
-		Short: "Generate JS that exports each direct child of a frame as PNG (sprite sheet workflow)",
-		Args:  cobra.ExactArgs(1),
+		Use:         "sprites <frameId>",
+		Short:       "Generate JS that exports each direct child of a frame as PNG (sprite sheet workflow)",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)

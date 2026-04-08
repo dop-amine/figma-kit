@@ -47,8 +47,8 @@ func newTextCreateCmd() *cobra.Command {
 		autoResize    string
 	)
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: "Create a text node",
+		Use:         "create",
+		Short:       "Create a text node",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := codegen.HexToRGB(color)
@@ -131,9 +131,9 @@ func newTextCreateCmd() *cobra.Command {
 func newTextEditCmd() *cobra.Command {
 	var content string
 	cmd := &cobra.Command{
-		Use:   "edit <nodeId>",
-		Short: "Edit text content of a text node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "edit <nodeId>",
+		Short:       "Edit text content of a text node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -160,9 +160,9 @@ func newTextStyleCmd() *cobra.Command {
 		align string
 	)
 	cmd := &cobra.Command{
-		Use:   "style <nodeId>",
-		Short: "Change typography on a text node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "style <nodeId>",
+		Short:       "Change typography on a text node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -202,9 +202,9 @@ func newTextRangeCmd() *cobra.Command {
 		color  string
 	)
 	cmd := &cobra.Command{
-		Use:   "range <nodeId>",
-		Short: "Apply mixed styles to a text range",
-		Args:  cobra.ExactArgs(1),
+		Use:         "range <nodeId>",
+		Short:       "Apply mixed styles to a text range",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -251,8 +251,8 @@ func newTextListFontsCmd() *cobra.Command {
 func newTextLoadFontsCmd() *cobra.Command {
 	var families string
 	cmd := &cobra.Command{
-		Use:   "load-fonts",
-		Short: "Generate font loading code for specified families",
+		Use:         "load-fonts",
+		Short:       "Generate font loading code for specified families",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()

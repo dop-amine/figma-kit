@@ -81,8 +81,8 @@ func newMakeCarouselCmd() *cobra.Command {
 	var slidesN int
 
 	cmd := &cobra.Command{
-		Use:   "carousel",
-		Short: "LinkedIn-style carousel slides from YAML (1080×1350 via theme.slide)",
+		Use:         "carousel",
+		Short:       "LinkedIn-style carousel slides from YAML (1080×1350 via theme.slide)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, _, b, err := startDeliverable(cmd)
@@ -139,8 +139,8 @@ func newMakeInstagramPostCmd() *cobra.Command {
 	var typ, content string
 
 	cmd := &cobra.Command{
-		Use:   "instagram-post",
-		Short: "Instagram feed post frame (1080×1080)",
+		Use:         "instagram-post",
+		Short:       "Instagram feed post frame (1080×1080)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -174,8 +174,8 @@ func newMakeInstagramStoryCmd() *cobra.Command {
 	var contentPath string
 
 	cmd := &cobra.Command{
-		Use:   "instagram-story",
-		Short: "Instagram story frame from YAML (1080×1920)",
+		Use:         "instagram-story",
+		Short:       "Instagram story frame from YAML (1080×1920)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -227,8 +227,8 @@ func newMakeTwitterCardCmd() *cobra.Command {
 	var headline, imageStyle string
 
 	cmd := &cobra.Command{
-		Use:   "twitter-card",
-		Short: "Twitter / X large card (1200×675)",
+		Use:         "twitter-card",
+		Short:       "Twitter / X large card (1200×675)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -265,8 +265,8 @@ func newMakeFacebookCoverCmd() *cobra.Command {
 	var scheme string
 
 	cmd := &cobra.Command{
-		Use:   "facebook-cover",
-		Short: "Facebook cover photo (820×312)",
+		Use:         "facebook-cover",
+		Short:       "Facebook cover photo (820×312)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -304,8 +304,8 @@ func newMakeYouTubeThumbCmd() *cobra.Command {
 	var title, face string
 
 	cmd := &cobra.Command{
-		Use:   "youtube-thumb",
-		Short: "YouTube thumbnail (1280×720)",
+		Use:         "youtube-thumb",
+		Short:       "YouTube thumbnail (1280×720)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -351,8 +351,8 @@ func newMakeOGImageCmd() *cobra.Command {
 	var title, description string
 
 	cmd := &cobra.Command{
-		Use:   "og-image",
-		Short: "Open Graph share image (1200×630)",
+		Use:         "og-image",
+		Short:       "Open Graph share image (1200×630)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -387,8 +387,8 @@ func newMakeBannerCmd() *cobra.Command {
 	var sizes, contentPath string
 
 	cmd := &cobra.Command{
-		Use:   "banner",
-		Short: "IAB-style display banners from YAML + size list",
+		Use:         "banner",
+		Short:       "IAB-style display banners from YAML + size list",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -449,8 +449,8 @@ func newMakeEmailHeaderCmd() *cobra.Command {
 	var width int
 
 	cmd := &cobra.Command{
-		Use:   "email-header",
-		Short: "Email header strip (default width 600px)",
+		Use:         "email-header",
+		Short:       "Email header strip (default width 600px)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -480,8 +480,8 @@ func newMakeAdSetCmd() *cobra.Command {
 	var contentPath, platforms string
 
 	cmd := &cobra.Command{
-		Use:   "ad-set",
-		Short: "Multi-platform ad frames from campaign YAML",
+		Use:         "ad-set",
+		Short:       "Multi-platform ad frames from campaign YAML",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -538,8 +538,8 @@ func newMakeOnePagerCmd() *cobra.Command {
 	var format, mode, contentPath string
 
 	cmd := &cobra.Command{
-		Use:   "one-pager",
-		Short: "B2B one-pager from YAML (embedded one-pager-print template)",
+		Use:         "one-pager",
+		Short:       "B2B one-pager from YAML (embedded one-pager-print template)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, _, b, err := startDeliverable(cmd)
@@ -590,8 +590,8 @@ func newMakePitchDeckCmd() *cobra.Command {
 	var template string
 
 	cmd := &cobra.Command{
-		Use:   "pitch-deck",
-		Short: "Pitch deck slide frames (1920×1080)",
+		Use:         "pitch-deck",
+		Short:       "Pitch deck slide frames (1920×1080)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -627,8 +627,8 @@ func newMakeCaseStudyCmd() *cobra.Command {
 	var sections string
 
 	cmd := &cobra.Command{
-		Use:   "case-study",
-		Short: "Case study layout with section blocks",
+		Use:         "case-study",
+		Short:       "Case study layout with section blocks",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -665,8 +665,8 @@ func newMakeProposalCmd() *cobra.Command {
 	var client, scopePath string
 
 	cmd := &cobra.Command{
-		Use:   "proposal",
-		Short: "Client proposal cover + scope from YAML",
+		Use:         "proposal",
+		Short:       "Client proposal cover + scope from YAML",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -707,8 +707,8 @@ func newMakeInvoiceCmd() *cobra.Command {
 	var template string
 
 	cmd := &cobra.Command{
-		Use:   "invoice",
-		Short: "Invoice layout frame",
+		Use:         "invoice",
+		Short:       "Invoice layout frame",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -746,8 +746,8 @@ func newMakeBusinessCardCmd() *cobra.Command {
 	var name, jobTitle string
 
 	cmd := &cobra.Command{
-		Use:   "business-card",
-		Short: "Business card (1050×600)",
+		Use:         "business-card",
+		Short:       "Business card (1050×600)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -782,8 +782,8 @@ func newMakeLetterheadCmd() *cobra.Command {
 	var format string
 
 	cmd := &cobra.Command{
-		Use:   "letterhead",
-		Short: "Letterhead document frame",
+		Use:         "letterhead",
+		Short:       "Letterhead document frame",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -816,8 +816,8 @@ func newMakeContractCmd() *cobra.Command {
 	var title string
 
 	cmd := &cobra.Command{
-		Use:   "contract",
-		Short: "Contract title page frame",
+		Use:         "contract",
+		Short:       "Contract title page frame",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -850,8 +850,8 @@ func newMakeStoryboardCmd() *cobra.Command {
 	var contentPath string
 
 	cmd := &cobra.Command{
-		Use:   "storyboard",
-		Short: "Storyboard styleframes from YAML (embedded storyboard-panel template)",
+		Use:         "storyboard",
+		Short:       "Storyboard styleframes from YAML (embedded storyboard-panel template)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, _, b, err := startDeliverable(cmd)
@@ -908,8 +908,8 @@ func newMakeStyleframeCmd() *cobra.Command {
 	var mood, scene string
 
 	cmd := &cobra.Command{
-		Use:   "styleframe",
-		Short: "Single motion styleframe (1920×1080)",
+		Use:         "styleframe",
+		Short:       "Single motion styleframe (1920×1080)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -951,8 +951,8 @@ func newMakeAnimaticCmd() *cobra.Command {
 	var duration string
 
 	cmd := &cobra.Command{
-		Use:   "animatic",
-		Short: "Animatic timeline overview frame",
+		Use:         "animatic",
+		Short:       "Animatic timeline overview frame",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -988,8 +988,8 @@ func newMakeTransitionSpecCmd() *cobra.Command {
 	var typ, easing string
 
 	cmd := &cobra.Command{
-		Use:   "transition-spec",
-		Short: "UI transition specification card",
+		Use:         "transition-spec",
+		Short:       "UI transition specification card",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1023,8 +1023,8 @@ func newMakeWireframeCmd() *cobra.Command {
 	var typ, breakpoint string
 
 	cmd := &cobra.Command{
-		Use:   "wireframe",
-		Short: "Low-fidelity wireframe shell",
+		Use:         "wireframe",
+		Short:       "Low-fidelity wireframe shell",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1062,8 +1062,8 @@ func newMakeScreenCmd() *cobra.Command {
 	var typ, sections string
 
 	cmd := &cobra.Command{
-		Use:   "screen",
-		Short: "Marketing screen with section strips",
+		Use:         "screen",
+		Short:       "Marketing screen with section strips",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1101,8 +1101,8 @@ func newMakeDashboardCmd() *cobra.Command {
 	var cols int
 
 	cmd := &cobra.Command{
-		Use:   "dashboard",
-		Short: "Dashboard grid of widget placeholders",
+		Use:         "dashboard",
+		Short:       "Dashboard grid of widget placeholders",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1148,8 +1148,8 @@ func newMakeFormCmd() *cobra.Command {
 	var fieldsPath string
 
 	cmd := &cobra.Command{
-		Use:   "form",
-		Short: "Form layout from JSON/YAML schema",
+		Use:         "form",
+		Short:       "Form layout from JSON/YAML schema",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1212,8 +1212,8 @@ func newMakeModalCmd() *cobra.Command {
 	var size, typ string
 
 	cmd := &cobra.Command{
-		Use:   "modal",
-		Short: "Modal overlay frame",
+		Use:         "modal",
+		Short:       "Modal overlay frame",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1254,8 +1254,8 @@ func newMakeEmptyStateCmd() *cobra.Command {
 	var message string
 
 	cmd := &cobra.Command{
-		Use:   "empty-state",
-		Short: "Empty state illustration block",
+		Use:         "empty-state",
+		Short:       "Empty state illustration block",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1284,8 +1284,8 @@ func newMakeErrorPageCmd() *cobra.Command {
 	var typ string
 
 	cmd := &cobra.Command{
-		Use:   "error-page",
-		Short: "Full-page error state",
+		Use:         "error-page",
+		Short:       "Full-page error state",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1324,8 +1324,8 @@ func newMakeOnboardingCmd() *cobra.Command {
 	var steps int
 
 	cmd := &cobra.Command{
-		Use:   "onboarding",
-		Short: "Onboarding step screens",
+		Use:         "onboarding",
+		Short:       "Onboarding step screens",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1357,8 +1357,8 @@ func newMakeSettingsCmd() *cobra.Command {
 	var sections string
 
 	cmd := &cobra.Command{
-		Use:   "settings",
-		Short: "Settings app layout with section list",
+		Use:         "settings",
+		Short:       "Settings app layout with section list",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1402,8 +1402,8 @@ func newMakePosterCmd() *cobra.Command {
 	var size, bleed string
 
 	cmd := &cobra.Command{
-		Use:   "poster",
-		Short: "Print poster frame with bleed note",
+		Use:         "poster",
+		Short:       "Print poster frame with bleed note",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1441,8 +1441,8 @@ func newMakeBrochureCmd() *cobra.Command {
 	var fold, format string
 
 	cmd := &cobra.Command{
-		Use:   "brochure",
-		Short: "Brochure panel layout",
+		Use:         "brochure",
+		Short:       "Brochure panel layout",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1486,8 +1486,8 @@ func newMakePackagingCmd() *cobra.Command {
 	var w, h, d float64
 
 	cmd := &cobra.Command{
-		Use:   "packaging",
-		Short: "Packaging die-line style frame (flat)",
+		Use:         "packaging",
+		Short:       "Packaging die-line style frame (flat)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1520,8 +1520,8 @@ func newMakeSignageCmd() *cobra.Command {
 	var wStr, hStr string
 
 	cmd := &cobra.Command{
-		Use:   "signage",
-		Short: "Large-format signage board",
+		Use:         "signage",
+		Short:       "Large-format signage board",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1553,8 +1553,8 @@ func newMakeMenuCmd() *cobra.Command {
 	var format string
 
 	cmd := &cobra.Command{
-		Use:   "menu",
-		Short: "Restaurant menu columns",
+		Use:         "menu",
+		Short:       "Restaurant menu columns",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, _, b, err := startDeliverable(cmd)
@@ -1599,9 +1599,9 @@ func newMakeChangelogCmd() *cobra.Command {
 		contentFile string
 	)
 	cmd := &cobra.Command{
-		Use:     "changelog",
-		Short:   "Create a styled changelog / release notes page",
-		Example: `  figma-kit make changelog -t noir --entries '[{"version":"1.0.0","date":"2025-01-15","changes":[{"type":"added","desc":"Direct MCP execution"},{"type":"fixed","desc":"Theme loading bug"}]}]'`,
+		Use:         "changelog",
+		Short:       "Create a styled changelog / release notes page",
+		Example:     `  figma-kit make changelog -t noir --entries '[{"version":"1.0.0","date":"2025-01-15","changes":[{"type":"added","desc":"Direct MCP execution"},{"type":"fixed","desc":"Theme loading bug"}]}]'`,
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, page, b, err := startDeliverable(cmd)

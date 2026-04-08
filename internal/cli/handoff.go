@@ -33,9 +33,9 @@ func newHandoffCmd() *cobra.Command {
 
 func newHandoffSpecCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "spec <nodeId>",
-		Short: "Generate JS that returns a Markdown spec from node properties",
-		Args:  cobra.ExactArgs(1),
+		Use:         "spec <nodeId>",
+		Short:       "Generate JS that returns a Markdown spec from node properties",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -63,9 +63,9 @@ func newHandoffSpecCmd() *cobra.Command {
 
 func newHandoffRedlineCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "redline <nodeId>",
-		Short: "Generate JS that draws measurement overlay lines on a duplicate above the node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "redline <nodeId>",
+		Short:       "Generate JS that draws measurement overlay lines on a duplicate above the node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -94,9 +94,9 @@ func newHandoffRedlineCmd() *cobra.Command {
 
 func newHandoffCSSCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "css <nodeId>",
-		Short: "Generate JS that builds a CSS snippet from solid fills, radius, and dimensions",
-		Args:  cobra.ExactArgs(1),
+		Use:         "css <nodeId>",
+		Short:       "Generate JS that builds a CSS snippet from solid fills, radius, and dimensions",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -125,9 +125,9 @@ func newHandoffCSSCmd() *cobra.Command {
 
 func newHandoffReactCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "react <nodeId>",
-		Short: "Instructions for generating React via the get_design_context MCP tool",
-		Args:  cobra.ExactArgs(1),
+		Use:         "react <nodeId>",
+		Short:       "Instructions for generating React via the get_design_context MCP tool",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			msg := strings.TrimSpace(fmt.Sprintf(`
@@ -147,9 +147,9 @@ figma-kit does not call MCP directly; invoke get_design_context from the MCP cli
 
 func newHandoffAssetsCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "assets <nodeId>",
-		Short: "Generate JS that lists export settings and child assets under a node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "assets <nodeId>",
+		Short:       "Generate JS that lists export settings and child assets under a node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)

@@ -114,8 +114,8 @@ func uiPreamble(b *codegen.Builder, t *theme.Theme, page int) {
 func newUIButtonCmd() *cobra.Command {
 	var variant, label, size string
 	cmd := &cobra.Command{
-		Use:   "button",
-		Short: "Themed button frame (auto-layout)",
+		Use:         "button",
+		Short:       "Themed button frame (auto-layout)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -193,8 +193,8 @@ func newUIButtonCmd() *cobra.Command {
 func newUIInputCmd() *cobra.Command {
 	var label, placeholder, typ string
 	cmd := &cobra.Command{
-		Use:   "input",
-		Short: "Labeled input field (auto-layout)",
+		Use:         "input",
+		Short:       "Labeled input field (auto-layout)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -372,8 +372,8 @@ func newUIAvatarCmd() *cobra.Command {
 	var initials string
 	var size int
 	cmd := &cobra.Command{
-		Use:   "avatar",
-		Short: "Circular avatar with initials",
+		Use:         "avatar",
+		Short:       "Circular avatar with initials",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -426,8 +426,8 @@ func newUIDividerCmd() *cobra.Command {
 	var dir, colorMode string
 	var length int
 	cmd := &cobra.Command{
-		Use:   "divider",
-		Short: "Horizontal or vertical divider line",
+		Use:         "divider",
+		Short:       "Horizontal or vertical divider line",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -480,8 +480,8 @@ func newUIIconCmd() *cobra.Command {
 	var shape, hex string
 	var size int
 	cmd := &cobra.Command{
-		Use:   "icon",
-		Short: "Icon placeholder frame (square or circle)",
+		Use:         "icon",
+		Short:       "Icon placeholder frame (square or circle)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -544,8 +544,8 @@ func newUIIconCmd() *cobra.Command {
 func newUIProgressCmd() *cobra.Command {
 	var value, width int
 	cmd := &cobra.Command{
-		Use:   "progress",
-		Short: "Progress bar (themed track + fill)",
+		Use:         "progress",
+		Short:       "Progress bar (themed track + fill)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -596,8 +596,8 @@ func newUIProgressCmd() *cobra.Command {
 func newUIToggleCmd() *cobra.Command {
 	var state, size string
 	cmd := &cobra.Command{
-		Use:   "toggle",
-		Short: "On/off switch (auto-layout track + thumb)",
+		Use:         "toggle",
+		Short:       "On/off switch (auto-layout track + thumb)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -667,8 +667,8 @@ func newUIToggleCmd() *cobra.Command {
 func newUITooltipCmd() *cobra.Command {
 	var text, position string
 	cmd := &cobra.Command{
-		Use:   "tooltip",
-		Short: "Tooltip bubble (auto-layout)",
+		Use:         "tooltip",
+		Short:       "Tooltip bubble (auto-layout)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -918,8 +918,8 @@ func emitParentAppend(b *codegen.Builder, parent, varName string) {
 func newUITableCmd() *cobra.Command {
 	var dataPath, cols string
 	cmd := &cobra.Command{
-		Use:   "table",
-		Short: "Table from JSON rows + column headers",
+		Use:         "table",
+		Short:       "Table from JSON rows + column headers",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -1064,8 +1064,8 @@ func splitCSVLine(s string) []string {
 func newUINavCmd() *cobra.Command {
 	var items, style string
 	cmd := &cobra.Command{
-		Use:   "nav",
-		Short: "Navigation links (topbar or sidebar)",
+		Use:         "nav",
+		Short:       "Navigation links (topbar or sidebar)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -1132,8 +1132,8 @@ func newUIFooterCmd() *cobra.Command {
 	var copyright string
 	var cols int
 	cmd := &cobra.Command{
-		Use:   "footer",
-		Short: "Footer with N link columns + optional copyright",
+		Use:         "footer",
+		Short:       "Footer with N link columns + optional copyright",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -1226,8 +1226,8 @@ func newUICheckboxCmd() *cobra.Command {
 	var label string
 	var checked bool
 	cmd := &cobra.Command{
-		Use:   "checkbox",
-		Short: "Checkbox control with label (auto-layout)",
+		Use:         "checkbox",
+		Short:       "Checkbox control with label (auto-layout)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -1287,8 +1287,8 @@ func newUIRadioCmd() *cobra.Command {
 	var label string
 	var selected bool
 	cmd := &cobra.Command{
-		Use:   "radio",
-		Short: "Radio button with label (auto-layout)",
+		Use:         "radio",
+		Short:       "Radio button with label (auto-layout)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -1344,8 +1344,8 @@ func newUITabsCmd() *cobra.Command {
 	var tabsRaw string
 	var active int
 	cmd := &cobra.Command{
-		Use:   "tabs",
-		Short: "Horizontal tab bar (auto-layout)",
+		Use:         "tabs",
+		Short:       "Horizontal tab bar (auto-layout)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -1419,8 +1419,8 @@ func newUIDropdownCmd() *cobra.Command {
 	var open bool
 	var optionsRaw string
 	cmd := &cobra.Command{
-		Use:   "dropdown",
-		Short: "Select dropdown control (auto-layout)",
+		Use:         "dropdown",
+		Short:       "Select dropdown control (auto-layout)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -1515,8 +1515,8 @@ func newUIDropdownCmd() *cobra.Command {
 func newUIBreadcrumbCmd() *cobra.Command {
 	var itemsRaw string
 	cmd := &cobra.Command{
-		Use:   "breadcrumb",
-		Short: "Breadcrumb navigation trail (auto-layout)",
+		Use:         "breadcrumb",
+		Short:       "Breadcrumb navigation trail (auto-layout)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -1577,8 +1577,8 @@ func newUISkeletonCmd() *cobra.Command {
 	var variant string
 	var rows int
 	cmd := &cobra.Command{
-		Use:   "skeleton",
-		Short: "Loading skeleton placeholder (text, card, or list variant)",
+		Use:         "skeleton",
+		Short:       "Loading skeleton placeholder (text, card, or list variant)",
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -1677,9 +1677,9 @@ func newUIHeroCmd() *cobra.Command {
 		parent   string
 	)
 	cmd := &cobra.Command{
-		Use:     "hero",
-		Short:   "Complete hero section with heading, subtitle, and CTA",
-		Example: `  figma-kit ui hero -t noir --title "Build Faster" --subtitle "Ship in days, not months" --cta "Get Started"`,
+		Use:         "hero",
+		Short:       "Complete hero section with heading, subtitle, and CTA",
+		Example:     `  figma-kit ui hero -t noir --title "Build Faster" --subtitle "Ship in days, not months" --cta "Get Started"`,
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -1748,9 +1748,9 @@ func newUIHeroCmd() *cobra.Command {
 func newUIPricingCmd() *cobra.Command {
 	var tiersJSON, parent string
 	cmd := &cobra.Command{
-		Use:     "pricing",
-		Short:   "Pricing table with tier cards",
-		Example: `  figma-kit ui pricing -t noir --tiers '[{"name":"Free","price":"$0","features":["5 projects","1GB storage"]},{"name":"Pro","price":"$29","features":["Unlimited","100GB"],"highlighted":true}]'`,
+		Use:         "pricing",
+		Short:       "Pricing table with tier cards",
+		Example:     `  figma-kit ui pricing -t noir --tiers '[{"name":"Free","price":"$0","features":["5 projects","1GB storage"]},{"name":"Pro","price":"$29","features":["Unlimited","100GB"],"highlighted":true}]'`,
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -1810,9 +1810,9 @@ func newUIFeatureGridCmd() *cobra.Command {
 		parent       string
 	)
 	cmd := &cobra.Command{
-		Use:     "feature-grid",
-		Short:   "Grid of feature cards with icon, title, and description",
-		Example: `  figma-kit ui feature-grid -t noir --cols 3 --features '[{"title":"Fast","desc":"Sub-ms reads"},{"title":"Secure","desc":"E2E encrypted"},{"title":"Global","desc":"Edge network"}]'`,
+		Use:         "feature-grid",
+		Short:       "Grid of feature cards with icon, title, and description",
+		Example:     `  figma-kit ui feature-grid -t noir --cols 3 --features '[{"title":"Fast","desc":"Sub-ms reads"},{"title":"Secure","desc":"E2E encrypted"},{"title":"Global","desc":"Edge network"}]'`,
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -1874,9 +1874,9 @@ func newUITestimonialCmd() *cobra.Command {
 		parent  string
 	)
 	cmd := &cobra.Command{
-		Use:     "testimonial",
-		Short:   "Testimonial/quote card with avatar, name, and rating",
-		Example: `  figma-kit ui testimonial -t noir --name "Jane Doe" --role "CEO at Acme" --quote "This changed everything" --rating 5`,
+		Use:         "testimonial",
+		Short:       "Testimonial/quote card with avatar, name, and rating",
+		Example:     `  figma-kit ui testimonial -t noir --name "Jane Doe" --role "CEO at Acme" --quote "This changed everything" --rating 5`,
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -1954,9 +1954,9 @@ func newUITestimonialCmd() *cobra.Command {
 func newUITimelineCmd() *cobra.Command {
 	var entriesJSON, parent string
 	cmd := &cobra.Command{
-		Use:     "timeline",
-		Short:   "Vertical timeline with dated entries",
-		Example: `  figma-kit ui timeline -t noir --entries '[{"date":"2024","title":"Founded","desc":"Started the journey"},{"date":"2025","title":"Series A","desc":"Raised $10M"}]'`,
+		Use:         "timeline",
+		Short:       "Vertical timeline with dated entries",
+		Example:     `  figma-kit ui timeline -t noir --entries '[{"date":"2024","title":"Founded","desc":"Started the journey"},{"date":"2025","title":"Series A","desc":"Raised $10M"}]'`,
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -2016,9 +2016,9 @@ func newUIStepperCmd() *cobra.Command {
 		parent    string
 	)
 	cmd := &cobra.Command{
-		Use:     "stepper",
-		Short:   "Step indicator / progress stepper",
-		Example: `  figma-kit ui stepper -t noir --steps 4 --active 2 --labels "Account,Profile,Settings,Done"`,
+		Use:         "stepper",
+		Short:       "Step indicator / progress stepper",
+		Example:     `  figma-kit ui stepper -t noir --steps 4 --active 2 --labels "Account,Profile,Settings,Done"`,
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)
@@ -2099,9 +2099,9 @@ func newUIAccordionCmd() *cobra.Command {
 		parent    string
 	)
 	cmd := &cobra.Command{
-		Use:     "accordion",
-		Short:   "Expandable sections (FAQ accordion)",
-		Example: `  figma-kit ui accordion -t noir --items '[{"question":"What is this?","answer":"A powerful design tool"},{"question":"How much?","answer":"Free and open source"}]'`,
+		Use:         "accordion",
+		Short:       "Expandable sections (FAQ accordion)",
+		Example:     `  figma-kit ui accordion -t noir --items '[{"question":"What is this?","answer":"A powerful design tool"},{"question":"How much?","answer":"Free and open source"}]'`,
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := resolveTheme(cmd)

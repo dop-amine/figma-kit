@@ -42,9 +42,9 @@ func newPageListCmd() *cobra.Command {
 func newPageCreateCmd() *cobra.Command {
 	var after int
 	cmd := &cobra.Command{
-		Use:   "create <name>",
-		Short: "Add a new page to the file",
-		Args:  cobra.ExactArgs(1),
+		Use:         "create <name>",
+		Short:       "Add a new page to the file",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -65,9 +65,9 @@ func newPageCreateCmd() *cobra.Command {
 
 func newPageRenameCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "rename <index> <new-name>",
-		Short: "Rename a page by index",
-		Args:  cobra.ExactArgs(2),
+		Use:         "rename <index> <new-name>",
+		Short:       "Rename a page by index",
+		Args:        cobra.ExactArgs(2),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -84,9 +84,9 @@ func newPageRenameCmd() *cobra.Command {
 
 func newPageDeleteCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "delete <index>",
-		Short: "Delete a page by index",
-		Args:  cobra.ExactArgs(1),
+		Use:         "delete <index>",
+		Short:       "Delete a page by index",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -104,9 +104,9 @@ func newPageDeleteCmd() *cobra.Command {
 
 func newPageDuplicateCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "duplicate <index>",
-		Short: "Duplicate a page by index",
-		Args:  cobra.ExactArgs(1),
+		Use:         "duplicate <index>",
+		Short:       "Duplicate a page by index",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()

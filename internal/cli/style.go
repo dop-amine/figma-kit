@@ -39,9 +39,9 @@ func newStyleFillCmd() *cobra.Command {
 		opacity float64
 	)
 	cmd := &cobra.Command{
-		Use:   "fill <nodeId>",
-		Short: "Set solid fill on a node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "fill <nodeId>",
+		Short:       "Set solid fill on a node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := codegen.HexToRGB(solid)
@@ -71,9 +71,9 @@ func newStyleStrokeCmd() *cobra.Command {
 		align  string
 	)
 	cmd := &cobra.Command{
-		Use:   "stroke <nodeId>",
-		Short: "Set stroke on a node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "stroke <nodeId>",
+		Short:       "Set stroke on a node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := codegen.HexToRGB(color)
@@ -105,9 +105,9 @@ func newStyleEffectCmd() *cobra.Command {
 		blurType string
 	)
 	cmd := &cobra.Command{
-		Use:   "effect <nodeId>",
-		Short: "Apply effects (shadow, blur) to a node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "effect <nodeId>",
+		Short:       "Apply effects (shadow, blur) to a node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -142,9 +142,9 @@ func newStyleCornerCmd() *cobra.Command {
 		tl, tr, br, bl int
 	)
 	cmd := &cobra.Command{
-		Use:   "corner <nodeId>",
-		Short: "Set corner radius on a node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "corner <nodeId>",
+		Short:       "Set corner radius on a node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -180,9 +180,9 @@ func newStyleBlendCmd() *cobra.Command {
 		opacity float64
 	)
 	cmd := &cobra.Command{
-		Use:   "blend <nodeId>",
-		Short: "Set blend mode and opacity",
-		Args:  cobra.ExactArgs(1),
+		Use:         "blend <nodeId>",
+		Short:       "Set blend mode and opacity",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -208,9 +208,9 @@ func newStyleGradientCmd() *cobra.Command {
 		stops    string
 	)
 	cmd := &cobra.Command{
-		Use:   "gradient <nodeId>",
-		Short: "Apply a gradient fill",
-		Args:  cobra.ExactArgs(1),
+		Use:         "gradient <nodeId>",
+		Short:       "Apply a gradient fill",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -248,9 +248,9 @@ func newStyleGradientCmd() *cobra.Command {
 func newStyleClipCmd() *cobra.Command {
 	var off bool
 	cmd := &cobra.Command{
-		Use:   "clip <nodeId>",
-		Short: "Toggle clip content on a frame",
-		Args:  cobra.ExactArgs(1),
+		Use:         "clip <nodeId>",
+		Short:       "Toggle clip content on a frame",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
@@ -271,9 +271,9 @@ func newStyleApplyCmd() *cobra.Command {
 	var styleName string
 	var styleType string
 	cmd := &cobra.Command{
-		Use:   "apply <nodeId>",
-		Short: "Apply a named local style (paint, text, or effect) to a node",
-		Args:  cobra.ExactArgs(1),
+		Use:         "apply <nodeId>",
+		Short:       "Apply a named local style (paint, text, or effect) to a node",
+		Args:        cobra.ExactArgs(1),
 		Annotations: map[string]string{"composable": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			b := newBuilder()
