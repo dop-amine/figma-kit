@@ -190,7 +190,7 @@ The entire [marketing site](https://dop-amine.github.io/figma-kit/) and its [Fig
 | 1 | Primitives | `node`, `style`, `text`, `layout` | Low-level node ops + boolean, svg, variant-set |
 | 2 | Patterns | `card`, `ui` (incl. `ui section` wrapper), `fx`, `image` | 8 card types, UI components + section layout helper, 14 effects |
 | 3 | Deliverables | `make` | 37 production templates + changelog |
-| 4 | Design System | `ds` | Token management, specimens, component-sheet, audit |
+| 4 | Design System | `ds`, `ds library` | Token management, specimens, component-sheet, audit, **library browsing & import** |
 | 5 | Inspect & QA | `inspect`, `tree`, `find`, `screenshot`, `qa` | Quality checks & MCP-backed screenshot |
 | 6 | Export | `export`, `handoff` | PNG/SVG/PDF, CSS, React specs |
 | 7 | Orchestration | `batch`, `compose` | YAML-driven recipes; compose batches N commands into 1 call |
@@ -227,6 +227,28 @@ figma-kit export tokens -t default --format css
 ```
 
 Custom themes: place a JSON file in `~/.config/figma-kit/themes/` or `./themes/`. See [Theme Docs](docs/THEMES.md) for full details, or run `figma-kit cookbook theme-from-a-mood` for a step-by-step example.
+
+## External Library Integration
+
+Import published components, styles, and variable collections from team or community Figma libraries:
+
+```bash
+# Discover — requires a PAT (FIGMA_TOKEN)
+figma-kit ds library list --team 123456
+figma-kit ds library list --file abc123 --type styles
+figma-kit ds library info a1b2c3d4e5
+
+# Import — generates Plugin API JS, no PAT needed
+figma-kit ds library import a1b2c3d4e5 --name "Hero"
+figma-kit ds library import-set x9y8z7 --variant "Size=Large"
+figma-kit ds library import-style s1t2y3l4e5 --apply 123:456
+figma-kit ds library variables
+
+# Compose with library components
+figma-kit compose -t noir \
+  "ds library import a1b2 --name Hero" \
+  "fx glow --last"
+```
 
 ## Content Specs
 

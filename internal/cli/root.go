@@ -8,6 +8,7 @@ import (
 
 	"github.com/dop-amine/figma-kit/internal/codegen"
 	"github.com/dop-amine/figma-kit/internal/config"
+	"github.com/dop-amine/figma-kit/internal/restapi"
 	"github.com/dop-amine/figma-kit/internal/theme"
 )
 
@@ -176,6 +177,19 @@ func resolveFileKey() string {
 // output writes the generated JS to stdout.
 func output(js string) {
 	_, _ = fmt.Fprint(os.Stdout, js)
+}
+
+// resolveRESTClient returns a REST API client if a PAT is available.
+// Returns nil with a descriptive error when no token is set.
+func resolveRESTClient() (*restapi.Client, error) {
+	c := restapi.NewClient()
+	if c == nil {
+		return nil, fmt.Errorf(
+			"no Figma Personal Access Token found.\n" +
+				"Set one of: FIGMA_TOKEN, FIGMA_PAT, or FIGMA_PERSONAL_ACCESS_TOKEN\n" +
+				"Generate a PAT at: https://www.figma.com/developers/api#access-tokens")
+	}
+	return c, nil
 }
 
 // newBuilder creates a codegen.Builder that respects the --body-only flag.

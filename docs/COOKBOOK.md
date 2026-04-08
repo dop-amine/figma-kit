@@ -933,3 +933,74 @@ figma-kit export tokens -t my-theme --format css   # CSS variables
 figma-kit handoff css <frame-id>                    # CSS for a specific frame
 figma-kit handoff react <frame-id>                  # React component spec
 ```
+
+---
+
+## External Library Integration
+
+### Browse a team library
+
+> "List all the published components in my team library and find a Button component"
+
+```bash
+# List components (requires PAT — set FIGMA_TOKEN)
+figma-kit ds library list --team 123456
+
+# Filter to component sets (variants)
+figma-kit ds library list --team 123456 --type component-sets
+
+# Get detailed info about a specific component
+figma-kit ds library info a1b2c3d4e5
+```
+
+### Import a published component
+
+> "Import the Hero component from our design system library and place it on the page"
+
+```bash
+figma-kit ds library import a1b2c3d4e5 --name "Main Hero"
+```
+
+### Use a component set with a specific variant
+
+> "Import the Button component set and create a Large, Primary variant"
+
+```bash
+figma-kit ds library import-set x9y8z7 --variant "Size=Large,State=Primary"
+```
+
+### Apply a published style
+
+> "Import our brand heading style and apply it to a text node"
+
+```bash
+figma-kit ds library import-style s1t2y3l4e5 --apply 123:456
+```
+
+### Compose with library components
+
+> "Build a page using library components combined with figma-kit themes and effects"
+
+```yaml
+# library-page.yml
+theme: noir
+page: "Library Demo"
+steps:
+  - "ds library import a1b2c3 --name Hero"
+  - "fx glow --last"
+  - "ds library import b2c3d4 --parent _results[0] --name Card"
+  - "ds library import-set x9y8z7 --variant Size=Large --parent _results[0]"
+```
+
+```bash
+figma-kit compose --recipe library-page.yml
+```
+
+### List library variable collections
+
+> "Show me the design tokens from our shared variable library"
+
+```bash
+figma-kit ds library variables
+figma-kit ds library variables --collection <collectionKey>
+```

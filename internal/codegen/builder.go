@@ -191,6 +191,56 @@ func (b *Builder) ReturnExpr(expr string) *Builder {
 	return b
 }
 
+// ---------------------------------------------------------------------------
+// Library import helpers — emit Plugin API calls for published assets
+// ---------------------------------------------------------------------------
+
+// ImportComponent emits JS to import a published component by key and create an instance.
+// varName is used as the JS variable prefix (e.g. "hero" → heroComp, hero).
+func (b *Builder) ImportComponent(key, varName string) *Builder {
+	b.Linef("const %sComp = await figma.importComponentByKeyAsync(%q);", varName, key)
+	b.Linef("const %s = %sComp.createInstance();", varName, varName)
+	return b
+}
+
+// ImportComponentSet emits JS to import a component set by key, find the variant
+// matching the given property string ("Size=Large,State=Default"), and create an instance.
+func (b *Builder) ImportComponentSet(key, variantProps, varName string) *Builder {
+	b.Linef("const %sSet = await figma.importComponentSetByKeyAsync(%q);", varName, key)
+	b.Linef("const %sVariant = %sSet.children.find(c => {", varName, varName)
+	b.Linef("  const p = c.variantProperties || {};")
+	b.Linef("  return %s;", buildVariantMatch(variantProps, "p"))
+	b.Linef("}) || %sSet.defaultVariant || %sSet.children[0];", varName, varName)
+	b.Linef("const %s = %sVariant.createInstance();", varName, varName)
+	return b
+}
+
+// ImportStyle emits JS to import a published style by key.
+func (b *Builder) ImportStyle(key, varName string) *Builder {
+	b.Linef("const %s = await figma.importStyleByKeyAsync(%q);", varName, key)
+	return b
+}
+
+// buildVariantMatch converts "Size=Large,State=Default" into a JS boolean expression
+// that checks each property: p["Size"]==="Large" && p["State"]==="Default".
+func buildVariantMatch(props, jsVar string) string {
+	if props == "" {
+		return "true"
+	}
+	parts := strings.Split(props, ",")
+	checks := make([]string, 0, len(parts))
+	for _, part := range parts {
+		kv := strings.SplitN(strings.TrimSpace(part), "=", 2)
+		if len(kv) == 2 {
+			checks = append(checks, fmt.Sprintf(`%s[%q]===%q`, jsVar, strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1])))
+		}
+	}
+	if len(checks) == 0 {
+		return "true"
+	}
+	return strings.Join(checks, " && ")
+}
+
 // String returns the final composed JavaScript string.
 func (b *Builder) String() string {
 	return b.buf.String()

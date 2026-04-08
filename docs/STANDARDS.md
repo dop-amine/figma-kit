@@ -48,7 +48,8 @@ Commands that do not emit Plugin API JS are not composable:
 - Go HTTP servers (`image serve`)
 - Go data output (`export tokens`, `ds sync-tokens`, `ds tokens`, `theme init`)
 - Config/utility (`init`, `config`, `open`, `status`, `info`, `themes`, `cookbook`, `examples`, `docs`)
-- MCP-only (`auth`, `whoami`, `new-file`, `ds search`, `ds import`, `ds audit`)
+- MCP-only (`auth`, `whoami`, `new-file`, `ds search`, `ds audit`)
+- REST API discovery (`ds library list`, `ds library info`)
 - Own composition (`batch`, `watch`, `compose`)
 - Validation (`validate theme`, `validate recipe`)
 
@@ -61,6 +62,7 @@ Compose rejects non-composable commands with a clear error message.
 - **`ui section`** — Recommended pattern for a centered block wrapper (label, heading, subtitle, optional divider) when building pages inside compose; nest child commands with `--parent _results[N]` (or `--last` on `fx`) instead of flat unrelated frames.
 - **Tree-shaking helpers** — Compose includes only helper functions that steps actually reference (via `detectNeededHelpers`), not the full helper bundle every time — roughly **~14KB → ~3KB** of helper JS when few helpers are used.
 - **Universal `--parent`** — Composable `ui` and `card` commands accept `--parent` for chaining. Values are either a Figma node id string or, when the value **starts with** `_results[`, emitted as a **JavaScript expression** (no `getNodeByIdAsync` wrapper) so compose can wire steps together.
+- **Library imports** — `ds library import`, `ds library import-set`, and `ds library import-style` are composable. They use `codegen.Builder` helpers (`ImportComponent`, `ImportComponentSet`, `ImportStyle`) that generate `figma.importComponentByKeyAsync()` / `figma.importComponentSetByKeyAsync()` / `figma.importStyleByKeyAsync()` calls. All support `--parent`, `--last`, and return IDs into `_results[]`.
 
 ## 3. Preamble Families
 

@@ -317,6 +317,48 @@
     }
     .theme-cta-bar .docs-btn:hover { background: rgba(20, 184, 166, 0.18); text-decoration: none; }
 
+    /* ── HOW IT WAS BUILT ── */
+    .built-section { text-align: center; }
+    .terminal-wrap {
+      max-width: 1000px; margin: 0 auto;
+      border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--stk);
+      background: #0A0B12;
+    }
+    .terminal-titlebar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 14px 18px;
+      background: #101118;
+    }
+    .terminal-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+    }
+    .terminal-dot.red { background: #FF6157; }
+    .terminal-dot.yellow { background: #FFBD2E; }
+    .terminal-dot.green { background: #28C840; }
+    .terminal-gif {
+      display: block; width: 100%;
+      border-top: 1px solid rgba(36, 41, 56, 0.5);
+    }
+    .built-steps {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+      max-width: 1120px; margin: 0 auto;
+    }
+    @media (max-width: 768px) { .built-steps { grid-template-columns: 1fr; } }
+    .built-step {
+      padding: 28px 24px; border-radius: 16px;
+      border: 1px solid var(--stk); background: transparent;
+      display: flex; flex-direction: column; gap: 12px;
+      text-align: left;
+    }
+    .built-step .step-badge {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-weight: 500; font-size: 15px;
+    }
+    .built-step h3 { font-size: 18px; font-weight: 600; }
+    .built-step p { font-size: 14px; color: var(--mt); line-height: 22px; }
+
     /* ── CTA ── */
     .cta-section { text-align: center; }
     .cta-install {
@@ -663,6 +705,45 @@
     <div class="theme-cta-bar fade-in" style="margin-top: 32px;">
       <span class="text">Create your own &rarr;&nbsp; <code>figma-kit theme init --primary "#3366FF" --accent "#14B8A6"</code></span>
       <a href="theme-builder.html" class="docs-btn">Theme Builder &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- HOW THIS SITE WAS BUILT -->
+<section id="built" class="built-section">
+  <div class="container">
+    <div class="section-divider"></div>
+    <div class="section-header">
+      <div class="section-label fade-in" style="color: var(--pp);">BUILT WITH FIGMA-KIT</div>
+      <div class="section-title fade-in">How this site was built</div>
+      <p class="section-desc fade-in">This entire marketing site was designed in Figma using figma-kit commands.<br>Every section, card, and theme token was generated programmatically.</p>
+    </div>
+
+    <div class="terminal-wrap fade-in">
+      <div class="terminal-titlebar">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+      </div>
+      <img src="demo.gif" alt="figma-kit terminal demo showing commands building this site" class="terminal-gif" loading="lazy">
+    </div>
+
+    <div class="built-steps" style="margin-top: 48px;">
+      <div class="built-step fade-in">
+        <div class="step-badge" style="background: rgba(51,102,255,0.1); color: var(--bl);">01</div>
+        <h3>Theme</h3>
+        <p>Create or pick a theme with colors, fonts, and tokens.</p>
+      </div>
+      <div class="built-step fade-in">
+        <div class="step-badge" style="background: rgba(140,92,245,0.1); color: #8C5CF5;">02</div>
+        <h3>Compose</h3>
+        <p>Chain commands into a single optimized JS payload.</p>
+      </div>
+      <div class="built-step fade-in">
+        <div class="step-badge" style="background: rgba(20,184,166,0.1); color: var(--tl);">03</div>
+        <h3>Execute</h3>
+        <p>Run via AI agent or exec &mdash; design appears in Figma.</p>
+      </div>
     </div>
   </div>
 </section>

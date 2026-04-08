@@ -2714,17 +2714,134 @@ figma-kit ds search
 
 ### `ds import`
 
-**Usage:** `figma-kit ds import`
+**Usage:** `figma-kit ds import <key> [key...]`
 
-**Description:** Stub JS/comments for mapping tokens to variables.
+**Description:** Alias for `ds library import` (deprecated — use `ds library import` instead). Imports published component(s) by key and creates instance(s).
+
+---
+
+### `ds library list`
+
+**Usage:** `figma-kit ds library list [--team ID | --file KEY]`
+
+**Description:** List published components, component sets, or styles from a team or file library. Requires a PAT.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| *(global)* | — | — | — |
+| `--team` | string | | Team ID to query |
+| `--file` | string | | File key to query |
+| `--type` | string | `components` | `components`, `component-sets`, or `styles` |
+| `--json` | bool | `false` | Output raw JSON |
+| `--limit` | int | `30` | Page size |
+| `--cursor` | string | | Pagination cursor |
 
 ```bash
-figma-kit ds import
+figma-kit ds library list --team 123456
+figma-kit ds library list --file abc123def --type styles
+figma-kit ds library list --file abc123def --type component-sets --json
 ```
+
+---
+
+### `ds library info`
+
+**Usage:** `figma-kit ds library info <key>`
+
+**Description:** Show detailed info for a single published component, component set, or style. Requires a PAT.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--type` | string | `component` | `component`, `component-set`, or `style` |
+| `--json` | bool | `false` | Output raw JSON |
+
+```bash
+figma-kit ds library info a1b2c3d4e5
+figma-kit ds library info s1t2y3 --type style --json
+```
+
+---
+
+### `ds library import`
+
+**Usage:** `figma-kit ds library import <key> [key...]`
+
+**Description:** Import published component(s) by key and create instance(s). Composable — works in compose recipes with `--parent` / `--last`.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--parent` | string | | Parent node ID (or `_results[N]` in compose) |
+| `--name` | string | | Rename the first instance |
+| `--x` | float | `0` | X position |
+| `--y` | float | `0` | Y position |
+| `--last` | bool | `false` | Append to last `_results[]` node (compose chaining) |
+
+```bash
+figma-kit ds library import a1b2c3d4e5
+figma-kit ds library import a1b2c3d4e5 --name "Main Hero" --parent 123:456
+figma-kit ds library import a1b2 b2c3 c3d4
+
+# In compose:
+figma-kit compose "ds library import a1b2 --name Hero" "fx glow --last"
+```
+
+---
+
+### `ds library import-set`
+
+**Usage:** `figma-kit ds library import-set <key>`
+
+**Description:** Import a component set and create an instance with a specific variant. Composable.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--variant` | string | | Variant properties: `Key=Value,Key=Value` |
+| `--parent` | string | | Parent node ID (or `_results[N]`) |
+| `--name` | string | | Rename the instance |
+| `--x` | float | `0` | X position |
+| `--y` | float | `0` | Y position |
+| `--last` | bool | `false` | Append to last `_results[]` node |
+
+```bash
+figma-kit ds library import-set x9y8z7 --variant "Size=Large,State=Default"
+figma-kit ds library import-set x9y8z7 --variant "Size=Small" --parent 123:456
+```
+
+---
+
+### `ds library import-style`
+
+**Usage:** `figma-kit ds library import-style <key>`
+
+**Description:** Import a published style and optionally apply it to a node. Composable.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--apply` | string | | Node ID to apply the style to (or `_results[N]`) |
+
+```bash
+figma-kit ds library import-style s1t2y3l4e5
+figma-kit ds library import-style s1t2y3l4e5 --apply 123:456
+```
+
+---
+
+### `ds library variables`
+
+**Usage:** `figma-kit ds library variables`
+
+**Description:** List available library variable collections and their variables using the Plugin API `figma.teamLibrary` methods.
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--collection` | string | | Collection key to list variables from |
+| `--json` | bool | `false` | Output raw JSON |
+
+```bash
+figma-kit ds library variables
+figma-kit ds library variables --collection <collectionKey>
+```
+
+> **Note:** The library must be enabled in the current Figma file via the UI for variable collections to be visible.
 
 ---
 

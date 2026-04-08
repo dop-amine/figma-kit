@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const baseURL = "https://api.figma.com"
+var baseURL = "https://api.figma.com"
 
 // Client wraps the Figma REST API. Created via NewClient(), which returns nil
 // when no PAT is available — callers should check for nil before using.
@@ -139,6 +139,113 @@ func (c *Client) FileImages(fileKey string) (map[string]string, error) {
 		return nil, fmt.Errorf("parsing file images: %w", err)
 	}
 	return result.Meta.Images, nil
+}
+
+// ---------------------------------------------------------------------------
+// Library endpoints — team-level (requires team_library_content:read scope)
+// ---------------------------------------------------------------------------
+
+// GetTeamComponents lists published components for a team.
+// pageSize=0 uses the API default; cursor="" starts from the beginning.
+func (c *Client) GetTeamComponents(teamID string, pageSize int, cursor string) (*ComponentsResponse, error) {
+	path := fmt.Sprintf("/v1/teams/%s/components", teamID)
+	path = appendPagination(path, pageSize, cursor)
+	return decodeJSON[ComponentsResponse](c, path)
+}
+
+// GetTeamComponentSets lists published component sets for a team.
+func (c *Client) GetTeamComponentSets(teamID string, pageSize int, cursor string) (*ComponentSetsResponse, error) {
+	path := fmt.Sprintf("/v1/teams/%s/component_sets", teamID)
+	path = appendPagination(path, pageSize, cursor)
+	return decodeJSON[ComponentSetsResponse](c, path)
+}
+
+// GetTeamStyles lists published styles for a team.
+func (c *Client) GetTeamStyles(teamID string, pageSize int, cursor string) (*StylesResponse, error) {
+	path := fmt.Sprintf("/v1/teams/%s/styles", teamID)
+	path = appendPagination(path, pageSize, cursor)
+	return decodeJSON[StylesResponse](c, path)
+}
+
+// ---------------------------------------------------------------------------
+// Library endpoints — file-level (requires library_content:read scope)
+// ---------------------------------------------------------------------------
+
+// GetFileComponents lists published components in a file.
+func (c *Client) GetFileComponents(fileKey string) (*ComponentsResponse, error) {
+	return decodeJSON[ComponentsResponse](c, fmt.Sprintf("/v1/files/%s/components", fileKey))
+}
+
+// GetFileComponentSets lists published component sets in a file.
+func (c *Client) GetFileComponentSets(fileKey string) (*ComponentSetsResponse, error) {
+	return decodeJSON[ComponentSetsResponse](c, fmt.Sprintf("/v1/files/%s/component_sets", fileKey))
+}
+
+// GetFileStyles lists published styles in a file.
+func (c *Client) GetFileStyles(fileKey string) (*StylesResponse, error) {
+	return decodeJSON[StylesResponse](c, fmt.Sprintf("/v1/files/%s/styles", fileKey))
+}
+
+// ---------------------------------------------------------------------------
+// Single asset lookup (requires library_assets:read scope)
+// ---------------------------------------------------------------------------
+
+// GetComponent retrieves a single published component by key.
+func (c *Client) GetComponent(key string) (*Component, error) {
+	resp, err := decodeJSON[SingleComponentResponse](c, fmt.Sprintf("/v1/components/%s", key))
+	if err != nil {
+		return nil, err
+	}
+	return &resp.Meta, nil
+}
+
+// GetComponentSet retrieves a single published component set by key.
+func (c *Client) GetComponentSet(key string) (*ComponentSet, error) {
+	resp, err := decodeJSON[SingleComponentSetResponse](c, fmt.Sprintf("/v1/component_sets/%s", key))
+	if err != nil {
+		return nil, err
+	}
+	return &resp.Meta, nil
+}
+
+// GetStyle retrieves a single published style by key.
+func (c *Client) GetStyle(key string) (*Style, error) {
+	resp, err := decodeJSON[SingleStyleResponse](c, fmt.Sprintf("/v1/styles/%s", key))
+	if err != nil {
+		return nil, err
+	}
+	return &resp.Meta, nil
+}
+
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+func appendPagination(path string, pageSize int, cursor string) string {
+	sep := "?"
+	if strings.Contains(path, "?") {
+		sep = "&"
+	}
+	if pageSize > 0 {
+		path += fmt.Sprintf("%spage_size=%d", sep, pageSize)
+		sep = "&"
+	}
+	if cursor != "" {
+		path += fmt.Sprintf("%safter=%s", sep, cursor)
+	}
+	return path
+}
+
+func decodeJSON[T any](c *Client, path string) (*T, error) {
+	body, err := c.get(path)
+	if err != nil {
+		return nil, err
+	}
+	var result T
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("parsing %s: %w", path, err)
+	}
+	return &result, nil
 }
 
 func (c *Client) get(path string) ([]byte, error) {

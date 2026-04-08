@@ -233,7 +233,20 @@ Many accept `--content <file.yml>` for data-driven generation.
 
 `ds <verb>`: `create`, `colors`, `type-scale`, `spacing`, `elevation`, `radius`, `icons`, `component`, `component-sheet`, `variables`, `variables-create`, `search`, `import`, `sync-tokens`, `audit`, `tokens`
 
-`ds create` and `ds variables-create` are composable. Search/import/audit are MCP-only (not composable).
+`ds create` and `ds variables-create` are composable. `search`/`audit` are MCP-only (not composable).
+
+**External Library** — `ds library <verb>`:
+
+| Command | Composable | Requires PAT |
+|---------|:----------:|:------------:|
+| `ds library list` | No (REST output) | Yes |
+| `ds library info <key>` | No (REST output) | Yes |
+| `ds library import <key>` | Yes | No |
+| `ds library import-set <key>` | Yes | No |
+| `ds library import-style <key>` | Yes | No |
+| `ds library variables` | Yes | No |
+
+Import commands generate `figma.importComponentByKeyAsync()` / `figma.importComponentSetByKeyAsync()` / `figma.importStyleByKeyAsync()` JS. Use in compose with `--parent`, `--last`, and `_results[]` chaining.
 
 ### Layer 5 — Inspect & QA
 
@@ -320,6 +333,19 @@ figma-kit compose -t brand \
 2. `figma-kit theme init --bg ... --primary ... --accent ... -o themes/ref.json`
 3. `figma-kit compose -t ref "preamble" "ui hero ..." "card glass ..." ...`
 4. `get_screenshot` once to verify
+
+### Library Components
+
+```bash
+# 1. Discover components (needs PAT)
+figma-kit ds library list --team 123456
+
+# 2. Import and compose with library components
+figma-kit compose -t noir \
+  "ds library import <component-key> --name Hero" \
+  "fx glow --last" \
+  "ds library import-set <set-key> --variant Size=Large --parent _results[0]"
+```
 
 ## MCP Tool Routing
 

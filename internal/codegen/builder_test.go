@@ -142,3 +142,46 @@ func TestBuilder_ChainOrder(t *testing.T) {
 		t.Errorf("expected substrings missing in %q", got)
 	}
 }
+
+func TestBuilder_ImportComponent(t *testing.T) {
+	got := New().ImportComponent("abc123", "hero").String()
+	must := []string{
+		`const heroComp = await figma.importComponentByKeyAsync("abc123");`,
+		`const hero = heroComp.createInstance();`,
+	}
+	for _, s := range must {
+		if !strings.Contains(got, s) {
+			t.Errorf("ImportComponent output missing %q in:\n%s", s, got)
+		}
+	}
+}
+
+func TestBuilder_ImportComponentSet(t *testing.T) {
+	got := New().ImportComponentSet("setKey", "Size=Large,State=Default", "btn").String()
+	must := []string{
+		`const btnSet = await figma.importComponentSetByKeyAsync("setKey");`,
+		`p["Size"]==="Large"`,
+		`p["State"]==="Default"`,
+		`const btn = btnVariant.createInstance();`,
+	}
+	for _, s := range must {
+		if !strings.Contains(got, s) {
+			t.Errorf("ImportComponentSet output missing %q in:\n%s", s, got)
+		}
+	}
+}
+
+func TestBuilder_ImportComponentSet_Empty(t *testing.T) {
+	got := New().ImportComponentSet("k", "", "x").String()
+	if !strings.Contains(got, "true") {
+		t.Errorf("empty variant should produce 'true' match, got:\n%s", got)
+	}
+}
+
+func TestBuilder_ImportStyle(t *testing.T) {
+	got := New().ImportStyle("s1key", "myStyle").String()
+	want := `const myStyle = await figma.importStyleByKeyAsync("s1key");`
+	if !strings.Contains(got, want) {
+		t.Errorf("ImportStyle output missing %q in:\n%s", want, got)
+	}
+}

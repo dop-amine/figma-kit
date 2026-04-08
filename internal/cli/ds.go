@@ -39,6 +39,7 @@ func newDSCmd() *cobra.Command {
 	cmd.AddCommand(newDSVariablesCreateCmd())
 	cmd.AddCommand(newDSSearchCmd())
 	cmd.AddCommand(newDSImportCmd())
+	cmd.AddCommand(newDSLibraryCmd())
 	cmd.AddCommand(newDSSyncTokensCmd())
 	cmd.AddCommand(newDSAuditCmd())
 	cmd.AddCommand(newDSTokensCmd())
@@ -500,29 +501,11 @@ func newDSSearchCmd() *cobra.Command {
 }
 
 func newDSImportCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "import",
-		Short: "Stub workflow for importing external tokens into variables (extend as needed)",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			t, err := resolveTheme(cmd)
-			if err != nil {
-				return err
-			}
-			b := newBuilder()
-			codegen.PreambleWithPage(b, t, resolvePage())
-			b.Comment("Import tokens: map theme colors to variables — customize collection/mode names")
-			b.Line("const collections = await figma.variables.getLocalVariableCollectionsAsync();")
-			b.Line("const col = collections[0];")
-			b.Line("if (!col) throw new Error('Create a variable collection first, or extend this script.');")
-			b.Line("const modeId = col.modes[0].modeId;")
-			b.Comment("Example: create COLOR variable from theme constant primary — duplicate per token")
-			b.Line("// const v = figma.variables.createVariable('primary', col, 'COLOR');")
-			b.Line("// v.setValueForMode(modeId, { type: 'color', r: primary.r, g: primary.g, b: primary.b });")
-			b.ReturnDone()
-			output(b.String())
-			return nil
-		},
-	}
+	cmd := newDSLibraryImportCmd()
+	cmd.Use = "import"
+	cmd.Short = "Import published component(s) by key (alias for ds library import)"
+	cmd.Deprecated = "use 'ds library import' instead"
+	return cmd
 }
 
 func newDSSyncTokensCmd() *cobra.Command {

@@ -90,11 +90,23 @@ The compose recipe YAML format uses `theme`, `page`, and `steps` (list of comman
 
 ## REST API client (`internal/restapi/`)
 
-`internal/restapi/client.go` wraps the Figma REST API (`https://api.figma.com`). Created via `NewClient()`, which returns `nil` when no PAT is available — callers check for nil before using.
+`internal/restapi/client.go` wraps the Figma REST API (`https://api.figma.com`). Created via `NewClient()`, which returns `nil` when no PAT is available — callers check for nil before using. Response types live in `internal/restapi/types.go`.
 
 Token resolution order: `FIGMA_TOKEN` → `FIGMA_PAT` → `FIGMA_PERSONAL_ACCESS_TOKEN`.
 
-The REST API is optional and complements the MCP path. It enables operations like file metadata retrieval and image exports that don't require Plugin API execution.
+The REST API is optional and complements the MCP path. It enables:
+- **File operations**: metadata retrieval, image exports, node subtree fetching
+- **Library discovery**: listing published components, component sets, and styles from team or file libraries (used by `ds library list` and `ds library info`)
+
+### Library endpoints
+
+Team-level endpoints (`/v1/teams/:id/components`, `/v1/teams/:id/component_sets`, `/v1/teams/:id/styles`) support pagination via `page_size` and `after` cursor. File-level endpoints (`/v1/files/:key/components`, etc.) return all assets in a single response. Single-asset lookups (`/v1/components/:key`, `/v1/component_sets/:key`, `/v1/styles/:key`) return detailed metadata for a specific published asset.
+
+### Library imports vs. discovery
+
+Discovery (`ds library list`, `ds library info`) uses the REST API and requires a PAT. Import commands (`ds library import`, `ds library import-set`, `ds library import-style`) generate Plugin API JavaScript using `figma.importComponentByKeyAsync()`, `figma.importComponentSetByKeyAsync()`, and `figma.importStyleByKeyAsync()` — these run in the Figma context via `use_figma` and do **not** require a PAT.
+
+The CLI helper `resolveRESTClient()` (in `internal/cli/root.go`) returns a client or a descriptive error pointing the user to PAT setup.
 
 ## Image pipeline
 
