@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: figma-kit
+  title: Figma Kit
+  description: >-
+    A Go CLI with 150+ commands that lets an AI agent drive Figma in natural
+    language — read a file, inspect a node tree, and edit designs without a
+    human in the canvas.
+  annotations:
+    github.com/project-slug: dop-amine/figma-kit
+    dop-amine.com/tier: '3'
+spec:
+  type: cli
+  lifecycle: experimental
+  owner: dop-amine
